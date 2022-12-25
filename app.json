@@ -14,20 +14,27 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mobileapp.timberstock"
     },
     "android": {
+      "googleServicesFile": "./SpecificPlatformFiles/android/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.mobileapp.timberstock"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["@react-native-firebase/app"],
+    "extra": {
+      "eas": {
+        "projectId": "77c3e023-bb35-4869-91e8-aef0a6820e4c"
+      }
     }
   }
 }
