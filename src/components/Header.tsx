@@ -1,6 +1,7 @@
 import React from 'react';
 import Constants from 'expo-constants';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { logoutUser } from '../functions/firebase';
 import colors from '../resources/Colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -15,6 +16,11 @@ export default function Header(props: HeaderProps) {
   const handleBack = () => {
     navigation.goBack();
   };
+
+  const handleLogout = () => {
+    logoutUser();
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.box}>
@@ -25,7 +31,11 @@ export default function Header(props: HeaderProps) {
         )}
       </View>
       <Text style={styles.text}> TimberStock</Text>
-      <View style={styles.box} />
+      <View style={styles.box}>
+        <TouchableOpacity onPress={() => handleLogout()}>
+          <Icon name="close-outline" size={30} color={colors.secondary} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

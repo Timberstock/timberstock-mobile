@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StyleSheet, Text, View } from 'react-native';
+import auth from '@react-native-firebase/auth';
 import Guias from './src/screens/Guias';
 import CreateGuia from './src/screens/CreateGuia';
+import Login from './src/screens/Login';
 import { GuiaDespachoProps } from './src/interfaces/guias';
-import { readGuias } from './src/functions/firebase';
+import 'expo-dev-client';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState();
   const [guias, setGuias] = useState<GuiaDespachoProps[]>([]);
   const rutEmpresa = '770685532';
 
@@ -19,6 +21,22 @@ export default function App() {
     setGuias,
     rutEmpresa,
   };
+
+  function onAuthStateChanged(user: any) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  if (initializing) return null;
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <NavigationContainer>

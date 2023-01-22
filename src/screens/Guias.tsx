@@ -56,7 +56,7 @@ export default function Guias(props: GuiasScreenProps) {
           style={styles.button}
           onPress={() => navigation.navigate('CreateGuia')}
         >
-          <Text style={styles.buttonText}> Emitir Guía de Despacho </Text>
+          <Text style={styles.buttonText}> Crear Nueva Guía de Despacho </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -79,9 +79,9 @@ const styles = StyleSheet.create({
   guia: {
     backgroundColor: 'grey',
     borderRadius: 12,
-    padding: 10,
-    margin: 10,
-    height: 100,
+    padding: '2.5%',
+    marginHorizontal: '2.5%',
+    marginVertical: '1.5%',
     justifyContent: 'center',
   },
   button: {
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     margin: 10,
-    marginBottom: 20,
+    marginBottom: '5%',
     alignItems: 'center',
   },
   buttonText: {

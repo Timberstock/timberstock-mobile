@@ -21,7 +21,7 @@ export default function CreateGuia(props: any) {
 
   const handleCreateGuia = () => {
     const guiaDummy: GuiaDespachoProps = {
-      estado: 'emitida',
+      estado: 'creada',
       fecha: new Date(),
       folio: 1,
       monto: 2046414,
@@ -64,10 +64,10 @@ export default function CreateGuia(props: any) {
             onCancel={() => setOpen(false)}
           />
         </View>
-        <TouchableOpacity style={styles.button} onPress={handleCreateGuia}>
-          <Text style={styles.buttonText}> Emitir Guía de Despacho </Text>
-        </TouchableOpacity>
       </View>
+      <TouchableOpacity style={styles.button} onPress={handleCreateGuia}>
+        <Text style={styles.buttonText}> Emitir Guía de Despacho </Text>
+      </TouchableOpacity>
     </View>
   );
 }
