@@ -1,31 +1,78 @@
-interface Receptor {
-  razon_social: string;
+// 2nd Level Interfaces
+export interface Chofer {
+  nombre: string;
   rut: string;
 }
 
-export interface GuiaDespachoProps {
-  //     {
-  //       estado: 'emitida',
-  //       fecha: 'December 24, 2022 at 1:02:28 PM UTC-3',
-  //       folio: 1,
-  //       monto: 2046414,
-  //       receptor: {
-  //         razon_social: 'COLLOTYPE LABELS CHILE SA',
-  //         rut: '99563940-8',
-  //       },
-  //     },
-  folio: number;
-  estado: string;
-  monto: number;
-  receptor: Receptor;
-  fecha: Date;
+export interface DetalleDTE {
+  indicador_exento: number;
+  nombre: string;
+  cantidad: number;
+  precio: number;
+  descuento: number;
+  recargo: number;
+  monto_item: number;
 }
 
-export interface GuiasScreenProps {
-  navigation: any;
-  GlobalState: {
-    guias: GuiaDespachoProps[];
-    setGuias: (value: GuiaDespachoProps[]) => void;
-    rutEmpresa: string;
-  };
+export interface ReferenciaDTE {
+  folio_referencia: string;
+  fecha_documento_referencia: Date;
+  razon_referencia: string;
+  tipo_documento: string;
+}
+
+// 3rd Level Interfaces
+export interface Identificacion {
+  fecha?: Date; // Optional because it's set in the function at the moment of creation
+  folio: number;
+  tipo_traslado: string;
+  tipo_despacho: string;
+}
+
+export interface Emisor {
+  actividad_economica: number[];
+  comuna: string;
+  rut: string;
+  razon_social: string;
+  giro: string;
+  direccion: string;
+}
+
+export interface Receptor {
+  rut: string;
+  razon_social: string;
+  giro: string;
+  direccion: string;
+  comuna: string;
+}
+
+export interface Transporte {
+  chofer: Chofer;
+  patente: string;
+  rut_transportista: string;
+  direccion_destino: string;
+  comuna_destino?: string;
+  ciudad_destino?: string;
+}
+
+export interface Totales {
+  monto_total: number;
+  monto_neto: number;
+}
+
+export interface GuiaDespachoProps {
+  identificacion: Identificacion;
+  emisor: Emisor;
+  receptor: Receptor;
+  transporte: Transporte;
+  detalles: DetalleDTE[];
+  totales: Totales;
+}
+
+export interface GuiaDespachoSummaryProps {
+  folio: number;
+  estado: string;
+  total: number;
+  receptor: Receptor;
+  fecha: Date;
 }

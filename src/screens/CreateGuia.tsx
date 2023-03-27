@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, MutableRefObject } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,115 +6,487 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
-import Icon from 'react-native-vector-icons/AntDesign';
-import { GuiaDespachoProps } from '../interfaces/guias';
-import { createGuia } from '../functions/firebase';
+import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {
+  handleSelectPredioLogic,
+  handleSelectClienteLogic,
+  handleFetchAllData,
+  handleSelectProveedorLogic,
+} from '../functions/screenFunctions';
+import { createGuiaScreenHooks } from '../functions/screenHooks';
 
+// TODO 1: ADD FIELDS VALIDATIONS, BOTH FOR COMPLETENESS AND CORRECTNESS
+// TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
-  const { GlobalState } = props;
-  const { guias, setGuias, rutEmpresa } = GlobalState;
-  const [date, setDate] = useState<Date>();
-  const [open, setOpen] = useState(false);
+  const { navigation, GlobalState } = props;
+  const { rutEmpresa, foliosOpts } = GlobalState;
 
-  const handleCreateGuia = () => {
-    const guiaDummy: GuiaDespachoProps = {
-      estado: 'creada',
-      fecha: new Date(),
-      folio: 1,
-      monto: 2046414,
-      receptor: {
-        razon_social: 'COLLOTYPE LABELS CHILE SA',
-        rut: '99563940-8',
+  const {
+    retrievedData,
+    setRetrievedData,
+    options,
+    setOptions,
+    identificacion,
+    setIdentificacion,
+    emisor,
+    setEmisor,
+    receptor,
+    setReceptor,
+    despacho,
+    setDespacho,
+    predio,
+    setPredio,
+    proveedor,
+    setProveedor,
+  } = createGuiaScreenHooks(foliosOpts);
+
+  const despachoRef = useRef() as MutableRefObject<SelectRef>;
+  const planDeManejoRef = useRef() as MutableRefObject<SelectRef>;
+
+  useEffect(() => {
+    handleFetchAllData(
+      rutEmpresa,
+      options,
+      setEmisor,
+      setOptions,
+      setRetrievedData
+    );
+  }, []);
+
+  const handleAddProductos = () => {
+    if (
+      !(
+        identificacion.folio &&
+        identificacion.tipo_despacho &&
+        identificacion.tipo_traslado
+      ) ||
+      !(receptor.razon_social && receptor.direccion) ||
+      !(
+        despacho.chofer.nombre &&
+        despacho.chofer.rut &&
+        despacho.patente &&
+        despacho.rut_transportista
+      ) ||
+      !predio.rol ||
+      !proveedor.razon_social
+    ) {
+      alert('Debe llenar todos los campos');
+      return;
+    }
+    navigation.push('AddProductos', {
+      data: {
+        retrievedData,
+        rutEmpresa,
+        guia: {
+          identificacion,
+          emisor,
+          receptor,
+          despacho,
+          predio,
+        },
       },
-    };
-    console.log(guias.length);
-    guiaDummy.folio = guias[0].folio + 1;
-    guiaDummy.monto = guias[0].monto + 131;
-    const guiasCopy = [...guias];
-    guiasCopy.unshift(guiaDummy);
-    setGuias(guiasCopy);
-    createGuia(rutEmpresa, guiaDummy);
+    });
   };
 
-  const handleOpenDatePicker = () => {
-    !date ? setDate(new Date()) : setOpen(true);
+  const handleSelectCliente = (option: any) => {
+    handleSelectClienteLogic(
+      option,
+      retrievedData,
+      options,
+      despachoRef,
+      despacho,
+      setDespacho,
+      setReceptor
+    );
   };
 
+  const handleSelectPredio = (option: any) => {
+    handleSelectPredioLogic(
+      option,
+      retrievedData,
+      options,
+      planDeManejoRef,
+      predio,
+      setPredio
+    );
+  };
+
+  const handleSelectProveedor = (option: any) => {
+    handleSelectProveedorLogic(option, retrievedData, setProveedor);
+  };
   return (
     <View style={styles.screen}>
-      <Header screenName="CreateGuia" {...props} />
+      <Header
+        screenName="CreateGuia"
+        empresa={emisor.razon_social}
+        {...props}
+      />
       <View style={styles.body}>
-        <View style={styles.row}>
-          <TouchableOpacity onPress={handleOpenDatePicker}>
-            <View style={styles.input}>
-              <TextInput placeholder={'Fecha y hora'} />
-              <Icon name="calendar" size={16} />
+        <KeyboardAwareScrollView style={styles.scrollView}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}> Identificación </Text>
+            <View style={styles.row}>
+              <Select
+                selectContainerStyle={selectStyles.container}
+                // @ts-ignore
+                selectControlStyle={{
+                  ...selectStyles.input,
+                  ...selectStyles.input.folio,
+                }}
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Nº Folio"
+                animated={true}
+                options={options.folios}
+                onSelect={(option) =>
+                  setIdentificacion({
+                    ...identificacion,
+                    folio: option?.value as unknown as number,
+                  })
+                }
+              />
             </View>
-          </TouchableOpacity>
-          <DateTimePickerModal
-            isVisible={open}
-            mode="datetime"
-            onConfirm={(date) => {
-              setOpen(false);
-              setDate(date);
-            }}
-            onCancel={() => setOpen(false)}
-          />
-        </View>
+            <View style={styles.row}>
+              <Select
+                selectContainerStyle={selectStyles.container}
+                selectControlStyle={selectStyles.input}
+                selectControlButtonsContainerStyle={
+                  selectStyles.buttonsContainer
+                }
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Tipo Despacho"
+                animated={true}
+                options={options.tipoDespacho}
+                onSelect={(option) =>
+                  setIdentificacion({
+                    ...identificacion,
+                    tipo_despacho: option ? option.value : '',
+                  })
+                }
+              />
+              <Select
+                selectContainerStyle={selectStyles.container}
+                selectControlStyle={selectStyles.input}
+                selectControlButtonsContainerStyle={
+                  selectStyles.buttonsContainer
+                }
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Tipo Traslado"
+                animated={true}
+                options={options.tipoTraslado}
+                onSelect={(option) =>
+                  setIdentificacion({
+                    ...identificacion,
+                    tipo_traslado: option ? option.value : '',
+                  })
+                }
+              />
+            </View>
+          </View>
+          <View style={{ ...styles.section, ...styles.section.receptor }}>
+            <Text style={styles.sectionTitle}> Receptor </Text>
+            <View style={styles.row}>
+              <Select
+                selectContainerStyle={selectStyles.container}
+                // @ts-ignore
+                selectControlStyle={{
+                  ...selectStyles.input,
+                }}
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Razon Social"
+                animated={true}
+                options={options.clientes}
+                onSelect={handleSelectCliente}
+              />
+            </View>
+            <View style={styles.row}>
+              <Select
+                selectContainerStyle={selectStyles.container}
+                // @ts-ignore
+                selectControlStyle={{
+                  ...selectStyles.input,
+                }}
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Direccion Despacho"
+                animated={true}
+                disabled={receptor.razon_social === ''}
+                options={options.destinos}
+                ref={despachoRef}
+                onSelect={(option) =>
+                  setDespacho({
+                    ...despacho,
+                    direccion_destino: option?.value as unknown as string,
+                  })
+                }
+              />
+            </View>
+            <View style={styles.row}>
+              <View style={styles.textContainer}>
+                {receptor.rut !== '' && (
+                  <Text style={styles.text}>
+                    RUT: {receptor.rut} || Comuna: {receptor.comuna}
+                  </Text>
+                )}
+                {receptor.rut !== '' && (
+                  <Text style={styles.text}>
+                    Direccion: {receptor.direccion}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}> Datos Despacho </Text>
+            <View style={styles.row}>
+              <View style={styles.container}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nombre Chofer"
+                  value={despacho.chofer.nombre}
+                  onChangeText={(e) => {
+                    setDespacho({
+                      ...despacho,
+                      chofer: {
+                        ...despacho.chofer,
+                        nombre: e,
+                      },
+                    });
+                  }}
+                />
+              </View>
+              <View style={styles.container}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="RUT (sin puntos c/ guión)"
+                  value={despacho.chofer.rut}
+                  onChangeText={(e) => {
+                    setDespacho({
+                      ...despacho,
+                      chofer: {
+                        ...despacho.chofer,
+                        rut: e,
+                      },
+                    });
+                  }}
+                />
+              </View>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.container}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Patente"
+                  value={despacho.patente}
+                  onChangeText={(e) => {
+                    setDespacho({
+                      ...despacho,
+                      patente: e,
+                    });
+                  }}
+                />
+              </View>
+              <View style={styles.container}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="RUT Transportista"
+                  value={despacho.rut_transportista}
+                  onChangeText={(e) => {
+                    setDespacho({
+                      ...despacho,
+                      rut_transportista: e,
+                    });
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+          <View style={{ ...styles.section, ...styles.section.predio }}>
+            <Text style={styles.sectionTitle}> Origen </Text>
+            <View style={styles.row}>
+              <Select
+                selectContainerStyle={selectStyles.container}
+                selectControlStyle={{
+                  ...selectStyles.input,
+                }}
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Comuna - Predio (Origen)"
+                // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
+                // searchable={true}
+                animated={true}
+                options={options.predios}
+                onSelect={handleSelectPredio}
+              />
+            </View>
+            <View style={styles.row}>
+              <Select
+                selectContainerStyle={selectStyles.container}
+                selectControlStyle={{
+                  ...selectStyles.input,
+                }}
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Plan de Manejo"
+                animated={true}
+                disabled={predio.manzana === ''}
+                ref={planDeManejoRef}
+                options={options.planesDeManejo}
+                onSelect={(option) =>
+                  setPredio({
+                    ...predio,
+                    plan_de_manejo: [option?.value as unknown as string],
+                  })
+                }
+              />
+            </View>
+            <View style={styles.row}>
+              <View style={styles.textContainer}>
+                {predio.rol !== '' && (
+                  <Text style={styles.text}>
+                    Predio: {predio.manzana} - {predio.rol}
+                  </Text>
+                )}
+                {predio.rol !== '' && (
+                  <Text style={styles.text}>
+                    GEO: {predio.georreferencia.latitude},
+                    {predio.georreferencia.longitude}
+                  </Text>
+                )}
+                {predio.rol !== '' && (
+                  <Text style={styles.text}>CERT: {predio.certificado}</Text>
+                )}
+              </View>
+            </View>
+          </View>
+          <View style={{ ...styles.section }}>
+            <Text style={styles.sectionTitle}> Proveedor A Pagar </Text>
+            <View style={styles.row}>
+              <Select
+                selectContainerStyle={selectStyles.container}
+                selectControlStyle={{
+                  ...selectStyles.input,
+                }}
+                selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                placeholderText="Proveedores"
+                // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
+                // searchable={true}
+                animated={true}
+                options={options.proveedores}
+                onSelect={handleSelectProveedor}
+              />
+            </View>
+          </View>
+        </KeyboardAwareScrollView>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleCreateGuia}>
-        <Text style={styles.buttonText}> Emitir Guía de Despacho </Text>
+      <TouchableOpacity style={styles.button} onPress={handleAddProductos}>
+        <Text style={styles.buttonText}> Agregar Productos </Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  sectionTitle: {
+    marginTop: '1%',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: '2.5%',
+  },
+  scrollView: {
+    width: '100%',
+    height: '100%',
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  section: {
+    marginTop: '2%',
+    height: 150,
+    backgroundColor: colors.crudo,
+    borderRadius: 15,
+    receptor: {
+      height: 200,
+    },
+    predio: {
+      height: 230,
+    },
+  },
   body: {
     flex: 9,
     width: '100%',
     backgroundColor: colors.white,
-    justifyContent: 'flex-start',
-    gap: 10,
+    display: 'flex',
   },
   row: {
+    flex: 1,
+    dispaly: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginVertical: 10,
+    justifyContent: 'space-between',
+    width: '100%',
   },
   input: {
     borderWidth: 2,
-    borderColor: '#cccccc',
+    height: 35,
+    backgroundColor: colors.white,
     padding: 7,
-    fontSize: 14,
+    borderColor: '#cccccc',
     borderRadius: 13,
-    textShadow: '0 0px 0px rgba(42,42,42,.75)',
+    alignSelf: 'center',
+    width: '90%',
+  },
+  container: {
+    flex: 1,
+  },
+  text: {
+    fontSize: 14,
     fontWeight: 'normal',
-    fontStyle: 'none',
     textAlign: 'left',
-    borderStyle: 'solid',
-    boxShadow: '0px 0px 0px 0px rgba(42,42,42,.26)',
+    margin: 5,
+  },
+  textContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '90%',
   },
   button: {
     backgroundColor: colors.secondary,
     borderRadius: 12,
     padding: 15,
     margin: 10,
-    marginBottom: 20,
     alignItems: 'center',
   },
   buttonText: {
     color: colors.white,
+  },
+});
+
+const selectStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  input: {
+    borderWidth: 2,
+    borderColor: '#cccccc',
+    borderRadius: 13,
+    alignSelf: 'center',
+    width: '90%',
+    folio: {
+      width: '45%',
+      alignSelf: 'center',
+      marginLeft: '2.5%',
+    },
+  },
+  buttonsContainer: {
+    tintColor: colors.secondary,
+    width: 10,
+    alignSelf: 'center',
+    alignContent: 'flex-end',
+    alignItems: 'center',
   },
 });

@@ -1,17 +1,18 @@
 import React from 'react';
 import Constants from 'expo-constants';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { logoutUser } from '../functions/firebase';
+import { logoutUser } from '../functions/firebase/auth';
 import colors from '../resources/Colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface HeaderProps {
   screenName?: string;
   navigation?: any;
+  empresa?: string;
 }
 
 export default function Header(props: HeaderProps) {
-  const { screenName, navigation } = props;
+  const { empresa, screenName, navigation } = props;
 
   const handleBack = () => {
     navigation.goBack();
@@ -30,7 +31,7 @@ export default function Header(props: HeaderProps) {
           </TouchableOpacity>
         )}
       </View>
-      <Text style={styles.text}> TimberStock</Text>
+      <Text style={styles.text}> {empresa ? empresa : 'TimberStock'}</Text>
       <View style={styles.box}>
         <TouchableOpacity onPress={() => handleLogout()}>
           <Icon name="close-outline" size={30} color={colors.secondary} />

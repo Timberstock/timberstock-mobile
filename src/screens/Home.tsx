@@ -8,35 +8,44 @@ import {
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
-import { GuiaDespachoProps, GuiasScreenProps } from '../interfaces/guias';
-import { formatDate } from '../functions/logic';
-import { readGuias } from '../functions/firebase';
+import {
+  GuiaDespachoProps,
+  GuiaDespachoSummaryProps,
+} from '../interfaces/guias';
+import { HomeScreenProps } from '../interfaces/screens';
+import { formatDate } from '../functions/helpers';
+import { readGuias } from '../functions/firebase/guias';
 
-export default function Guias(props: GuiasScreenProps) {
+export default function Home(props: HomeScreenProps) {
   const { navigation, GlobalState } = props;
-  const { guias, setGuias, rutEmpresa } = GlobalState;
+  const { user, guias, setGuias, rutEmpresa } = GlobalState;
+
   let loading = false;
 
   useEffect(() => {
     handleRefresh();
-  }, []);
+  }, [rutEmpresa]);
 
   const handleRefresh = async () => {
-    loading = true;
-    console.log('REFRESHING');
-    const newGuias = await readGuias(rutEmpresa);
-    setGuias(newGuias || []);
-    console.log('DONE');
-    loading = false;
+    // THIS ONLY WILL BE RUN IF WE ARE LOGGED IN
+    user ? console.log(user.uid) : null;
+    if (rutEmpresa) {
+      loading = true;
+      console.log('REFRESHING');
+      const newGuias = await readGuias(rutEmpresa);
+      setGuias(newGuias || []);
+      console.log('DONE');
+      loading = false;
+    }
   };
 
-  const renderItem = ({ item }: { item: GuiaDespachoProps }) => {
+  const renderItem = ({ item }: { item: GuiaDespachoSummaryProps }) => {
     const guia = item;
     return (
       <TouchableOpacity style={styles.guia}>
         <Text> Folio: {guia.folio}</Text>
         <Text> Estado: {guia.estado}</Text>
-        <Text> Monto: {guia.monto}</Text>
+        <Text> Monto: {guia.total}</Text>
         <Text> Receptor: {guia.receptor.razon_social}</Text>
         <Text> Fecha: {formatDate(guia.fecha)}</Text>
       </TouchableOpacity>

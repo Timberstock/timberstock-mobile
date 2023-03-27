@@ -7,7 +7,7 @@ import {
   TextInput,
   FlatList,
 } from 'react-native';
-import { authenticateUser } from '../functions/firebase';
+import { authenticateUser } from '../functions/firebase/auth';
 import colors from '../resources/Colors';
 
 export default function Login() {
