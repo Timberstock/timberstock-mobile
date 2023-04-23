@@ -20,6 +20,7 @@ import {
 } from '../resources/options';
 import { fetchInfoEmpresa, fetchData } from './firebase/data';
 import { createGuia } from './firebase/guias';
+import { Alert } from 'react-native';
 
 export const createGuiaDespacho = async (
   rutEmpresa: string,
@@ -37,7 +38,12 @@ export const createGuiaDespacho = async (
   guia.identificacion.fecha = new Date();
   try {
     await createGuia(rutEmpresa, guia);
-  } catch (error) {
+    Alert.alert('Guía creada con éxito');
+  } catch (error: any) {
+    Alert.alert(
+      'Error al crear guía',
+      error.message || error || 'Error desconocido al crear guía'
+    );
     console.log(error);
   }
 };

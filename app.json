@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "timberstock-mobile-app",
+    "name": "TimberStock",
     "slug": "timberstock-mobile-app",
-    "version": "1.0.0",
+    "version": "0.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/dallelogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/dallesplashart.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,18 +18,19 @@
     "ios": {
       "googleServicesFile": "./SpecificPlatformFiles/ios/GoogleService-Info.plist",
       "supportsTablet": true,
-      "bundleIdentifier": "com.atc.timberstockapp"
+      "bundleIdentifier": "com.atc.timberstockapp",
+      "buildNumber": "2"
     },
     "android": {
       "googleServicesFile": "./SpecificPlatformFiles/android/google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/dallelogo.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.atc.timberstockapp"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/dallelogo.png"
     },
     "plugins": [
       "@react-native-firebase/app",

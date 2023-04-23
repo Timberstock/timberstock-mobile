@@ -21,7 +21,7 @@ import AddProductos from './src/screens/AddProductos';
 
 const Stack = createNativeStackNavigator();
 // This works really weird and I have to mess up with the emulator and with index.js here to be able to change from production to emulator (seems to).
-firestore().useEmulator('localhost', 8080);
+// firestore().useEmulator('localhost', 8080);
 
 export default function App() {
   // TODO ADD REACT NATIVE UI COMPONENT LIBRARY
