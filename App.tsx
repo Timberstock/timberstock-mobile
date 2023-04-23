@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import firestore from '@react-native-firebase/firestore';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import auth from '@react-native-firebase/auth';
@@ -8,10 +7,6 @@ import CreateGuia from './src/screens/CreateGuia';
 import Login from './src/screens/Login';
 import { SelectProvider } from '@mobile-reality/react-native-select-pro';
 import 'expo-dev-client';
-import {
-  GuiaDespachoProps,
-  GuiaDespachoSummaryProps,
-} from './src/interfaces/guias';
 import { Usuario } from './src/interfaces/usuario';
 
 import { fetchUserData } from './src/functions/firebase/auth';
@@ -19,18 +14,18 @@ import { fetchUserData } from './src/functions/firebase/auth';
 import { foliosDummy } from './src/resources/dummyData';
 import AddProductos from './src/screens/AddProductos';
 
+import AppProvider from './src/AppContext';
+
 const Stack = createNativeStackNavigator();
 // This works really weird and I have to mess up with the emulator and with index.js here to be able to change from production to emulator (seems to).
+// import firestore from '@react-native-firebase/firestore';
 // firestore().useEmulator('localhost', 8080);
 
 export default function App() {
   // TODO ADD REACT NATIVE UI COMPONENT LIBRARY
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState<Usuario | null>();
-  const [guias, setGuias] = useState<GuiaDespachoSummaryProps[]>([]);
   const [rutEmpresa, setRutEmpresa] = useState('');
-
-  const [foliosOpts, setFoliosOpts] = useState(foliosDummy);
 
   const onAuthStateChanged = async (inputUser: Usuario | null) => {
     // IN CASE OF LOGIN
@@ -46,7 +41,6 @@ export default function App() {
     else {
       setUser(null);
       setRutEmpresa('');
-      setGuias([]);
     }
     if (initializing) setInitializing(false);
   };
@@ -63,28 +57,27 @@ export default function App() {
   }
 
   const GlobalState = {
-    guias,
-    setGuias,
     user,
     rutEmpresa,
-    foliosOpts,
   };
 
   return (
-    <SelectProvider>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen name="Home" options={{ headerShown: false }}>
-            {(props) => <Home {...props} GlobalState={GlobalState} />}
-          </Stack.Screen>
-          <Stack.Screen name="CreateGuia" options={{ headerShown: false }}>
-            {(props) => <CreateGuia {...props} GlobalState={GlobalState} />}
-          </Stack.Screen>
-          <Stack.Screen name="AddProductos" options={{ headerShown: false }}>
-            {(props) => <AddProductos {...props} GlobalState={GlobalState} />}
-          </Stack.Screen>
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SelectProvider>
+    <AppProvider>
+      <SelectProvider>
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen name="Home" options={{ headerShown: false }}>
+              {(props) => <Home {...props} GlobalState={GlobalState} />}
+            </Stack.Screen>
+            <Stack.Screen name="CreateGuia" options={{ headerShown: false }}>
+              {(props) => <CreateGuia {...props} GlobalState={GlobalState} />}
+            </Stack.Screen>
+            <Stack.Screen name="AddProductos" options={{ headerShown: false }}>
+              {(props) => <AddProductos {...props} GlobalState={GlobalState} />}
+            </Stack.Screen>
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SelectProvider>
+    </AppProvider>
   );
 }

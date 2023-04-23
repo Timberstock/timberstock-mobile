@@ -86,3 +86,14 @@ export const proveedoresOptions = (proveedores: Proveedor[]) => {
   }
   return proveedoresOptions;
 };
+
+export const foliosOptions = (folios: number[]) => {
+  let foliosOpts = [];
+  for (const folio of folios) {
+    foliosOpts.push({
+      value: folio.toString(),
+      label: folio.toString(),
+    });
+  }
+  return foliosOpts;
+};

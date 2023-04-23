@@ -50,3 +50,11 @@ export interface GuiaDespachoFirebase {
   total: number;
   estado: string;
 }
+
+export interface EmpresaData {
+  foliosDisp: number[];
+  clientes: Cliente[];
+  predios: Predio[];
+  productos: Producto[];
+  proveedores: Proveedor[];
+}

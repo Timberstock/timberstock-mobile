@@ -1,38 +1,41 @@
-import React, { useEffect, useRef, MutableRefObject } from 'react';
+import React, { useEffect, useRef, MutableRefObject, useContext } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   TextInput,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
 import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {
+  clientesOptions,
+  foliosOptions,
+  prediosOptions,
+  proveedoresOptions,
+} from '../resources/options';
 import {
   handleSelectPredioLogic,
   handleSelectClienteLogic,
-  handleFetchAllData,
   handleSelectProveedorLogic,
 } from '../functions/screenFunctions';
 import { createGuiaScreenHooks } from '../functions/screenHooks';
+import { AppContext } from '../AppContext';
 
 // TODO 1: ADD FIELDS VALIDATIONS, BOTH FOR COMPLETENESS AND CORRECTNESS
 // TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
   const { navigation, GlobalState } = props;
-  const { rutEmpresa, foliosOpts } = GlobalState;
+  const { rutEmpresa } = GlobalState;
+  const { emisor, retrievedData } = useContext(AppContext);
 
   const {
-    retrievedData,
-    setRetrievedData,
     options,
     setOptions,
     identificacion,
     setIdentificacion,
-    emisor,
-    setEmisor,
     receptor,
     setReceptor,
     despacho,
@@ -41,19 +44,19 @@ export default function CreateGuia(props: any) {
     setPredio,
     proveedor,
     setProveedor,
-  } = createGuiaScreenHooks(foliosOpts);
+  } = createGuiaScreenHooks();
 
   const despachoRef = useRef() as MutableRefObject<SelectRef>;
   const planDeManejoRef = useRef() as MutableRefObject<SelectRef>;
 
   useEffect(() => {
-    handleFetchAllData(
-      rutEmpresa,
-      options,
-      setEmisor,
-      setOptions,
-      setRetrievedData
-    );
+    setOptions({
+      ...options,
+      folios: foliosOptions(retrievedData.foliosDisp),
+      clientes: clientesOptions(retrievedData.clientes),
+      predios: prediosOptions(retrievedData.predios),
+      proveedores: proveedoresOptions(retrievedData.proveedores),
+    });
   }, []);
 
   const handleAddProductos = () => {
@@ -73,7 +76,7 @@ export default function CreateGuia(props: any) {
       !predio.rol ||
       !proveedor.razon_social
     ) {
-      alert('Debe llenar todos los campos');
+      alert('Debes llenar todos los campos');
       return;
     }
     navigation.push('AddProductos', {
@@ -125,7 +128,7 @@ export default function CreateGuia(props: any) {
         {...props}
       />
       <View style={styles.body}>
-        <KeyboardAwareScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}> Identificación </Text>
             <View style={styles.row}>
@@ -376,7 +379,7 @@ export default function CreateGuia(props: any) {
               />
             </View>
           </View>
-        </KeyboardAwareScrollView>
+        </ScrollView>
       </View>
       <TouchableOpacity style={styles.button} onPress={handleAddProductos}>
         <Text style={styles.buttonText}> Agregar Productos </Text>

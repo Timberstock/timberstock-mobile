@@ -1,6 +1,7 @@
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
+import { GuiaDespachoSummaryProps } from '../interfaces/guias';
 
 function padTo2Digits(num: number) {
   return num.toString().padStart(2, '0');
@@ -37,4 +38,34 @@ export const getIndividualData = async (
     arrayToPush.push(document.data());
   });
   return arrayToPush;
+};
+
+export const getFoliosDisp = (
+  guias: GuiaDespachoSummaryProps[],
+  caf_n: number
+) => {
+  const folios: number[] = [];
+  const foliosNoDisp: number[] = [];
+  let max_folio_emitido = 0;
+
+  // Primero agregamos todos los folios que ya estan bloqueados
+  // a la lista de folios no disponibles
+  guias.map((guia) => {
+    if (
+      guia.estado === 'aceptada' ||
+      guia.estado === 'emitida' ||
+      guia.estado === 'pendiente'
+    )
+      foliosNoDisp.push(guia.folio);
+  });
+
+  // Luego agregamos todos los folios que esten disponibles desde el 1
+  // hasta el maximo folio posible, segun el numero de CAFs solicitados
+  // en la empresa.
+  // TODO: probablemente sea un numero mayor a 5, actualizar cuando se decida.
+  const max_folio_posible = caf_n * 5;
+  for (let i = 1; i <= max_folio_posible; i++) {
+    if (!foliosNoDisp.includes(i)) folios.push(i);
+  }
+  return folios;
 };

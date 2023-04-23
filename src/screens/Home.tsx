@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useContext } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,17 +8,19 @@ import {
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
-import {
-  GuiaDespachoProps,
-  GuiaDespachoSummaryProps,
-} from '../interfaces/guias';
+import { Emisor, GuiaDespachoSummaryProps } from '../interfaces/guias';
 import { HomeScreenProps } from '../interfaces/screens';
+import { handleFetchFirebase } from '../functions/screenFunctions';
 import { formatDate } from '../functions/helpers';
-import { readGuias } from '../functions/firebase/guias';
+import { Alert } from 'react-native';
+
+import { AppContext } from '../AppContext';
 
 export default function Home(props: HomeScreenProps) {
   const { navigation, GlobalState } = props;
-  const { user, guias, setGuias, rutEmpresa } = GlobalState;
+  const { user, rutEmpresa } = GlobalState;
+  const { guias, updateGuias, updateEmisor, updateRetrievedData } =
+    useContext(AppContext);
 
   let loading = false;
 
@@ -30,12 +32,19 @@ export default function Home(props: HomeScreenProps) {
     // THIS ONLY WILL BE RUN IF WE ARE LOGGED IN
     user ? console.log(user.uid) : null;
     if (rutEmpresa) {
-      loading = true;
-      console.log('REFRESHING');
-      const newGuias = await readGuias(rutEmpresa);
-      setGuias(newGuias || []);
-      console.log('DONE');
-      loading = false;
+      try {
+        loading = true;
+        console.log('REFRESHING');
+        const { empresaInfo, empresaData, empresaGuias } =
+          await handleFetchFirebase(rutEmpresa);
+        updateGuias(empresaGuias || []);
+        updateEmisor(empresaInfo as Emisor);
+        updateRetrievedData(empresaData);
+        loading = false;
+        console.log('DONE');
+      } catch (error) {
+        Alert.alert('Error', 'No se pudo obtener la información de la empresa');
+      }
     }
   };
 

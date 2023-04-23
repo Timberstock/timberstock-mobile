@@ -1,4 +1,4 @@
-import { MutableRefObject, useRef, useState } from 'react';
+import { MutableRefObject, useRef, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
+  Alert,
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
@@ -17,10 +18,11 @@ import {
 import { productosOptions, claseDiametricaOptions } from '../resources/options';
 import { ProductoAdded } from '../interfaces/firestore';
 import Icon from 'react-native-vector-icons/AntDesign';
+import { AppContext } from '../AppContext';
 
 export default function AddProductos(props: any) {
-  const { navigation, GlobalState } = props;
-  const { guias, setGuias } = GlobalState;
+  const { navigation } = props;
+  const { guias, updateGuias } = useContext(AppContext);
   const [cantidad, setCantidad] = useState(0);
   const cantidadRef = useRef() as MutableRefObject<TextInput>;
 
@@ -112,7 +114,7 @@ export default function AddProductos(props: any) {
         receptor: newGuia.receptor,
         fecha: newGuia.identificacion.fecha,
       });
-      setGuias(newGuias);
+      updateGuias(newGuias);
       //   navigation.navigate('Home', {
       //     data: {
       //       rutEmpresa,
@@ -121,6 +123,7 @@ export default function AddProductos(props: any) {
       //   });
     } catch (e) {
       console.log(e);
+      Alert.alert('Error', 'No se pudo crear la guia de despacho');
     }
   };
 

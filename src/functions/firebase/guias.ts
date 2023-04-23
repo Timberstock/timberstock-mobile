@@ -1,6 +1,7 @@
 import firestore from '@react-native-firebase/firestore';
 import { GuiaDespachoSummaryProps } from '../../interfaces/guias';
 import { GuiaDespachoFirebase } from '../../interfaces/firestore';
+import { Alert } from 'react-native';
 
 export const createGuia = async (
   rutEmpresa: string,
@@ -24,12 +25,9 @@ export const readGuias = async (rutEmpresa: string) => {
     const querySnapshot = await firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
       .get();
-    console.log(querySnapshot);
     const guias: GuiaDespachoSummaryProps[] = [];
     // ANY because we don't know exactly the structure of the data since it can be different from doc to doc
-    console.log(querySnapshot);
     querySnapshot.forEach((doc: any) => {
-      console.log(doc);
       const data = doc.data();
       const guiaData = {
         folio: data.identificacion.folio,
@@ -44,12 +42,13 @@ export const readGuias = async (rutEmpresa: string) => {
       );
       //@ts-ignore
       guias.push(guiaData);
-      console.log(
-        `${doc.id} => Folio: ${guiaData.folio} | Estado: ${guiaData.estado} | Receptor: ${guiaData.receptor.razon_social}`
-      );
+      //   console.log(
+      //     `${doc.id} => Folio: ${guiaData.folio} | Estado: ${guiaData.estado} | Receptor: ${guiaData.receptor.razon_social}`
+      //   );
     });
     return guias;
   } catch (e) {
     console.error('Error adding document: ', e);
+    Alert.alert('Error al agregar guía(s)');
   }
 };

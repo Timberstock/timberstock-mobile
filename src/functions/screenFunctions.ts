@@ -3,6 +3,7 @@ import { MutableRefObject } from 'react';
 import { Predio, Producto, Proveedor } from '../interfaces/detalles';
 import {
   Cliente,
+  EmpresaData,
   GuiaDespachoFirebase,
   ProductoAdded,
 } from '../interfaces/firestore';
@@ -13,14 +14,10 @@ import {
   Transporte,
 } from '../interfaces/guias';
 import { IOptions } from '../interfaces/screens';
-import {
-  clientesOptions,
-  prediosOptions,
-  proveedoresOptions,
-} from '../resources/options';
 import { fetchInfoEmpresa, fetchData } from './firebase/data';
-import { createGuia } from './firebase/guias';
+import { createGuia, readGuias } from './firebase/guias';
 import { Alert } from 'react-native';
+import { getFoliosDisp } from './helpers';
 
 export const createGuiaDespacho = async (
   rutEmpresa: string,
@@ -190,28 +187,20 @@ export const handleSelectProveedorLogic = (
   });
 };
 
-export const handleFetchAllData = async (
-  rutEmpresa: string,
-  // TODO: Fix this type
-  options: any,
-  setEmisor: (value: Emisor) => void,
-  // TODO: Fix this type
-  setOptions: (value: any) => void,
-  setRetrievedData: (value: {
-    clientes: Cliente[];
-    predios: Predio[];
-    productos: Producto[];
-    proveedores: Proveedor[];
-  }) => void
-) => {
+export const handleFetchFirebase = async (rutEmpresa: string) => {
   const empresaInfo = await fetchInfoEmpresa(rutEmpresa);
-  setEmisor(empresaInfo as Emisor);
-  const newRetrievedData = await fetchData(rutEmpresa);
-  setOptions({
-    ...options,
-    clientes: clientesOptions(newRetrievedData.clientes),
-    predios: prediosOptions(newRetrievedData.predios),
-    proveedores: proveedoresOptions(newRetrievedData.proveedores),
-  });
-  setRetrievedData(newRetrievedData);
+  const empresaGuias = await readGuias(rutEmpresa);
+  // primero accedemos a la Data sin los folios
+  let empresaData = (await fetchData(rutEmpresa)) as EmpresaData;
+  // Luego calculamos los folios y se lo asignamos
+  empresaData.foliosDisp = getFoliosDisp(
+    empresaGuias ? empresaGuias : [],
+    empresaInfo?.caf_n
+  );
+
+  return {
+    empresaInfo,
+    empresaData,
+    empresaGuias,
+  };
 };

@@ -19,6 +19,7 @@ export const fetchInfoEmpresa = async (empresaId: string) => {
       razon_social: empresaData?.razon_social,
       giro: empresaData?.giro,
       direccion: empresaData?.direccion,
+      caf_n: empresaData?.caf_n,
     };
     console.log(empresa);
     return empresa;

@@ -1,32 +1,21 @@
 import { useState } from 'react';
-import { Proveedor, Predio, Producto } from '../interfaces/detalles';
-import { Cliente } from '../interfaces/firestore';
+import { Proveedor, Predio } from '../interfaces/detalles';
 import {
   Identificacion,
-  Emisor,
   Receptor,
   Transporte,
   Chofer,
 } from '../interfaces/guias';
 import { IOptions } from '../interfaces/screens';
 import { tipoDespachoOptions, tipoTrasladoOptions } from '../resources/options';
-import { formatDate } from '../functions/helpers';
 
-export const createGuiaScreenHooks = (foliosOpts: []) => {
-  const [retrievedData, setRetrievedData] = useState({
-    proveedores: [] as Proveedor[],
-    predios: [] as Predio[],
-    productos: [] as Producto[],
-    clientes: [] as Cliente[],
-  });
+export const createGuiaScreenHooks = () => {
   const [options, setOptions] = useState({
-    folios: foliosOpts,
     tipoDespacho: tipoDespachoOptions,
     tipoTraslado: tipoTrasladoOptions,
-
+    folios: [] as IOptions[],
     clientes: [] as IOptions[],
     destinos: [] as IOptions[],
-
     predios: [] as IOptions[],
     planesDeManejo: [] as IOptions[],
     proveedores: [] as IOptions[],
@@ -36,14 +25,6 @@ export const createGuiaScreenHooks = (foliosOpts: []) => {
     folio: -1,
     tipo_despacho: '',
     tipo_traslado: '',
-  });
-  const [emisor, setEmisor] = useState<Emisor>({
-    razon_social: '',
-    rut: '',
-    giro: '',
-    direccion: '',
-    comuna: '',
-    actividad_economica: [],
   });
   const [receptor, setReceptor] = useState<Receptor>({
     razon_social: '',
@@ -80,14 +61,10 @@ export const createGuiaScreenHooks = (foliosOpts: []) => {
     rut: '',
   });
   return {
-    retrievedData,
-    setRetrievedData,
     options,
     setOptions,
     identificacion,
     setIdentificacion,
-    emisor,
-    setEmisor,
     receptor,
     setReceptor,
     despacho,
