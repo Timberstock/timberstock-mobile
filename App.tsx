@@ -11,7 +11,6 @@ import { Usuario } from './src/interfaces/usuario';
 
 import { fetchUserData } from './src/functions/firebase/auth';
 
-import { foliosDummy } from './src/resources/dummyData';
 import AddProductos from './src/screens/AddProductos';
 
 import AppProvider from './src/AppContext';
@@ -50,7 +49,10 @@ export default function App() {
     return subscriber; // unsubscribe on unmount
   }, []);
 
-  if (initializing) return null;
+  if (initializing) {
+    console.log('INITIALIZING');
+    return null;
+  }
 
   if (!user) {
     return <Login />;

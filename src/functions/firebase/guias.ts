@@ -7,6 +7,9 @@ export const createGuia = async (
   rutEmpresa: string,
   guiaData: GuiaDespachoFirebase
 ) => {
+  if (rutEmpresa === '') {
+    return null;
+  }
   try {
     const guiaDocumentId =
       'DTE_GD_' + rutEmpresa + 'f' + guiaData.identificacion.folio;
@@ -15,15 +18,21 @@ export const createGuia = async (
       .doc(guiaDocumentId)
       .set(guiaData);
     console.log('Document written with ID: ', guiaDocumentId);
+    Alert.alert('Guía creada con éxito');
   } catch (e) {
     console.error('Error adding document: ', e);
+    Alert.alert('Error al agregar guía');
   }
 };
 
 export const readGuias = async (rutEmpresa: string) => {
+  if (rutEmpresa === '') {
+    return null;
+  }
   try {
     const querySnapshot = await firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
+      .orderBy('identificacion.folio', 'desc')
       .get();
     const guias: GuiaDespachoSummaryProps[] = [];
     // ANY because we don't know exactly the structure of the data since it can be different from doc to doc

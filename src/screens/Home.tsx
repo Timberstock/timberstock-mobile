@@ -62,7 +62,7 @@ export default function Home(props: HomeScreenProps) {
   };
   return (
     <View style={styles.screen}>
-      <Header screenName="Guias" {...props} />
+      <Header screenName="Home" {...props} />
       <View style={styles.body}>
         <FlatList
           data={guias}

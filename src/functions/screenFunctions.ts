@@ -35,7 +35,6 @@ export const createGuiaDespacho = async (
   guia.identificacion.fecha = new Date();
   try {
     await createGuia(rutEmpresa, guia);
-    Alert.alert('Guía creada con éxito');
   } catch (error: any) {
     Alert.alert(
       'Error al crear guía',

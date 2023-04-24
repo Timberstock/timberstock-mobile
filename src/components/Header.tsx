@@ -15,7 +15,8 @@ export default function Header(props: HeaderProps) {
   const { empresa, screenName, navigation } = props;
 
   const handleBack = () => {
-    navigation.goBack();
+    if (screenName === 'CreateGuia') navigation.navigate('Home');
+    else navigation.goBack();
   };
 
   const handleLogout = () => {

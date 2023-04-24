@@ -1,6 +1,8 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { Emisor, GuiaDespachoSummaryProps } from './interfaces/guias';
 import { EmpresaData } from './interfaces/firestore';
+import { readGuias } from './functions/firebase/guias';
+import { Alert } from 'react-native';
 
 type AppContextType = {
   guias: GuiaDespachoSummaryProps[];
@@ -63,6 +65,19 @@ const AppProvider: any = ({ children }: any) => {
     retrievedData,
     updateRetrievedData,
   };
+
+  useEffect(() => {
+    const fetchGuias = async () => {
+      try {
+        const guiasFromFirestore = await readGuias(emisor.rut);
+        setGuias(guiasFromFirestore || []);
+      } catch (error) {
+        console.error('Error fetching guias:', error);
+        Alert.alert('Error', 'No se pudieron obtener las guías');
+      }
+    };
+    fetchGuias();
+  }, [guias]);
 
   return (
     <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>
