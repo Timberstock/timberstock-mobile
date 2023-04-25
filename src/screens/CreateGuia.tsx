@@ -23,12 +23,13 @@ import {
 } from '../functions/screenFunctions';
 import { createGuiaScreenHooks } from '../functions/screenHooks';
 import { AppContext } from '../context/AppContext';
+import { UserContext } from '../context/UserContext';
 
 // TODO 1: ADD FIELDS VALIDATIONS, BOTH FOR COMPLETENESS AND CORRECTNESS
 // TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
-  const { navigation, GlobalState } = props;
-  const { rutEmpresa } = GlobalState;
+  const { navigation } = props;
+  const { user } = useContext(UserContext);
   const { emisor, retrievedData } = useContext(AppContext);
 
   const {
@@ -81,8 +82,6 @@ export default function CreateGuia(props: any) {
     }
     navigation.push('AddProductos', {
       data: {
-        retrievedData,
-        rutEmpresa,
         guia: {
           identificacion,
           emisor,
@@ -146,7 +145,7 @@ export default function CreateGuia(props: any) {
                 onSelect={(option) =>
                   setIdentificacion({
                     ...identificacion,
-                    folio: option?.value as unknown as number,
+                    folio: parseInt(option?.value || '-1'),
                   })
                 }
               />

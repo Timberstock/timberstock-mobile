@@ -75,4 +75,5 @@ export interface GuiaDespachoSummaryProps {
   total: number;
   receptor: Receptor;
   fecha: Date;
+  url: string;
 }

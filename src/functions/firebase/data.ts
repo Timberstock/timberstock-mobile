@@ -1,10 +1,11 @@
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
-import { getIndividualData } from '../helpers';
-import { Empresa, Contrato, Cliente } from '../../interfaces/firestore';
+import { Cliente } from '../../interfaces/firestore';
 import { Predio, Producto, Proveedor } from '../../interfaces/detalles';
+import customHelpers from '../helpers';
 
+// TODO: Optimize all this file along with ChatGPT after wrapping up the app.
 export const fetchInfoEmpresa = async (empresaId: string) => {
   try {
     const empresaInfo = await firestore()
@@ -21,7 +22,7 @@ export const fetchInfoEmpresa = async (empresaId: string) => {
       direccion: empresaData?.direccion,
       caf_n: empresaData?.caf_n,
     };
-    console.log(empresa);
+    console.log(`Empresa ${empresaData?.razon_social} fetched`);
     return empresa;
   } catch (e: any) {
     console.log(e);
@@ -58,7 +59,7 @@ export const fetchData = async (
       const contrato = doc.data();
       proveedores.push(contrato.proveedor);
 
-      await getIndividualData(
+      await customHelpers.getIndividualData(
         empresaId,
         doc.id,
         'contratos',
@@ -66,7 +67,7 @@ export const fetchData = async (
         predios
       );
 
-      await getIndividualData(
+      await customHelpers.getIndividualData(
         empresaId,
         doc.id,
         'contratos',
@@ -76,7 +77,7 @@ export const fetchData = async (
     }
 
     for (const doc of contratosVentaCollection.docs) {
-      await getIndividualData(
+      await customHelpers.getIndividualData(
         empresaId,
         doc.id,
         'contratos_venta',

@@ -17,7 +17,7 @@ import { IOptions } from '../interfaces/screens';
 import { fetchInfoEmpresa, fetchData } from './firebase/data';
 import { createGuia, readGuias } from './firebase/guias';
 import { Alert } from 'react-native';
-import { getFoliosDisp } from './helpers';
+import customHelpers from './helpers';
 
 export const createGuiaDespacho = async (
   rutEmpresa: string,
@@ -123,7 +123,6 @@ export const handleSelectPredioLogic = (
     nombre: newPredio?.nombre || '',
     plan_de_manejo: predio.plan_de_manejo || [],
   });
-  console.log(newPredio);
   if (option === null) {
     planDeManejoRef?.current.clear();
   }
@@ -186,13 +185,14 @@ export const handleSelectProveedorLogic = (
   });
 };
 
-export const handleFetchFirebase = async (rutEmpresa: string) => {
+export const handleFetchFirebase = async (rutEmpresa: string | undefined) => {
+  if (rutEmpresa === undefined) return;
   const empresaInfo = await fetchInfoEmpresa(rutEmpresa);
   const empresaGuias = await readGuias(rutEmpresa);
   // primero accedemos a la Data sin los folios
   let empresaData = (await fetchData(rutEmpresa)) as EmpresaData;
   // Luego calculamos los folios y se lo asignamos
-  empresaData.foliosDisp = getFoliosDisp(
+  empresaData.foliosDisp = customHelpers.getFoliosDisp(
     empresaGuias ? empresaGuias : [],
     empresaInfo?.caf_n
   );

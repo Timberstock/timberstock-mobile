@@ -14,19 +14,25 @@ import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
 import {
   handleSelectProductoLogic,
   createGuiaDespacho,
+  handleFetchFirebase,
 } from '../functions/screenFunctions';
 import { productosOptions, claseDiametricaOptions } from '../resources/options';
 import { ProductoAdded } from '../interfaces/firestore';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { AppContext } from '../context/AppContext';
+import { UserContext } from '../context/UserContext';
+import OverlayLoading from '../resources/OverlayLoading';
 
 export default function AddProductos(props: any) {
   const { navigation } = props;
-  const { guias, updateGuias } = useContext(AppContext);
+  const { user } = useContext(UserContext);
+  const { guiasSummary, updateGuiasSummary, retrievedData } =
+    useContext(AppContext);
   const [cantidad, setCantidad] = useState(0);
+  const [loading, setLoading] = useState(false);
   const cantidadRef = useRef() as MutableRefObject<TextInput>;
 
-  const { retrievedData, rutEmpresa, guia } = props.route.params.data;
+  const { guia } = props.route.params.data;
   const claseDiametricaRef = useRef() as MutableRefObject<SelectRef>;
 
   const productosOpts = productosOptions(retrievedData.productos) || [];
@@ -92,7 +98,6 @@ export default function AddProductos(props: any) {
       setProductosAdded([...productosAdded, newActualProducto]);
       setCantidad(0);
       cantidadRef.current.blur();
-      console.log(newActualProducto.total);
     }
   };
 
@@ -101,28 +106,40 @@ export default function AddProductos(props: any) {
       guia.productos = productosAdded;
       guia.total = total;
       guia.identificacion.fecha = new Date();
-      console.log(guia);
-      await createGuiaDespacho(rutEmpresa, guia);
+      // TODO: actually, int32 only accepts numbers between -2,147,483,648 and 2,147,483,647
+      if (guia.total > 2147483647) {
+        Alert.alert('Error', 'El total no puede ser mayor a 2147483647');
+        return;
+      }
+      setLoading(true);
+      // just typescript things -.-
+      if (user?.empresa_id) await createGuiaDespacho(user.empresa_id, guia);
       const newGuia = guia;
       newGuia.productos = productosAdded;
       newGuia.total = total;
-      const newGuias = guias;
-      newGuias.push({
+      const newGuias = guiasSummary;
+      const newGuiaSummary = {
         folio: newGuia.identificacion.folio,
         estado: newGuia.estado,
         total: newGuia.total,
         receptor: newGuia.receptor,
         fecha: newGuia.identificacion.fecha,
+        url: '',
+      };
+      newGuias.unshift(newGuiaSummary);
+      updateGuiasSummary(newGuias);
+      // We only need to do this to update foliosOptions with the new info
+      const { empresaGuias }: any = await handleFetchFirebase(user?.empresa_id);
+      updateGuiasSummary(empresaGuias || []);
+      Alert.alert('Guía creada con éxito');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
       });
-      updateGuias(newGuias);
-      //   navigation.navigate('Home', {
-      //     data: {
-      //       rutEmpresa,
-      //       guias: newGuias,
-      //     },
-      //   });
+      navigation.push('Home');
     } catch (e) {
       console.log(e);
+      setLoading(false);
       Alert.alert('Error', 'No se pudo crear la guia de despacho');
     }
   };
@@ -164,7 +181,7 @@ export default function AddProductos(props: any) {
   return (
     <View style={styles.screen}>
       <Header
-        screenName="CreateGuia"
+        screenName="AddProductos"
         empresa={guia.emisor.razon_social}
         {...props}
       />
@@ -224,12 +241,12 @@ export default function AddProductos(props: any) {
             disabled={cantidad === 0}
             style={{
               ...styles.button,
-              ...styles.button.little,
+              ...styles.buttonLittle,
               backgroundColor: props.disabled ? 'grey' : colors.secondary,
             }}
             onPress={handleAddProducto}
           >
-            <Text style={{ ...styles.buttonText, ...styles.buttonText.little }}>
+            <Text style={{ ...styles.buttonText, ...styles.buttonTextLittle }}>
               {' '}
               Agregar{' '}
             </Text>
@@ -244,6 +261,7 @@ export default function AddProductos(props: any) {
           </Text>
         </TouchableOpacity>
       </View>
+      <OverlayLoading loading={loading} />
     </View>
   );
 }
@@ -345,16 +363,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     width: '90%',
-    little: {
-      paddingVertical: 7,
-      width: '40%',
-    },
+  },
+  buttonLittle: {
+    paddingVertical: 7,
+    width: '40%',
   },
   buttonText: {
     color: colors.white,
-    little: {
-      fontSize: 12,
-    },
+  },
+  buttonTextLittle: {
+    fontSize: 12,
   },
 });
 

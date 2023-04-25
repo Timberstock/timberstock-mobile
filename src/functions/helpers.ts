@@ -3,11 +3,18 @@ import firestore, {
 } from '@react-native-firebase/firestore';
 import { GuiaDespachoSummaryProps } from '../interfaces/guias';
 
-function padTo2Digits(num: number) {
-  return num.toString().padStart(2, '0');
-}
+const fromFirebaseDateToJSDate = (firebaseDate: any) => {
+  const date = new Date(
+    firebaseDate.seconds * 1000 + firebaseDate.nanoseconds / 1000000
+  );
+  return date;
+};
 
-export const formatDate = (date: Date) => {
+const formatDate = (date: Date) => {
+  // From Date to string
+  function padTo2Digits(num: number) {
+    return num.toString().padStart(2, '0');
+  }
   return `${[
     padTo2Digits(date.getDate()),
     padTo2Digits(date.getMonth() + 1),
@@ -20,7 +27,7 @@ export const formatDate = (date: Date) => {
 
 // This function is used to retrieve data form Firestore and then
 // push it to an array that is passed. It is used in the fetchData function.
-export const getIndividualData = async (
+const getIndividualData = async (
   empresaId: string,
   docId: string,
   collection1Name: string,
@@ -40,13 +47,9 @@ export const getIndividualData = async (
   return arrayToPush;
 };
 
-export const getFoliosDisp = (
-  guias: GuiaDespachoSummaryProps[],
-  caf_n: number
-) => {
+const getFoliosDisp = (guias: GuiaDespachoSummaryProps[], caf_n: number) => {
   const folios: number[] = [];
   const foliosNoDisp: number[] = [];
-  let max_folio_emitido = 0;
 
   // Primero agregamos todos los folios que ya estan bloqueados
   // a la lista de folios no disponibles
@@ -54,7 +57,8 @@ export const getFoliosDisp = (
     if (
       guia.estado === 'aceptada' ||
       guia.estado === 'emitida' ||
-      guia.estado === 'pendiente'
+      guia.estado === 'pendiente' ||
+      guia.estado === 'sin conexion'
     )
       foliosNoDisp.push(guia.folio);
   });
@@ -69,3 +73,12 @@ export const getFoliosDisp = (
   }
   return folios;
 };
+
+const customHelpers = {
+  fromFirebaseDateToJSDate,
+  formatDate,
+  getIndividualData,
+  getFoliosDisp,
+};
+
+export default customHelpers;

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useState } from 'react';
 import { Usuario } from '../interfaces/usuario';
 import { fetchUserData } from '../functions/firebase/auth';
 
@@ -12,30 +12,20 @@ const initialState = {
   updateUser: () => {},
 };
 
-// Crear el contexto
+// Context
 export const UserContext = createContext<UserContextType>(initialState);
 
-// Crear un proveedor de contexto
+// Provider
 export const UserContextProvider = ({ children }: any) => {
   const [user, setUser] = useState<Usuario | null>(null);
 
-  useEffect(() => {
-    const updateUserInfoFromFirestore = async (user: Usuario) => {
-      const userData = await fetchUserData(user.uid);
-      user.nombre = userData?.nombre;
-      user.empresa_id = userData?.empresa_id;
-      user.rut = userData?.rut;
-      setUser(user);
-    };
-
-    // No correr el fetch si el user ya tiene una empresa_id (ya se corrio una vez)
-    if (user?.empresa_id) return;
-
-    // Actualizamos la información del user con la de Firebase
-    if (user) updateUserInfoFromFirestore(user);
-  }, [user]);
-
-  const updateUser = (newUser: Usuario | null) => {
+  const updateUser = async (newUser: Usuario | null) => {
+    if (newUser) {
+      const userData = await fetchUserData(newUser.uid);
+      newUser.nombre = userData?.nombre;
+      newUser.empresa_id = userData?.empresa_id;
+      newUser.rut = userData?.rut;
+    }
     setUser(newUser);
   };
 

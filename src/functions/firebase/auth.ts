@@ -35,6 +35,10 @@ export const authenticateUser = async (email: string, password: string) => {
   }
 };
 
+export const getCurrentAuthUser = () => {
+  return auth().currentUser;
+};
+
 export const logoutUser = async () => {
   try {
     await auth().signOut();

@@ -15,7 +15,7 @@ export default function Header(props: HeaderProps) {
   const { empresa, screenName, navigation } = props;
 
   const handleBack = () => {
-    if (screenName === 'CreateGuia') navigation.navigate('Home');
+    if (screenName === 'CreateGuia') navigation.push('Home');
     else navigation.goBack();
   };
 
@@ -26,7 +26,7 @@ export default function Header(props: HeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.box}>
-        {screenName !== 'Guias' && (
+        {screenName !== 'Home' && (
           <TouchableOpacity style={styles.back} onPress={() => handleBack()}>
             <Icon name="arrow-back" size={38} color={colors.secondary} />
           </TouchableOpacity>

@@ -1,12 +1,10 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { Emisor, GuiaDespachoSummaryProps } from '../interfaces/guias';
 import { EmpresaData } from '../interfaces/firestore';
-import { readGuias } from '../functions/firebase/guias';
-import { Alert } from 'react-native';
 
 type AppContextType = {
-  guias: GuiaDespachoSummaryProps[];
-  updateGuias: (guias: GuiaDespachoSummaryProps[]) => void;
+  guiasSummary: GuiaDespachoSummaryProps[];
+  updateGuiasSummary: (guiasSummary: GuiaDespachoSummaryProps[]) => void;
   emisor: Emisor;
   updateEmisor: (emisor: Emisor) => void;
   retrievedData: EmpresaData;
@@ -14,8 +12,8 @@ type AppContextType = {
 };
 
 const initialState = {
-  guias: [],
-  updateGuias: () => {},
+  guiasSummary: [],
+  updateGuiasSummary: () => {},
   emisor: {
     razon_social: '',
     rut: '',
@@ -38,46 +36,38 @@ const initialState = {
 export const AppContext = createContext<AppContextType>(initialState);
 
 const AppProvider: any = ({ children }: any) => {
-  const [guias, setGuias] = useState<GuiaDespachoSummaryProps[]>(
-    initialState.guias
+  const [guiasSummary, setGuiasSummary] = useState<GuiaDespachoSummaryProps[]>(
+    initialState.guiasSummary
   );
   const [retrievedData, setRetrievedData] = useState<any>(
     initialState.retrievedData
   );
   const [emisor, setEmisor] = useState<Emisor>(initialState.emisor);
 
-  const updateGuias = (guias: GuiaDespachoSummaryProps[]) => {
-    setGuias(guias);
+  const updateGuiasSummary = (guiasSummary: GuiaDespachoSummaryProps[]) => {
+    setGuiasSummary(guiasSummary);
   };
+
   const updateEmisor = (emisor: Emisor) => {
     setEmisor(emisor);
   };
 
-  const updateRetrievedData = (data: any) => {
-    setRetrievedData(data);
+  // If we are updating more than one state "in the same time" here
+  // this is the last to update.
+  const updateRetrievedData = (newEmpresaData: EmpresaData) => {
+    // TODO: Reordernar y actualizar los folios disponibles
+    // cada vez que se lean.
+    setRetrievedData(newEmpresaData);
   };
 
   const contextValue: AppContextType = {
-    guias,
-    updateGuias,
+    guiasSummary,
+    updateGuiasSummary,
     emisor,
     updateEmisor,
     retrievedData,
     updateRetrievedData,
   };
-
-  useEffect(() => {
-    const fetchGuias = async () => {
-      try {
-        const guiasFromFirestore = await readGuias(emisor.rut);
-        setGuias(guiasFromFirestore || []);
-      } catch (error) {
-        console.error('Error fetching guias:', error);
-        Alert.alert('Error', 'No se pudieron obtener las guías');
-      }
-    };
-    fetchGuias();
-  }, [guias]);
 
   return (
     <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>

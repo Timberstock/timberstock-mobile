@@ -1,23 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
   TextInput,
-  FlatList,
 } from 'react-native';
-import { authenticateUser } from '../functions/firebase/auth';
+import {
+  authenticateUser,
+  getCurrentAuthUser,
+} from '../functions/firebase/auth';
 import colors from '../resources/Colors';
+import Loading from '../components/Loading';
 
 export default function Login() {
-  const [email, setEmail] = useState('mateo@timberstock.cl'); //SACAR EL VALOR POR DEFECTO
-  const [password, setPassword] = useState('Lumber157'); //SACAR EL VALOR POR DEFECTO
+  const [email, setEmail] = useState(''); //SACAR EL VALOR POR DEFECTO
+  const [password, setPassword] = useState(''); //SACAR EL VALOR POR DEFECTO
+  //   const [email, setEmail] = useState('mateo@timberstock.cl'); //SACAR EL VALOR POR DEFECTO
+  //   const [password, setPassword] = useState('Lumber157'); //SACAR EL VALOR POR DEFECTO
   const [errorMessage, setErrorMessage] = useState<null | string>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (email: string, password: string) => {
+  if (getCurrentAuthUser()) {
+    return <Loading />;
+  }
+
+  const handleLogin = async () => {
+    setLoading(true);
+    setErrorMessage(null);
     const authResponseMessage = await authenticateUser(email, password);
     if (authResponseMessage !== 'Sesión iniciada') {
+      setLoading(false);
       setErrorMessage(authResponseMessage);
     }
   };
@@ -38,13 +51,11 @@ export default function Login() {
         onChangeText={(text) => setPassword(text)}
         value={password}
       />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => handleLogin(email, password)}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Iniciar Sesión</Text>
       </TouchableOpacity>
       <Text style={styles.errorMessage}>{errorMessage}</Text>
+      <View style={styles.loadingContainer}>{loading && <Loading />}</View>
     </View>
   );
 }
@@ -86,5 +97,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: colors.white,
     fontSize: 20,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: '75%',
   },
 });
