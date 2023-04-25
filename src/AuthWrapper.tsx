@@ -10,10 +10,6 @@ function AuthWrapper({ children }: any) {
   const { user, updateUser } = useContext(UserContext);
   //   const [loading, setLoading] = useState(true);
   console.log('User in AuthWrapper: ', user?.uid || user);
-  console.log(
-    'User currently logged in in Firebase: ',
-    auth().currentUser?.uid || auth().currentUser
-  );
 
   // This "inputUser" is the user received by Firebase which is not actually
   // sent by us directly, but by Firebase auth whenever a method
@@ -21,18 +17,10 @@ function AuthWrapper({ children }: any) {
   // or auth().signOut() is called by us.
   // This means that we do not run this function directly but we pass our onAuthStateChanged
   // logic through this customOnAuthStateChanged function definition to auth().onAuthStateChanged()
-  const customOnAuthStateChanged = async (inputUser: Usuario | null) => {
-    console.log(
-      'User received in customOnAuthStateChanged: ',
-      inputUser?.uid || inputUser
-    );
+  const customOnAuthStateChangedCallback = (inputUser: Usuario | null) => {
+    // console.log('User received in customOnAuthStateChanged: ', inputUser);
     // IN CASE OF LOGIN
     if (inputUser) {
-      const userData = await fetchUserData(inputUser.uid);
-      inputUser.nombre = userData?.nombre;
-      inputUser.empresa_id = userData?.empresa_id;
-      inputUser.rut = userData?.rut;
-      console.log('User empresa_id fetched: ', inputUser.empresa_id);
       updateUser(inputUser);
     }
     // IN CASE OF LOGOUT
@@ -44,7 +32,9 @@ function AuthWrapper({ children }: any) {
   };
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(customOnAuthStateChanged);
+    const unsubscribe = auth().onAuthStateChanged(
+      customOnAuthStateChangedCallback
+    );
 
     return () => {
       unsubscribe(); // unsubscribe on unmount

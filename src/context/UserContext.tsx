@@ -1,5 +1,6 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useMemo } from 'react';
 import { Usuario } from '../interfaces/usuario';
+import { fetchUserData } from '../functions/firebase/auth';
 
 type UserContextType = {
   user: Usuario | null;
@@ -19,8 +20,20 @@ export const UserContextProvider = ({ children }: any) => {
   const [user, setUser] = useState<Usuario | null>(null);
 
   useEffect(() => {
-    // Aquí puedes añadir tu lógica para escuchar cambios en Firebase y actualizar el estado
-  }, []);
+    const updateUserInfoFromFirestore = async (user: Usuario) => {
+      const userData = await fetchUserData(user.uid);
+      user.nombre = userData?.nombre;
+      user.empresa_id = userData?.empresa_id;
+      user.rut = userData?.rut;
+      setUser(user);
+    };
+
+    // No correr el fetch si el user ya tiene una empresa_id (ya se corrio una vez)
+    if (user?.empresa_id) return;
+
+    // Actualizamos la información del user con la de Firebase
+    if (user) updateUserInfoFromFirestore(user);
+  }, [user]);
 
   const updateUser = (newUser: Usuario | null) => {
     setUser(newUser);

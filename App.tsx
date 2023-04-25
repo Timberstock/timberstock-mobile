@@ -24,6 +24,7 @@ const Stack = createNativeStackNavigator();
 // firestore().useEmulator('localhost', 8080);
 
 export default function App() {
+  console.log('ALO?');
   // If the user is logged in and it finished initializing, we show the app
   const GlobalState = {
     user: null,
