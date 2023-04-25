@@ -18,7 +18,7 @@ import {
 import { productosOptions, claseDiametricaOptions } from '../resources/options';
 import { ProductoAdded } from '../interfaces/firestore';
 import Icon from 'react-native-vector-icons/AntDesign';
-import { AppContext } from '../AppContext';
+import { AppContext } from '../context/AppContext';
 
 export default function AddProductos(props: any) {
   const { navigation } = props;

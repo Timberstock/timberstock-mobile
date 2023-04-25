@@ -22,7 +22,7 @@ import {
   handleSelectProveedorLogic,
 } from '../functions/screenFunctions';
 import { createGuiaScreenHooks } from '../functions/screenHooks';
-import { AppContext } from '../AppContext';
+import { AppContext } from '../context/AppContext';
 
 // TODO 1: ADD FIELDS VALIDATIONS, BOTH FOR COMPLETENESS AND CORRECTNESS
 // TODO 2: MAKE CERTIFICATE OPTIONAL

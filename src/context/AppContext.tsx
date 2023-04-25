@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { Emisor, GuiaDespachoSummaryProps } from './interfaces/guias';
-import { EmpresaData } from './interfaces/firestore';
-import { readGuias } from './functions/firebase/guias';
+import { Emisor, GuiaDespachoSummaryProps } from '../interfaces/guias';
+import { EmpresaData } from '../interfaces/firestore';
+import { readGuias } from '../functions/firebase/guias';
 import { Alert } from 'react-native';
 
 type AppContextType = {

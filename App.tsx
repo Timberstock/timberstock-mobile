@@ -13,7 +13,10 @@ import { fetchUserData } from './src/functions/firebase/auth';
 
 import AddProductos from './src/screens/AddProductos';
 
-import AppProvider from './src/AppContext';
+import AppProvider from './src/context/AppContext';
+
+import UserContextProvider from './src/context/UserContext';
+import AuthWrapper from './src/AuthWrapper';
 
 const Stack = createNativeStackNavigator();
 // This works really weird and I have to mess up with the emulator and with index.js here to be able to change from production to emulator (seems to).
@@ -21,65 +24,43 @@ const Stack = createNativeStackNavigator();
 // firestore().useEmulator('localhost', 8080);
 
 export default function App() {
-  // TODO ADD REACT NATIVE UI COMPONENT LIBRARY
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState<Usuario | null>();
-  const [rutEmpresa, setRutEmpresa] = useState('');
-
-  const onAuthStateChanged = async (inputUser: Usuario | null) => {
-    // IN CASE OF LOGIN
-    if (inputUser) {
-      const userData = await fetchUserData(inputUser.uid);
-      inputUser.nombre = userData?.nombre;
-      inputUser.empresa_id = userData?.empresa_id;
-      inputUser.rut = userData?.rut;
-      setUser(inputUser);
-      setRutEmpresa(userData?.empresa_id);
-    }
-    // IN CASE OF LOGOUT
-    else {
-      setUser(null);
-      setRutEmpresa('');
-    }
-    if (initializing) setInitializing(false);
-  };
-
-  useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber; // unsubscribe on unmount
-  }, []);
-
-  if (initializing) {
-    console.log('INITIALIZING');
-    return null;
-  }
-
-  if (!user) {
-    return <Login />;
-  }
-
+  // If the user is logged in and it finished initializing, we show the app
   const GlobalState = {
-    user,
-    rutEmpresa,
+    user: null,
+    rutEmpresa: '',
   };
 
   return (
-    <AppProvider>
-      <SelectProvider>
-        <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen name="Home" options={{ headerShown: false }}>
-              {(props) => <Home {...props} GlobalState={GlobalState} />}
-            </Stack.Screen>
-            <Stack.Screen name="CreateGuia" options={{ headerShown: false }}>
-              {(props) => <CreateGuia {...props} GlobalState={GlobalState} />}
-            </Stack.Screen>
-            <Stack.Screen name="AddProductos" options={{ headerShown: false }}>
-              {(props) => <AddProductos {...props} GlobalState={GlobalState} />}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SelectProvider>
-    </AppProvider>
+    <UserContextProvider>
+      <AuthWrapper>
+        <AppProvider>
+          <SelectProvider>
+            <NavigationContainer>
+              <Stack.Navigator>
+                <Stack.Screen name="Home" options={{ headerShown: false }}>
+                  {(props) => <Home {...props} GlobalState={GlobalState} />}
+                </Stack.Screen>
+                <Stack.Screen
+                  name="CreateGuia"
+                  options={{ headerShown: false }}
+                >
+                  {(props) => (
+                    <CreateGuia {...props} GlobalState={GlobalState} />
+                  )}
+                </Stack.Screen>
+                <Stack.Screen
+                  name="AddProductos"
+                  options={{ headerShown: false }}
+                >
+                  {(props) => (
+                    <AddProductos {...props} GlobalState={GlobalState} />
+                  )}
+                </Stack.Screen>
+              </Stack.Navigator>
+            </NavigationContainer>
+          </SelectProvider>
+        </AppProvider>
+      </AuthWrapper>
+    </UserContextProvider>
   );
 }

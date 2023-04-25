@@ -2,6 +2,7 @@ import auth from '@react-native-firebase/auth';
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
+import { Alert } from 'react-native';
 
 export const fetchUserData = async (
   userId: string
@@ -12,6 +13,7 @@ export const fetchUserData = async (
     return userData;
   } catch (e: any) {
     console.log(e);
+    Alert.alert('Error al obtener datos de usuario');
   }
 };
 
@@ -27,6 +29,7 @@ export const authenticateUser = async (email: string, password: string) => {
     if (e.code === 'auth/wrong-password') return 'Contraseña incorrecta';
     else {
       console.log(e);
+      Alert.alert('Error de autenticación');
       return 'Error de autenticación';
     }
   }
@@ -38,6 +41,7 @@ export const logoutUser = async () => {
     return 'Sesión cerrada';
   } catch (e: any) {
     console.log(e);
-    return 'Error de autenticación';
+    Alert.alert('Error para cerrar sesión');
+    return 'Error para cerrar sesión';
   }
 };

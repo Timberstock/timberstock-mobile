@@ -14,7 +14,7 @@ import { handleFetchFirebase } from '../functions/screenFunctions';
 import { formatDate } from '../functions/helpers';
 import { Alert } from 'react-native';
 
-import { AppContext } from '../AppContext';
+import { AppContext } from '../context/AppContext';
 
 export default function Home(props: HomeScreenProps) {
   const { navigation, GlobalState } = props;
