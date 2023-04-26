@@ -1,28 +1,26 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './context/UserContext';
-import auth from '@react-native-firebase/auth';
-import { Usuario } from './interfaces/usuario';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import Login from './screens/Login';
 import AppProvider from './context/AppContext';
-import OverlayLoading from './resources/OverlayLoading';
 import Loading from './components/Loading';
 
 function AuthWrapper({ children }: any) {
-  const { user, updateUser } = useContext(UserContext);
+  const { user, updateUserAuth } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
 
   // This is the Callback function passed to auth().onAuthStateChanged()
-  // It will be called every time the auth state changes.
-  const customOnAuthStateChangedCallback = async (
-    inputUser: Usuario | null
+  // It will be called every time the auth state changes (Firebase Auth)
+  const customOnAuthStateChangedCallback = (
+    inputUser: FirebaseAuthTypes.User | null
   ) => {
     // IN CASE OF LOGIN
     if (inputUser) {
-      await updateUser(inputUser);
+      updateUserAuth(inputUser);
     }
     // IN CASE OF LOGOUT
     else {
-      await updateUser(null);
+      updateUserAuth(null);
     }
   };
 
@@ -35,15 +33,17 @@ function AuthWrapper({ children }: any) {
     return () => {
       unsubscribe(); // unsubscribe on unmount
     };
-  }, [updateUser]);
+  }, []);
 
-  useEffect(() => {
-    setLoading(false);
-  }, [user]);
+  //   useEffect(() => {
+  //     if (user && user.firebaseAuth) {
+  //       setLoading(false);
+  //     }
+  //   }, [user]);
 
-  if (loading) {
-    return <Loading />;
-  }
+  //   if (loading) {
+  //     return <Loading />;
+  //   }
 
   // If the user is not logged in, we show the login screen
   if (!user) {
