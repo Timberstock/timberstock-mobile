@@ -6,10 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
-import {
-  authenticateUser,
-  getCurrentAuthUser,
-} from '../functions/firebase/auth';
+import { authenticateUser } from '../functions/firebase/auth';
 import colors from '../resources/Colors';
 import Loading from '../components/Loading';
 
@@ -20,10 +17,6 @@ export default function Login() {
   //   const [password, setPassword] = useState('Lumber157'); //SACAR EL VALOR POR DEFECTO
   const [errorMessage, setErrorMessage] = useState<null | string>(null);
   const [loading, setLoading] = useState(false);
-
-  if (getCurrentAuthUser()) {
-    return <Loading />;
-  }
 
   const handleLogin = async () => {
     setLoading(true);

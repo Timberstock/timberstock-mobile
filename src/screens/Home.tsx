@@ -33,15 +33,13 @@ export default function Home(props: HomeScreenProps) {
 
   const [loading, setLoading] = useState(true);
 
-  useFocusEffect(
-    // TODO: we will have to use useMemo because eventually, we are going
-    // to load things faster and from before the screen visited again
-    // we can check if the data is already loaded and if it is, we don't
-    // have to load it again nor show the loading icon.
-    useCallback(() => {
-      handleRefresh();
-    }, [])
-  );
+  //   useFocusEffect(
+  // TODO: we will have to use useMemo because eventually, we are going
+  // to load things faster and from before the screen visited again
+  // we can check if the data is already loaded and if it is, we don't
+  // have to load it again nor show the loading icon.
+  //   handleRefresh
+  //   );
 
   useEffect(() => {
     handleRefresh();
@@ -63,6 +61,8 @@ export default function Home(props: HomeScreenProps) {
       } catch (error) {
         Alert.alert('Error', 'No se pudo obtener la información de la empresa');
       }
+    } else {
+      Alert.alert('Error', 'No se pudo obtener la información de la empresa');
     }
   };
 
@@ -87,7 +87,7 @@ export default function Home(props: HomeScreenProps) {
         <Text> Monto: {guia.total}</Text>
         <Icon
           name="external-link"
-          size={20}
+          size={30}
           color="blue"
           onPress={handleLinkClick}
           style={styles.linkIcon}
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   },
   linkIcon: {
     position: 'absolute',
-    top: '2.5%',
-    right: '2.5%',
+    top: '50%',
+    right: '5%',
   },
 });

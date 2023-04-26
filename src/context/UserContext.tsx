@@ -58,7 +58,6 @@ export const UserContextProvider = ({ children }: any) => {
 
   useEffect(() => {
     // After logging in with Firebase Authentication, read from Firestore
-    console.log(user);
     if (user && user.firebaseAuth) {
       const userDocRef = getUserDocRef(user.firebaseAuth.uid);
       listenerRef.current = createUserDocSnapListener(

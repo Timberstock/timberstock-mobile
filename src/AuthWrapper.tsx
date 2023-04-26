@@ -7,7 +7,9 @@ import Loading from './components/Loading';
 
 function AuthWrapper({ children }: any) {
   const { user, updateUserAuth } = useContext(UserContext);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(
+    !(user && user.firebaseAuth && user.empresa_id)
+  );
 
   // This is the Callback function passed to auth().onAuthStateChanged()
   // It will be called every time the auth state changes (Firebase Auth)
@@ -27,6 +29,9 @@ function AuthWrapper({ children }: any) {
   useEffect(() => {
     // Used when unmounting component (not yet necessary)
     const unsubscribe = auth().onAuthStateChanged(
+      // For some reason, this callback is called twice: one just mounted (inputUser==null when not previously logged in
+      // or inputUser==previousUser otherwise), and another one which is the actual change (inputUser==newUser).
+      // Seems to be expected behavior: https://stackoverflow.com/questions/37674823/firebase-android-onauthstatechanged-fire-twice-after-signinwithemailandpasswor
       customOnAuthStateChangedCallback
     );
 
@@ -35,19 +40,13 @@ function AuthWrapper({ children }: any) {
     };
   }, []);
 
-  //   useEffect(() => {
-  //     if (user && user.firebaseAuth) {
-  //       setLoading(false);
-  //     }
-  //   }, [user]);
-
-  //   if (loading) {
-  //     return <Loading />;
-  //   }
-
   // If the user is not logged in, we show the login screen
   if (!user) {
     return <Login />;
+  }
+
+  if (loading) {
+    return <Loading />;
   }
 
   // If the user is logged in, we read the data according to the user and show the app
