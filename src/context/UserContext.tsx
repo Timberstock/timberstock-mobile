@@ -1,12 +1,7 @@
-import React, { createContext, useEffect, useRef, useState } from 'react';
-import { Usuario, UsuarioFirestoreData } from '../interfaces/usuario';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import {
-  createUserDocSnapListener,
-  getCurrentAuthUser,
-  getUserDocRef,
-} from '../functions/firebase/auth';
+import React, { createContext, useRef, useState } from 'react';
+import { Usuario } from '../interfaces/usuario';
+import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { retrieveUserFirestoreInformation } from '../functions/firebase/firestore/usuarios';
 
 type UserContextType = {
   user: Usuario | null;
@@ -25,62 +20,29 @@ export const UserContext = createContext<UserContextType>(initialState);
 export const UserContextProvider = ({ children }: any) => {
   const [user, setUser] = useState<Usuario | null>(null);
 
-  const updateUserAuth = (newUser: FirebaseAuthTypes.User | null) => {
-    // Signing Out
-    if (!newUser) {
+  const updateUserAuth = async (newAuthUser: FirebaseAuthTypes.User | null) => {
+    // Logging Out
+    if (!newAuthUser) {
       setUser(null);
       return;
     }
+
     // Logging in
     // For simplicity, we assign a reference to Firebase Authentication's User to our user state
-    const userAuth = {
-      firebaseAuth: newUser,
-      nombre: '',
-      rut: '',
-      empresa_id: '',
-      email: '',
-    };
-    setUser(userAuth);
-  };
-
-  // Following blocks are just for reducing the number of reads to firestore.
-  // Ref the function that uses this for more details
-  const previousSnapshotRef =
-    useRef<FirebaseFirestoreTypes.DocumentSnapshot<FirebaseFirestoreTypes.DocumentData> | null>(
-      null
+    console.log('Retrieving user information...\n\n');
+    const newUserFirestoreData = await retrieveUserFirestoreInformation(
+      newAuthUser.uid
     );
-  const listenerRef = useRef<(() => void) | null>(null);
-  // Called just by the callback function of the snapshot listener, thus not provided as part of the context
-  const updateUserFirestore = (newUser: UsuarioFirestoreData) => {
-    newUser.firebaseAuth = getCurrentAuthUser();
+    const newUser = {
+      firebaseAuth: newAuthUser,
+      empresa_id: newUserFirestoreData?.empresa_id,
+      rut: newUserFirestoreData?.rut,
+      nombre: newUserFirestoreData?.nombre,
+      email: newUserFirestoreData?.email,
+    };
+
     setUser(newUser as Usuario);
   };
-
-  useEffect(() => {
-    // After logging in with Firebase Authentication, read from Firestore
-    if (user && user.firebaseAuth) {
-      const userDocRef = getUserDocRef(user.firebaseAuth.uid);
-      listenerRef.current = createUserDocSnapListener(
-        userDocRef,
-        previousSnapshotRef,
-        updateUserFirestore
-      );
-    } else {
-      // After logging out, unsubscribe from Firestore
-      if (listenerRef.current) {
-        listenerRef.current();
-        listenerRef.current = null;
-      }
-    }
-
-    return () => {
-      // When unmounting the component, unsubscribe from Firestore
-      if (listenerRef.current) {
-        listenerRef.current();
-        listenerRef.current = null;
-      }
-    };
-  }, [user]);
 
   const contextValue: UserContextType = {
     user,

@@ -9,37 +9,29 @@ import {
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
-import { Emisor, GuiaDespachoSummaryProps } from '../interfaces/guias';
+import { GuiaDespachoSummaryProps } from '../interfaces/guias';
 import { HomeScreenProps } from '../interfaces/screens';
-import { handleFetchFirebase } from '../functions/screenFunctions';
 import { Alert } from 'react-native';
 
 import { AppContext } from '../context/AppContext';
 
 import { UserContext } from '../context/UserContext';
 import customHelpers from '../functions/helpers';
-import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { fetchGuiasDocs } from '../functions/firebase/firestore/guias';
 
 export default function Home(props: HomeScreenProps) {
   const { navigation } = props;
   const { user } = useContext(UserContext);
-  const {
-    guiasSummary,
-    updateGuiasSummary,
-    updateEmisor,
-    updateRetrievedData,
-  } = useContext(AppContext);
+  const { empresa, guiasSummary, updateGuiasSummary, updateFoliosDisp } =
+    useContext(AppContext);
 
   const [loading, setLoading] = useState(true);
 
-  //   useFocusEffect(
   // TODO: we will have to use useMemo because eventually, we are going
   // to load things faster and from before the screen visited again
   // we can check if the data is already loaded and if it is, we don't
   // have to load it again nor show the loading icon.
-  //   handleRefresh
-  //   );
 
   useEffect(() => {
     handleRefresh();
@@ -51,18 +43,20 @@ export default function Home(props: HomeScreenProps) {
     if (user.empresa_id) {
       try {
         console.log('REFRESHING');
-        const { empresaInfo, empresaData, empresaGuias }: any =
-          await handleFetchFirebase(user.empresa_id);
-        updateGuiasSummary(empresaGuias || []);
-        updateEmisor(empresaInfo as Emisor);
-        updateRetrievedData(empresaData);
+        const empresaGuias = await fetchGuiasDocs(user.empresa_id);
+        updateFoliosDisp(empresaGuias, empresa.caf_n);
+        updateGuiasSummary(empresaGuias);
+
         setLoading(false);
         console.log('DONE');
       } catch (error) {
         Alert.alert('Error', 'No se pudo obtener la información de la empresa');
       }
     } else {
-      Alert.alert('Error', 'No se pudo obtener la información de la empresa');
+      Alert.alert(
+        'No se encuentra la empresa de usuario',
+        'No se pudo obtener la información de la empresa'
+      );
     }
   };
 

@@ -1,48 +1,9 @@
 import { SelectRef } from '@mobile-reality/react-native-select-pro';
 import { MutableRefObject } from 'react';
 import { Predio, Producto, Proveedor } from '../interfaces/detalles';
-import {
-  Cliente,
-  EmpresaData,
-  GuiaDespachoFirebase,
-  ProductoAdded,
-} from '../interfaces/firestore';
-import {
-  Emisor,
-  Identificacion,
-  Receptor,
-  Transporte,
-} from '../interfaces/guias';
+import { Cliente, ProductoAdded } from '../interfaces/firestore';
+import { Receptor, Transporte } from '../interfaces/guias';
 import { IOptions } from '../interfaces/screens';
-import { fetchInfoEmpresa, fetchData } from './firebase/data';
-import { createGuia, readGuias } from './firebase/guias';
-import { Alert } from 'react-native';
-import customHelpers from './helpers';
-
-export const createGuiaDespacho = async (
-  rutEmpresa: string,
-  preGuia: {
-    identificacion: Identificacion;
-    emisor: Emisor;
-    receptor: Receptor;
-    transporte: Transporte;
-    productos: ProductoAdded[];
-    predio: Predio;
-    total: number;
-  }
-) => {
-  const guia: GuiaDespachoFirebase = { ...preGuia, estado: 'pendiente' };
-  guia.identificacion.fecha = new Date();
-  try {
-    await createGuia(rutEmpresa, guia);
-  } catch (error: any) {
-    Alert.alert(
-      'Error al crear guía',
-      error.message || error || 'Error desconocido al crear guía'
-    );
-    console.log(error);
-  }
-};
 
 export const handleSelectClienteLogic = (
   option: IOptions | null,
@@ -183,23 +144,4 @@ export const handleSelectProveedorLogic = (
     razon_social: newProveedor?.razon_social || '',
     rut: newProveedor?.rut || '',
   });
-};
-
-export const handleFetchFirebase = async (rutEmpresa: string | undefined) => {
-  if (rutEmpresa === undefined) return;
-  const empresaInfo = await fetchInfoEmpresa(rutEmpresa);
-  const empresaGuias = await readGuias(rutEmpresa);
-  // primero accedemos a la Data sin los folios
-  let empresaData = (await fetchData(rutEmpresa)) as EmpresaData;
-  // Luego calculamos los folios y se lo asignamos
-  empresaData.foliosDisp = customHelpers.getFoliosDisp(
-    empresaGuias ? empresaGuias : [],
-    empresaInfo?.caf_n
-  );
-
-  return {
-    empresaInfo,
-    empresaData,
-    empresaGuias,
-  };
 };

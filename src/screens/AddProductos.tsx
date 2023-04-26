@@ -11,23 +11,19 @@ import {
 import colors from '../resources/Colors';
 import Header from '../components/Header';
 import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
-import {
-  handleSelectProductoLogic,
-  createGuiaDespacho,
-  handleFetchFirebase,
-} from '../functions/screenFunctions';
+import { handleSelectProductoLogic } from '../functions/screenFunctions';
 import { productosOptions, claseDiametricaOptions } from '../resources/options';
 import { ProductoAdded } from '../interfaces/firestore';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { AppContext } from '../context/AppContext';
 import { UserContext } from '../context/UserContext';
 import OverlayLoading from '../resources/OverlayLoading';
+import { createGuiaDoc } from '../functions/firebase/firestore/guias';
 
 export default function AddProductos(props: any) {
   const { navigation } = props;
   const { user } = useContext(UserContext);
-  const { guiasSummary, updateGuiasSummary, retrievedData } =
-    useContext(AppContext);
+  const { subCollectionsData } = useContext(AppContext);
   const [cantidad, setCantidad] = useState(0);
   const [loading, setLoading] = useState(false);
   const cantidadRef = useRef() as MutableRefObject<TextInput>;
@@ -35,7 +31,7 @@ export default function AddProductos(props: any) {
   const { guia } = props.route.params.data;
   const claseDiametricaRef = useRef() as MutableRefObject<SelectRef>;
 
-  const productosOpts = productosOptions(retrievedData.productos) || [];
+  const productosOpts = productosOptions(subCollectionsData.productos) || [];
 
   // This would have to be managed with redux or context API to be able to persist
   // the state of the products in other screens (e.g pressing back here)
@@ -58,7 +54,7 @@ export default function AddProductos(props: any) {
   const handleSelectProducto = (option: any) => {
     handleSelectProductoLogic(
       option,
-      retrievedData,
+      subCollectionsData,
       claseDiametricaRef,
       actualProducto,
       setActualProducto
@@ -112,25 +108,7 @@ export default function AddProductos(props: any) {
         return;
       }
       setLoading(true);
-      // just typescript things -.-
-      if (user?.empresa_id) await createGuiaDespacho(user.empresa_id, guia);
-      const newGuia = guia;
-      newGuia.productos = productosAdded;
-      newGuia.total = total;
-      const newGuias = guiasSummary;
-      const newGuiaSummary = {
-        folio: newGuia.identificacion.folio,
-        estado: newGuia.estado,
-        total: newGuia.total,
-        receptor: newGuia.receptor,
-        fecha: newGuia.identificacion.fecha,
-        url: '',
-      };
-      newGuias.unshift(newGuiaSummary);
-      updateGuiasSummary(newGuias);
-      // We only need to do this to update foliosOptions with the new info
-      const { empresaGuias }: any = await handleFetchFirebase(user?.empresa_id);
-      updateGuiasSummary(empresaGuias || []);
+      if (user?.empresa_id) await createGuiaDoc(user.empresa_id, guia);
       Alert.alert('Guía creada con éxito');
       navigation.reset({
         index: 0,

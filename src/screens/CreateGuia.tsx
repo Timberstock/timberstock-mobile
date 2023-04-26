@@ -29,8 +29,7 @@ import { UserContext } from '../context/UserContext';
 // TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
   const { navigation } = props;
-  const { user } = useContext(UserContext);
-  const { emisor, retrievedData } = useContext(AppContext);
+  const { empresa, subCollectionsData, foliosDisp } = useContext(AppContext);
 
   const {
     options,
@@ -53,10 +52,10 @@ export default function CreateGuia(props: any) {
   useEffect(() => {
     setOptions({
       ...options,
-      folios: foliosOptions(retrievedData.foliosDisp),
-      clientes: clientesOptions(retrievedData.clientes),
-      predios: prediosOptions(retrievedData.predios),
-      proveedores: proveedoresOptions(retrievedData.proveedores),
+      folios: foliosOptions(foliosDisp),
+      clientes: clientesOptions(subCollectionsData.clientes),
+      predios: prediosOptions(subCollectionsData.predios),
+      proveedores: proveedoresOptions(subCollectionsData.proveedores),
     });
   }, []);
 
@@ -83,8 +82,8 @@ export default function CreateGuia(props: any) {
     navigation.push('AddProductos', {
       data: {
         guia: {
+          emisor: empresa.emisor,
           identificacion,
-          emisor,
           receptor,
           despacho,
           predio,
@@ -96,7 +95,7 @@ export default function CreateGuia(props: any) {
   const handleSelectCliente = (option: any) => {
     handleSelectClienteLogic(
       option,
-      retrievedData,
+      subCollectionsData,
       options,
       despachoRef,
       despacho,
@@ -108,7 +107,7 @@ export default function CreateGuia(props: any) {
   const handleSelectPredio = (option: any) => {
     handleSelectPredioLogic(
       option,
-      retrievedData,
+      subCollectionsData,
       options,
       planDeManejoRef,
       predio,
@@ -117,13 +116,13 @@ export default function CreateGuia(props: any) {
   };
 
   const handleSelectProveedor = (option: any) => {
-    handleSelectProveedorLogic(option, retrievedData, setProveedor);
+    handleSelectProveedorLogic(option, subCollectionsData, setProveedor);
   };
   return (
     <View style={styles.screen}>
       <Header
         screenName="CreateGuia"
-        empresa={emisor.razon_social}
+        empresa={empresa.emisor.razon_social}
         {...props}
       />
       <View style={styles.body}>

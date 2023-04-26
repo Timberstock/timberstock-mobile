@@ -51,10 +51,19 @@ export interface GuiaDespachoFirebase {
   estado: string;
 }
 
-export interface EmpresaData {
-  foliosDisp: number[];
+export interface EmpresaSubCollectionsData {
   clientes: Cliente[];
   predios: Predio[];
   productos: Producto[];
   proveedores: Proveedor[];
+}
+
+export interface PreGuia {
+  identificacion: Identificacion;
+  emisor: Emisor;
+  receptor: Receptor;
+  transporte: Transporte;
+  productos: ProductoAdded[];
+  predio: Predio;
+  total: number;
 }

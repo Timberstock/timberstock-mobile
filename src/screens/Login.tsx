@@ -20,12 +20,14 @@ export default function Login() {
 
   const handleLogin = async () => {
     setLoading(true);
-    setErrorMessage(null);
     const authResponseMessage = await authenticateUser(email, password);
     if (authResponseMessage !== 'Sesión iniciada') {
       setLoading(false);
       setErrorMessage(authResponseMessage);
+      return;
     }
+    setErrorMessage(authResponseMessage);
+    return;
   };
 
   return (
