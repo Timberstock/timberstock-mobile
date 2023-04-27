@@ -1,6 +1,7 @@
 import firestore from '@react-native-firebase/firestore';
 import { UsuarioFirestoreData } from '../../../interfaces/usuario';
 import customHelpers from '../../helpers';
+import { Alert } from 'react-native';
 
 const fetchUserInfoFromCache = async (
   userUid: string
@@ -36,7 +37,7 @@ const fetchUserInfoFromServer = async (
 export const retrieveUserFirestoreInformation = async (
   userUid: string
 ): Promise<UsuarioFirestoreData | null> => {
-  // Mixed way of getting the user info, first from cache and then from server
+  // This will be the final version, but for now we will just return the user data from the server
   try {
     // First try to get the user info from the cache
     const userDataFromCache = await fetchUserInfoFromCache(userUid);
@@ -57,5 +58,24 @@ export const retrieveUserFirestoreInformation = async (
     // Case no data from cache
     const userDataFromServer = await fetchUserInfoFromServer(userUid);
     return userDataFromServer;
+  }
+};
+
+export const retrieveUserSafe = async (userUid: string) => {
+  // Just for now
+  try {
+    const userDataFromServer = await fetchUserInfoFromServer(userUid);
+    return userDataFromServer;
+  } catch (e) {
+    try {
+      const userDataFromCache = await fetchUserInfoFromCache(userUid);
+      return userDataFromCache;
+    } catch (e) {
+      Alert.alert(
+        'Error usuario (server y cache)',
+        'No se pudo obtener la información del usuario'
+      );
+      return null;
+    }
   }
 };

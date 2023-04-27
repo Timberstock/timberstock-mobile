@@ -2,6 +2,7 @@ import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
 import { Emisor } from '../../../interfaces/guias';
+import { Alert } from 'react-native';
 
 // TODO: Optimize all this file along with ChatGPT after wrapping up the app.
 export const fetchEmpresaDoc = async (empresaId: string) => {
@@ -30,15 +31,20 @@ export const fetchEmpresaDoc = async (empresaId: string) => {
     console.log(`Empresa ${empresaData?.razon_social} fetched`);
     return empresa;
   };
-  // first we try with cache always, since we don't expect the data to change much
+  // first we try with server always, to make sure the app is up to date and works well
   try {
-    const empresaFromCache = await empresaDocRequest('cache');
-    const response = uponRequestResolution(empresaFromCache);
-    return response;
-  } catch (e: any) {
-    console.log(e);
     const empresaFromServer = await empresaDocRequest('server');
     const response = uponRequestResolution(empresaFromServer);
     return response;
+  } catch (e: any) {
+    console.log(e);
+    try {
+      const empresaFromCache = await empresaDocRequest('cache');
+      const response = uponRequestResolution(empresaFromCache);
+      return response;
+    } catch (e: any) {
+      Alert.alert('Error al leer empresa (server y cache)', e);
+      throw new Error('Error al leer empresa (servidor y cache)');
+    }
   }
 };

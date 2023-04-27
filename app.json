@@ -2,7 +2,7 @@
   "expo": {
     "name": "TimberStock",
     "slug": "timberstock-mobile-app",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "orientation": "portrait",
     "icon": "./assets/dallelogo.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
       "googleServicesFile": "./SpecificPlatformFiles/ios/GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.atc.timberstockapp",
-      "buildNumber": "0.1"
+      "buildNumber": "0.5"
     },
     "android": {
       "googleServicesFile": "./SpecificPlatformFiles/android/google-services.json",

@@ -11,17 +11,18 @@ function AuthWrapper({ children }: any) {
 
   // This is the Callback function passed to auth().onAuthStateChanged()
   // It will be called every time the auth state changes (Firebase Auth)
-  const customOnAuthStateChangedCallback = (
+  const customOnAuthStateChangedCallback = async (
     inputUser: FirebaseAuthTypes.User | null
   ) => {
     // IN CASE OF LOGIN
     if (inputUser) {
-      updateUserAuth(inputUser);
+      await updateUserAuth(inputUser);
     }
     // IN CASE OF LOGOUT
     else {
-      updateUserAuth(null);
+      await updateUserAuth(null);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -38,20 +39,30 @@ function AuthWrapper({ children }: any) {
     };
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      setLoading(false);
-    }
-  }, [user]);
+  //   useEffect(() => {
+  //     if (user) {
+  //       setLoading(false);
+  //     }
+  //     if (user?.empresa_id) {
+  //       setLoading(false);
+  //     }
+  //   }, [user]);
 
-  if (loading && user) {
+  if (loading) {
+    console.log(['Entering Loading Screen']);
     return <Loading />;
   }
 
   // If the user is not logged in, we show the login screen
   if (!user) {
+    console.log('[Entering Login Screen]');
     return <Login />;
   }
+
+  //   if (loading && !user) {
+  //     console.log('[Entering Loading Screen 2]');
+  //     return <Loading />;
+  //   }
 
   // If the user is logged in, we read the data according to the user and show the app
   return <AppProvider>{children}</AppProvider>;

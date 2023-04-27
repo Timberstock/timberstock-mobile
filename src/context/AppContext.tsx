@@ -16,6 +16,7 @@ import customHelpers from '../functions/helpers';
 import { fetchSubCollections } from '../functions/firebase/firestore/subcollections';
 import { fetchEmpresaDoc } from '../functions/firebase/firestore/empresa';
 import { fetchGuiasDocs } from '../functions/firebase/firestore/guias';
+import { Alert } from 'react-native';
 
 type AppContextType = {
   guiasSummary: GuiaDespachoSummaryProps[];
@@ -142,8 +143,9 @@ const AppProvider = ({ children }: any) => {
           );
           updateGuiasSummary(guiasSummaryFetched);
           updateFoliosDisp(guiasSummaryFetched, empresaFetched.caf_n);
-        } catch (err) {
+        } catch (err: any) {
           console.log(err);
+          Alert.alert(err);
         }
       };
       poblateData();

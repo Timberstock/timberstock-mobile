@@ -1,16 +1,19 @@
 import React, { createContext, useRef, useState } from 'react';
 import { Usuario } from '../interfaces/usuario';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { retrieveUserFirestoreInformation } from '../functions/firebase/firestore/usuarios';
+import {
+  retrieveUserFirestoreInformation,
+  retrieveUserSafe,
+} from '../functions/firebase/firestore/usuarios';
 
 type UserContextType = {
   user: Usuario | null;
-  updateUserAuth: (user: FirebaseAuthTypes.User | null) => void;
+  updateUserAuth: (user: FirebaseAuthTypes.User | null) => Promise<void>;
 };
 
 const initialState = {
   user: null,
-  updateUserAuth: () => {},
+  updateUserAuth: () => Promise.resolve(),
 };
 
 // Context
@@ -20,7 +23,9 @@ export const UserContext = createContext<UserContextType>(initialState);
 export const UserContextProvider = ({ children }: any) => {
   const [user, setUser] = useState<Usuario | null>(null);
 
-  const updateUserAuth = async (newAuthUser: FirebaseAuthTypes.User | null) => {
+  const updateUserAuth = async (
+    newAuthUser: FirebaseAuthTypes.User | null
+  ): Promise<void> => {
     // Logging Out
     if (!newAuthUser) {
       setUser(null);
@@ -30,9 +35,9 @@ export const UserContextProvider = ({ children }: any) => {
     // Logging in
     // For simplicity, we assign a reference to Firebase Authentication's User to our user state
     console.log('Retrieving user information...\n\n');
-    const newUserFirestoreData = await retrieveUserFirestoreInformation(
-      newAuthUser.uid
-    );
+    // const newUserFirestoreData = await retrieveUserFirestoreInformation(
+    // For now we will try to retrieve the user's information as safe as possible
+    const newUserFirestoreData = await retrieveUserSafe(newAuthUser.uid);
     const newUser = {
       firebaseAuth: newAuthUser,
       empresa_id: newUserFirestoreData?.empresa_id,

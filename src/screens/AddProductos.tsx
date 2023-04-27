@@ -108,8 +108,8 @@ export default function AddProductos(props: any) {
         return;
       }
       setLoading(true);
+      console.log('Creando Guía...');
       if (user?.empresa_id) await createGuiaDoc(user.empresa_id, guia);
-      Alert.alert('Guía creada con éxito');
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],

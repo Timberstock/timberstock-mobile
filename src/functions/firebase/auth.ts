@@ -31,7 +31,6 @@ export const logoutUser = async () => {
     return 'Sesión cerrada';
   } catch (e: any) {
     console.log(e);
-    Alert.alert('Error para cerrar sesión');
     return 'Error para cerrar sesión';
   }
 };

@@ -118,26 +118,17 @@ export const fetchSubCollections = async (
   const empresaSubCollectionRequest =
     empresaSubCollectionRequestConstructor(empresaId);
   try {
-    const empresaFromCache = await empresaSubCollectionRequest('cache');
-    const response = empresaFromCache;
+    const empresaFromServer = await empresaSubCollectionRequest('server');
+    const response = empresaFromServer;
     return response;
   } catch (e: any) {
     try {
-      const empresaFromServer = await empresaSubCollectionRequest('server');
-      const response = empresaFromServer;
+      const empresaFromCache = await empresaSubCollectionRequest('cache');
+      const response = empresaFromCache;
       return response;
     } catch (e: any) {
       console.log(e);
-      Alert.alert(
-        'Error',
-        'No se pudo obtener la información de la empresa. Por favor, intente más tarde.'
-      );
-      return {
-        proveedores: [],
-        predios: [],
-        productos: [],
-        clientes: [],
-      };
+      throw new Error(`Error sub colecciones (server y cache): ${e}`);
     }
   }
 };
