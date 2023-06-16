@@ -18,7 +18,10 @@ import { AppContext } from '../context/AppContext';
 import { UserContext } from '../context/UserContext';
 import customHelpers from '../functions/helpers';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { fetchGuiasDocs } from '../functions/firebase/firestore/guias';
+import {
+  _createGuiaTest,
+  fetchGuiasDocs,
+} from '../functions/firebase/firestore/guias';
 
 export default function Home(props: HomeScreenProps) {
   const { navigation } = props;
@@ -101,7 +104,8 @@ export default function Home(props: HomeScreenProps) {
         />
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.push('CreateGuia')}
+          // onPress={() => navigation.push('CreateGuia')}
+          onPress={async () => await _createGuiaTest()} // Just while testing
         >
           <Text style={styles.buttonText}> Crear Nueva Guía de Despacho </Text>
         </TouchableOpacity>
