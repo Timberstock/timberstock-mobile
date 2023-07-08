@@ -18,7 +18,7 @@ const Stack = createNativeStackNavigator();
 
 // This works really weird, try playing with emulator and with index.js if doesn't work
 // import firestore from '@react-native-firebase/firestore';
-firestore().useEmulator('localhost', 8080);
+// firestore().useEmulator('localhost', 8080);
 
 export default function App() {
   const deleteCache = async (): Promise<number> => {
