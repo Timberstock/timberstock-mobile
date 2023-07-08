@@ -109,11 +109,16 @@ export default function AddProductos(props: any) {
       }
       setLoading(true);
       console.log('Creando Guía...');
-      if (user?.empresa_id) await createGuiaDoc(user.empresa_id, guia);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
+      if (user?.empresa_id) {
+        await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
+        // await generatePDF();
+      }
+      setLoading(false);
+
+      // navigation.reset({
+      //   index: 0,
+      //   routes: [{ name: 'Home' }],
+      // });
       navigation.push('Home');
     } catch (e) {
       console.log(e);

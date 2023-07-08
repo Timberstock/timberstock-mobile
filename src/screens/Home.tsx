@@ -105,7 +105,11 @@ export default function Home(props: HomeScreenProps) {
         <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.push('CreateGuia')}
-          // onPress={async () => await _createGuiaTest()} // Just while testing
+          // Just for testing
+          // onPress={async () => {
+          // await _createGuiaTest(2);
+          // await generatePDF();
+          // }}
         >
           <Text style={styles.buttonText}> Crear Nueva Guía de Despacho </Text>
         </TouchableOpacity>

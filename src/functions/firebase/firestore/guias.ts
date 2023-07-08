@@ -29,13 +29,13 @@ export const createGuiaDoc = (rutEmpresa: string, preGuia: PreGuia) => {
   }
 };
 
-export const _createGuiaTest = () => {
-  console.log('[TEST GUIA CREATED]');
+export const _createGuiaTest = (folio: number) => {
+  console.log('[TEST GUIA CREATION]');
   const rutEmpresa = '770685532';
   const guia = {
     despacho: {
       chofer: {
-        nombre: 'Test',
+        nombre: 'Chofer de Prueba',
         rut: '19810662-3',
       },
       direccion_destino: 'Planta Laja',
@@ -53,7 +53,7 @@ export const _createGuiaTest = () => {
     estado: 'pendiente',
     identificacion: {
       fecha: new Date(),
-      folio: 10,
+      folio: folio,
       tipo_despacho: 'Por cuenta del emisor a instalaciones cliente',
       tipo_traslado: 'Venta por efectuar',
     },
@@ -135,7 +135,7 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
         fecha: customHelpers.fromFirebaseDateToJSDate(
           data.identificacion.fecha
         ),
-        url: data.url,
+        url: data?.pdf_url ? data.pdf_url : '',
       };
       guiasSummary.push(guiaData);
     });

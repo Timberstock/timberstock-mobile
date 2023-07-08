@@ -4,6 +4,9 @@ import { Predio, Producto, Proveedor } from '../interfaces/detalles';
 import { Cliente, ProductoAdded } from '../interfaces/firestore';
 import { Receptor, Transporte } from '../interfaces/guias';
 import { IOptions } from '../interfaces/screens';
+import * as Print from 'expo-print';
+import * as FileSystem from 'expo-file-system';
+import { shareAsync } from 'expo-sharing';
 
 export const handleSelectClienteLogic = (
   option: IOptions | null,
@@ -144,4 +147,59 @@ export const handleSelectProveedorLogic = (
     razon_social: newProveedor?.razon_social || '',
     rut: newProveedor?.rut || '',
   });
+};
+
+// const savePDF = async () => {
+//   const html = `
+//               <html>
+//                 <head>
+//                   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+//                 </head>
+//                 <body style="text-align: center;">
+//                   <h1 style="font-size: 50px; font-family: Helvetica Neue; font-weight: normal;">
+//                     Hello Expo!
+//                   </h1>
+//                   <img
+//                     src="https://d30j33t1r58ioz.cloudfront.net/static/guides/sdk.png"
+//                     style="width: 90vw;" />
+//                 </body>
+//               </html>
+//               `;
+//   // On iOS/android prints the given html. On web prints the HTML from the current page.
+//   const { uri } = await Print.printToFileAsync({ html });
+//   console.log('File has been saved to:', uri);
+//   await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+// };
+
+export const generatePDF = async () => {
+  try {
+    // Prepare the HTML content for the PDF
+    const html = `
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+      </head>
+      <body style="text-align: center;">
+        <h1 style="font-size: 50px; font-family: Helvetica Neue; font-weight: normal;">
+          Hello Expo!
+        </h1>
+        <img
+          src="https://d30j33t1r58ioz.cloudfront.net/static/guides/sdk.png"
+          style="width: 90vw;" />
+      </body>
+    </html>
+    `;
+
+    // Generate the PDF using Expo's print module
+    const { uri } = await Print.printToFileAsync({ html: html });
+
+    // // Move the PDF file to a permanent location using Expo's file system module
+    const permanentUri = `${FileSystem.documentDirectory}example.pdf`;
+    await FileSystem.moveAsync({ from: uri, to: permanentUri });
+    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+
+    console.log('PDF file generated:', permanentUri);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+  }
 };
