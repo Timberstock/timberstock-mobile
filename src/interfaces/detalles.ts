@@ -35,3 +35,11 @@ interface Detalles {
   predio: Predio;
   proveedor: Proveedor;
 }
+
+// Only for PDF
+export interface DetallesPDF {
+  nombre: string;
+  cantidad: number;
+  precio?: number;
+  montoItem?: number;
+}

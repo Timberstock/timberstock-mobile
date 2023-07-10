@@ -9,7 +9,6 @@ import customHelpers from '../../helpers';
 export const createGuiaDoc = (rutEmpresa: string, preGuia: PreGuia) => {
   if (!rutEmpresa) return null;
   const guia: GuiaDespachoFirebase = { ...preGuia, estado: 'pendiente' };
-  guia.identificacion.fecha = new Date();
   try {
     const guiaDocumentId =
       'DTE_GD_' + rutEmpresa + 'f' + guia.identificacion.folio.toString();
@@ -52,7 +51,7 @@ export const _createGuiaTest = (folio: number) => {
     },
     estado: 'pendiente',
     identificacion: {
-      fecha: new Date(),
+      fecha: new Date().toISOString(),
       folio: folio,
       tipo_despacho: 'Por cuenta del emisor a instalaciones cliente',
       tipo_traslado: 'Venta por efectuar',
@@ -90,10 +89,12 @@ export const _createGuiaTest = (folio: number) => {
       razon_social: 'CMPC PULP SPA',
       rut: '96532330-9',
     },
+    precio_ref: 38000,
     total: 1298079,
   };
 
   try {
+    console.log(guia);
     const guiaDocumentId =
       'DTE_GD_' + rutEmpresa + 'f' + guia.identificacion.folio.toString();
     firestore()
@@ -132,9 +133,7 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
         estado: data.estado,
         total: data.total,
         receptor: data.receptor,
-        fecha: customHelpers.fromFirebaseDateToJSDate(
-          data.identificacion.fecha
-        ),
+        fecha: data.identificacion.fecha,
         url: data?.pdf_url ? data.pdf_url : '',
       };
       guiasSummary.push(guiaData);

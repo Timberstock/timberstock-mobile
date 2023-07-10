@@ -23,6 +23,8 @@ import {
   fetchGuiasDocs,
 } from '../functions/firebase/firestore/guias';
 
+import { generatePDF } from '../functions/screenFunctions';
+
 export default function Home(props: HomeScreenProps) {
   const { navigation } = props;
   const { user } = useContext(UserContext);
@@ -77,7 +79,7 @@ export default function Home(props: HomeScreenProps) {
     };
     return (
       <TouchableOpacity style={styles.guia}>
-        <Text> Fecha: {customHelpers.formatDate(guia.fecha)}</Text>
+        <Text> Fecha: {guia.fecha}</Text>
         <Text> Estado: {guia.estado}</Text>
         <Text> Folio: {guia.folio}</Text>
         <Text> Receptor: {guia.receptor.razon_social}</Text>

@@ -112,10 +112,8 @@ const AppProvider = ({ children }: any) => {
                 estado: data?.estado,
                 total: data?.total,
                 receptor: data?.receptor,
-                fecha: customHelpers.fromFirebaseDateToJSDate(
-                  data?.identificacion.fecha
-                ),
-                url: data?.pdf_url ? data.pdf_url : '',
+                fecha: data?.identificacion.fecha,
+                url: data?.url,
               };
               return newGuias.push(guiaData);
             }

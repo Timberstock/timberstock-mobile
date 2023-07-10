@@ -1,9 +1,10 @@
 import { SelectRef } from '@mobile-reality/react-native-select-pro';
 import { MutableRefObject } from 'react';
 import { Predio, Producto, Proveedor } from '../interfaces/detalles';
-import { Cliente, ProductoAdded } from '../interfaces/firestore';
+import { Cliente, PreGuia, Trozo } from '../interfaces/firestore';
 import { Receptor, Transporte } from '../interfaces/guias';
 import { IOptions } from '../interfaces/screens';
+import CustomHelpers from '../functions/helpers';
 import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
@@ -98,8 +99,8 @@ export const handleSelectProductoLogic = (
     productos: Producto[];
   },
   claseDiametricaRef: MutableRefObject<SelectRef>,
-  actualProducto: ProductoAdded,
-  setActualProducto: (value: ProductoAdded) => void
+  actualTrozo: Trozo,
+  setActualTrozo: (value: Trozo) => void
 ) => {
   const productoSplit = option?.value.split(' - ');
   const { especie, tipo, calidad, largo, precio_ref } = {
@@ -109,26 +110,26 @@ export const handleSelectProductoLogic = (
     largo: productoSplit ? productoSplit[3] : '',
     precio_ref: productoSplit ? productoSplit[4].slice(1, -3) : '',
   };
-  const newProducto = retrievedData.productos.find(
-    (newProducto) =>
-      newProducto.especie === especie &&
-      newProducto.tipo === tipo &&
-      newProducto.calidad === calidad &&
-      newProducto.largo === parseFloat(largo) &&
-      newProducto.precio_ref === parseFloat(precio_ref)
+  const selectedTrozo = retrievedData.productos.find(
+    (selectedTrozo) =>
+      selectedTrozo.especie === especie &&
+      selectedTrozo.tipo === tipo &&
+      selectedTrozo.calidad === calidad &&
+      selectedTrozo.largo === parseFloat(largo) &&
+      selectedTrozo.precio_ref === parseFloat(precio_ref)
   );
-  setActualProducto({
-    especie: newProducto?.especie || '',
-    tipo: newProducto?.tipo || '',
-    calidad: newProducto?.calidad || '',
-    largo: newProducto?.largo || 0,
-    unidad: newProducto?.unidad || '',
-    cantidad: newProducto?.cantidad || 0,
-    precio_ref: newProducto?.precio_ref || 0,
+  setActualTrozo({
+    especie: selectedTrozo?.especie || '',
+    tipo: selectedTrozo?.tipo || '',
+    calidad: selectedTrozo?.calidad || '',
+    largo: selectedTrozo?.largo || 0,
+    unidad: selectedTrozo?.unidad || '',
+    cantidad: selectedTrozo?.cantidad || 0,
+    precio_ref: selectedTrozo?.precio_ref || 0,
     claseDiametrica:
-      newProducto?.tipo === 'Asserrable' ? actualProducto.claseDiametrica : '',
+      selectedTrozo?.tipo === 'Asserrable' ? actualTrozo.claseDiametrica : '',
   });
-  if (option === null || newProducto?.tipo !== 'Aserrable') {
+  if (option === null || selectedTrozo?.tipo !== 'Aserrable') {
     claseDiametricaRef.current?.clear();
   }
 };
@@ -149,46 +150,10 @@ export const handleSelectProveedorLogic = (
   });
 };
 
-// const savePDF = async () => {
-//   const html = `
-//               <html>
-//                 <head>
-//                   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-//                 </head>
-//                 <body style="text-align: center;">
-//                   <h1 style="font-size: 50px; font-family: Helvetica Neue; font-weight: normal;">
-//                     Hello Expo!
-//                   </h1>
-//                   <img
-//                     src="https://d30j33t1r58ioz.cloudfront.net/static/guides/sdk.png"
-//                     style="width: 90vw;" />
-//                 </body>
-//               </html>
-//               `;
-//   // On iOS/android prints the given html. On web prints the HTML from the current page.
-//   const { uri } = await Print.printToFileAsync({ html });
-//   console.log('File has been saved to:', uri);
-//   await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-// };
-
-export const generatePDF = async () => {
+export const generatePDF = async (guia: PreGuia) => {
   try {
     // Prepare the HTML content for the PDF
-    const html = `
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-      </head>
-      <body style="text-align: center;">
-        <h1 style="font-size: 50px; font-family: Helvetica Neue; font-weight: normal;">
-          Hello Expo!
-        </h1>
-        <img
-          src="https://d30j33t1r58ioz.cloudfront.net/static/guides/sdk.png"
-          style="width: 90vw;" />
-      </body>
-    </html>
-    `;
+    const html = CustomHelpers.createPDFHTMLString(guia);
 
     // Generate the PDF using Expo's print module
     const { uri } = await Print.printToFileAsync({ html: html });
@@ -196,7 +161,10 @@ export const generatePDF = async () => {
     // // Move the PDF file to a permanent location using Expo's file system module
     const permanentUri = `${FileSystem.documentDirectory}example.pdf`;
     await FileSystem.moveAsync({ from: uri, to: permanentUri });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    await shareAsync(permanentUri, {
+      UTI: '.pdf',
+      mimeType: 'application/pdf',
+    });
 
     console.log('PDF file generated:', permanentUri);
   } catch (error) {

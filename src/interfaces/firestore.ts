@@ -1,7 +1,7 @@
 import { Proveedor, Predio, Producto } from './detalles';
 import { Emisor, Identificacion, Receptor, Transporte } from './guias';
 
-export interface ProductoAdded extends Producto {
+export interface Trozo extends Producto {
   cantidad: number;
   volumen?: number;
   claseDiametrica?: string;
@@ -40,17 +40,6 @@ export interface ContratoVenta {
   clientes: Cliente[];
 }
 
-export interface GuiaDespachoFirebase {
-  identificacion: Identificacion;
-  emisor: Emisor;
-  receptor: Receptor;
-  transporte: Transporte;
-  productos: ProductoAdded[];
-  predio: Predio;
-  total: number;
-  estado: string;
-}
-
 export interface EmpresaSubCollectionsData {
   clientes: Cliente[];
   predios: Predio[];
@@ -63,7 +52,12 @@ export interface PreGuia {
   emisor: Emisor;
   receptor: Receptor;
   transporte: Transporte;
-  productos: ProductoAdded[];
+  productos: Trozo[];
   predio: Predio;
+  precio_ref: number;
   total: number;
+}
+
+export interface GuiaDespachoFirebase extends PreGuia {
+  estado: string;
 }

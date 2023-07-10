@@ -13,12 +13,13 @@ import Header from '../components/Header';
 import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
 import { handleSelectProductoLogic } from '../functions/screenFunctions';
 import { productosOptions, claseDiametricaOptions } from '../resources/options';
-import { ProductoAdded } from '../interfaces/firestore';
+import { Trozo } from '../interfaces/firestore';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { AppContext } from '../context/AppContext';
 import { UserContext } from '../context/UserContext';
 import OverlayLoading from '../resources/OverlayLoading';
 import { createGuiaDoc } from '../functions/firebase/firestore/guias';
+import { generatePDF } from '../functions/screenFunctions';
 
 export default function AddProductos(props: any) {
   const { navigation } = props;
@@ -35,7 +36,7 @@ export default function AddProductos(props: any) {
 
   // This would have to be managed with redux or context API to be able to persist
   // the state of the products in other screens (e.g pressing back here)
-  const [actualProducto, setActualProducto] = useState<ProductoAdded>({
+  const [actualTrozo, setActualTrozo] = useState<Trozo>({
     especie: '',
     tipo: '',
     calidad: '',
@@ -47,7 +48,7 @@ export default function AddProductos(props: any) {
   });
   const [productosAdded, setProductosAdded] = useState<any>([]);
   const total = productosAdded.reduce(
-    (acc: number, producto: ProductoAdded) =>
+    (acc: number, producto: Trozo) =>
       acc + (producto.total !== undefined ? producto.total : 0),
     0
   );
@@ -56,42 +57,39 @@ export default function AddProductos(props: any) {
       option,
       subCollectionsData,
       claseDiametricaRef,
-      actualProducto,
-      setActualProducto
+      actualTrozo,
+      setActualTrozo
     );
   };
 
   const handleSelectClaseDiametrica = (option: any) => {
-    setActualProducto({
-      ...actualProducto,
+    setActualTrozo({
+      ...actualTrozo,
       claseDiametrica: option?.value || null,
     });
   };
 
   const handleAddProducto = () => {
     // TODO ALSO AVOID ADDING WHEN NOT CLASE DIAMETRICA IS SELECTED AND IS ASERRABLE
-    if (actualProducto) {
-      const newActualProducto = actualProducto;
+    if (actualTrozo) {
+      const newTrozo = actualTrozo;
       let volumen = 0;
-      if (
-        actualProducto.tipo === 'Aserrable' &&
-        actualProducto.claseDiametrica
-      ) {
-        newActualProducto.unidad = 'm3';
+      if (actualTrozo.tipo === 'Aserrable' && actualTrozo.claseDiametrica) {
+        newTrozo.unidad = 'm3';
         volumen =
           cantidad *
-          actualProducto.largo *
+          actualTrozo.largo *
           Math.PI *
-          (parseFloat(actualProducto.claseDiametrica) / (2 * 100)) ** 2; // pasamos diametro de centimetros a metros
+          (parseFloat(actualTrozo.claseDiametrica) / (2 * 100)) ** 2; // pasamos diametro de centimetros a metros
       } else {
-        newActualProducto.unidad = 'mr';
-        volumen = cantidad * actualProducto.largo;
+        newTrozo.unidad = 'mr';
+        volumen = cantidad * actualTrozo.largo;
       }
-      newActualProducto.total = Math.trunc(volumen * actualProducto.precio_ref);
-      newActualProducto.volumen = volumen;
-      newActualProducto.cantidad = cantidad;
-      setActualProducto(newActualProducto);
-      setProductosAdded([...productosAdded, newActualProducto]);
+      newTrozo.total = Math.trunc(volumen * actualTrozo.precio_ref);
+      newTrozo.volumen = volumen;
+      newTrozo.cantidad = cantidad;
+      setActualTrozo(newTrozo);
+      setProductosAdded([...productosAdded, newTrozo]);
       setCantidad(0);
       cantidadRef.current.blur();
     }
@@ -101,7 +99,6 @@ export default function AddProductos(props: any) {
     try {
       guia.productos = productosAdded;
       guia.total = total;
-      guia.identificacion.fecha = new Date();
       // TODO: actually, int32 only accepts numbers between -2,147,483,648 and 2,147,483,647
       if (guia.total > 2147483647) {
         Alert.alert('Error', 'El total no puede ser mayor a 2147483647');
@@ -110,8 +107,11 @@ export default function AddProductos(props: any) {
       setLoading(true);
       console.log('Creando Guía...');
       if (user?.empresa_id) {
+        guia.precio_ref = productosAdded[0].precio_ref;
+        guia.identificacion.fecha = new Date().toISOString();
+        console.log(guia);
         await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
-        // await generatePDF();
+        await generatePDF(guia);
       }
       setLoading(false);
 
@@ -127,12 +127,12 @@ export default function AddProductos(props: any) {
     }
   };
 
-  const renderItem = ({ item }: { item: ProductoAdded }) => {
+  const renderItem = ({ item }: { item: Trozo }) => {
     const producto = item;
     const handleDeleteProducto = () => {
       const index = productosAdded.indexOf(item);
       const newProductosAdded = productosAdded.filter(
-        (_producto: ProductoAdded, i: number) => i !== index
+        (_producto: Trozo, i: number) => i !== index
       );
       setProductosAdded(newProductosAdded);
     };
@@ -198,7 +198,7 @@ export default function AddProductos(props: any) {
               }}
               placeholderText=""
               placeholderTextColor="#cccccc"
-              disabled={actualProducto?.tipo !== 'Aserrable'}
+              disabled={actualTrozo?.tipo !== 'Aserrable'}
               selectControlArrowImageStyle={selectStyles.buttonsContainer}
               ref={claseDiametricaRef}
               options={claseDiametricaOptions}

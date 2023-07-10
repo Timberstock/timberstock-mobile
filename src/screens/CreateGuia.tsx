@@ -85,7 +85,7 @@ export default function CreateGuia(props: any) {
           emisor: empresa.emisor,
           identificacion,
           receptor,
-          despacho,
+          transporte: despacho, // Just to keep structure correct with PreGuia
           predio,
         },
       },
