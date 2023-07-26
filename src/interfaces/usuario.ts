@@ -6,6 +6,8 @@ export interface UsuarioFirestoreData {
   rut: string;
   empresa_id: string;
   email: string;
+  folios_reservados: number[];
+  cafs: string[];
   last_login: FirebaseFirestoreTypes.Timestamp;
   // Just so the same interface can be used to extend the received user
   // in the updateUserFirestore function.

@@ -23,7 +23,7 @@ import { generatePDF } from '../functions/screenFunctions';
 
 export default function AddProductos(props: any) {
   const { navigation } = props;
-  const { user } = useContext(UserContext);
+  const { user, updateUserReservedFolios } = useContext(UserContext);
   const { subCollectionsData } = useContext(AppContext);
   const [cantidad, setCantidad] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -106,12 +106,21 @@ export default function AddProductos(props: any) {
       }
       setLoading(true);
       console.log('Creando Guía...');
-      if (user?.empresa_id) {
-        guia.precio_ref = productosAdded[0].precio_ref;
-        guia.identificacion.fecha = new Date().toISOString();
+      if (user && user.firebaseAuth && user.empresa_id) {
+        // When we upload guias, we need Firebase to be able to parse the date correctly
         console.log(guia);
-        await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
-        await generatePDF(guia);
+
+        // We retrieve the date on which the guia was created as ISOString for consistency and not using Date (mutable object warning)
+        const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
+
+        await generatePDF(guia, guiaDate as string);
+
+        // Remove the folio from the list of folios_reserved
+        const newFoliosReserved = user.folios_reservados.filter(
+          (folio) => folio !== guia.identificacion.folio
+        );
+        // Update the user's folios locally popping the one just used
+        await updateUserReservedFolios(newFoliosReserved);
       }
       setLoading(false);
 

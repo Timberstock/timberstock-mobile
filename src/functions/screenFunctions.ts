@@ -150,10 +150,10 @@ export const handleSelectProveedorLogic = (
   });
 };
 
-export const generatePDF = async (guia: PreGuia) => {
+export const generatePDF = async (guia: PreGuia, guiaDate: string) => {
   try {
     // Prepare the HTML content for the PDF
-    const html = CustomHelpers.createPDFHTMLString(guia);
+    const html = CustomHelpers.createPDFHTMLString(guia, guiaDate);
 
     // Generate the PDF using Expo's print module
     const { uri } = await Print.printToFileAsync({ html: html });

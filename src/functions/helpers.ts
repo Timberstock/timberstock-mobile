@@ -67,7 +67,7 @@ const getFoliosDisp = (guias: GuiaDespachoSummaryProps[], caf_n: number) => {
   }
 };
 
-const createPDFHTMLString = (DTE: PreGuia) => {
+const createPDFHTMLString = (DTE: PreGuia, guiaDate: string) => {
   const _detallesToDescripcionTable = (detallesList: DetallesPDF[]) => {
     const _productosToTags = (productosList: DetallesPDF[]) => {
       // returns object of strings composed of concatenated <p> tags with the product names, quantities and prices
@@ -287,9 +287,7 @@ const createPDFHTMLString = (DTE: PreGuia) => {
           <p class="s1">Fecha Emisión</p>
         </td>
         <td class="cellwithborders">
-          <p class="s2">${
-            (DTE.identificacion.fecha as string).split('T')[0]
-          }</p>
+          <p class="s2">${guiaDate.split('T')[0]}</p>
         </td>
       </tr>
       <tr>
@@ -404,9 +402,6 @@ const createPDFHTMLString = (DTE: PreGuia) => {
     ...predioDetalles,
     ...productosDetalles,
   ];
-
-  console.log(detallesList);
-  console.log(detallesList[8].nombre.includes('Metro Ruma'));
 
   const detalles = _detallesToDescripcionTable(detallesList);
 

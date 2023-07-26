@@ -4,23 +4,32 @@ import firestore, {
 import { GuiaDespachoSummaryProps } from '../../../interfaces/guias';
 import { GuiaDespachoFirebase, PreGuia } from '../../../interfaces/firestore';
 import { Alert } from 'react-native';
-import customHelpers from '../../helpers';
 
-export const createGuiaDoc = (rutEmpresa: string, preGuia: PreGuia) => {
+export const createGuiaDoc = async (
+  rutEmpresa: string,
+  preGuia: PreGuia
+): Promise<string | null> => {
   if (!rutEmpresa) return null;
-  const guia: GuiaDespachoFirebase = { ...preGuia, estado: 'pendiente' };
+  const creationDate = new Date();
+  const guia: GuiaDespachoFirebase = {
+    ...preGuia,
+    identificacion: { ...preGuia.identificacion, fecha: creationDate },
+    estado: 'pendiente',
+  };
   try {
     const guiaDocumentId =
       'DTE_GD_' + rutEmpresa + 'f' + guia.identificacion.folio.toString();
-    firestore()
+    await firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
       .doc(guiaDocumentId)
       .set(guia);
     console.log('Guía agregada a firebase: ', guiaDocumentId);
+
     Alert.alert(
       'Guía agregada correctamente',
       `Guía de folio: ${guia.identificacion.folio}`
     );
+    return creationDate.toISOString();
   } catch (e) {
     console.error('Error adding document: ', e);
     Alert.alert('Error al agregar guía');
@@ -51,7 +60,8 @@ export const _createGuiaTest = (folio: number) => {
     },
     estado: 'pendiente',
     identificacion: {
-      fecha: new Date().toISOString(),
+      // fecha: new Date().toISOString(),
+      fecha: new Date(),
       folio: folio,
       tipo_despacho: 'Por cuenta del emisor a instalaciones cliente',
       tipo_traslado: 'Venta por efectuar',
@@ -133,7 +143,8 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
         estado: data.estado,
         total: data.total,
         receptor: data.receptor,
-        fecha: data.identificacion.fecha,
+        // We parse the firestore timestamp to a string
+        fecha: data.identificacion.fecha.toDate().toISOString(),
         url: data?.pdf_url ? data.pdf_url : '',
       };
       guiasSummary.push(guiaData);

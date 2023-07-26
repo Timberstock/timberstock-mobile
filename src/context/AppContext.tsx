@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-} from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { GuiaDespachoSummaryProps } from '../interfaces/guias';
 import { EmpresaSubCollectionsData } from '../interfaces/firestore';
 import { Empresa } from '../interfaces/empresa';
@@ -112,7 +106,8 @@ const AppProvider = ({ children }: any) => {
                 estado: data?.estado,
                 total: data?.total,
                 receptor: data?.receptor,
-                fecha: data?.identificacion.fecha,
+                // we parse firestore timestamp to string
+                fecha: data?.identificacion.fecha.toDate().toISOString(),
                 url: data?.url,
               };
               return newGuias.push(guiaData);

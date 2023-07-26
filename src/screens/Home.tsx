@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   FlatList,
   Linking,
+  Modal,
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
+import FoliosRequestModal from '../components/FoliosRequestModal';
+import { requestReservarFolios } from '../functions/firebase/cloud_functions';
 import { GuiaDespachoSummaryProps } from '../interfaces/guias';
 import { HomeScreenProps } from '../interfaces/screens';
 import { Alert } from 'react-native';
@@ -27,20 +30,34 @@ import { generatePDF } from '../functions/screenFunctions';
 
 export default function Home(props: HomeScreenProps) {
   const { navigation } = props;
-  const { user } = useContext(UserContext);
+  const { user, updateUserReservedFolios } = useContext(UserContext);
   const { empresa, guiasSummary, updateGuiasSummary, updateFoliosDisp } =
     useContext(AppContext);
 
   const [loading, setLoading] = useState(true);
-
-  // TODO: we will have to use useMemo because eventually, we are going
-  // to load things faster and from before the screen visited again
-  // we can check if the data is already loaded and if it is, we don't
-  // have to load it again nor show the loading icon.
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     handleRefresh();
   }, []);
+
+  const handleGetFolios = async (numFolios: number) => {
+    //TODO: Loading icon
+
+    // Call the function to reserve the folios
+    if (user === null || user.firebaseAuth === null || numFolios <= 0) return;
+
+    const response = await requestReservarFolios(
+      user.firebaseAuth.uid,
+      numFolios
+    );
+
+    // Update the user's folios locally
+    await updateUserReservedFolios(response.folios_reservados, response.cafs);
+
+    // Close the modal after successful action
+    setModalVisible(false);
+  };
 
   const handleRefresh = async () => {
     // THIS ONLY WILL BE RUN IF WE ARE LOGGED IN
@@ -49,19 +66,19 @@ export default function Home(props: HomeScreenProps) {
       try {
         console.log('REFRESHING');
         const empresaGuias = await fetchGuiasDocs(user.empresa_id);
-        updateFoliosDisp(empresaGuias, empresa.caf_n);
+        // updateFoliosDisp(empresaGuias, empresa.caf_n);
         updateGuiasSummary(empresaGuias);
 
         setLoading(false);
         console.log('DONE');
       } catch (error) {
-        Alert.alert('Error', 'No se pudo obtener la información de la empresa');
+        Alert.alert(
+          'Error al cargar guías',
+          'No se pudo obtener la información de la empresa'
+        );
       }
     } else {
-      Alert.alert(
-        'No se encuentra la empresa de usuario',
-        'No se pudo obtener la información de la empresa'
-      );
+      Alert.alert('Error', 'Error al cargar empresa_id del usuario');
     }
   };
 
@@ -104,18 +121,43 @@ export default function Home(props: HomeScreenProps) {
           onRefresh={handleRefresh}
           refreshing={loading}
         />
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.push('CreateGuia')}
-          // Just for testing
-          // onPress={async () => {
-          // await _createGuiaTest(2);
-          // await generatePDF();
-          // }}
-        >
-          <Text style={styles.buttonText}> Crear Nueva Guía de Despacho </Text>
-        </TouchableOpacity>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.buttonText}> Solicitar Folios </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            // style={styles.button}
+            style={[
+              styles.button,
+              user?.folios_reservados.length === 0 && styles.disabledButton,
+            ]}
+            onPress={() => navigation.push('CreateGuia')}
+            disabled={
+              user?.folios_reservados?.length &&
+              user.folios_reservados.length > 0
+                ? false
+                : true
+            }
+            // Just for testing
+            // onPress={async () => {
+            // await _createGuiaTest(2);
+            // await generatePDF();
+            // }}
+          >
+            <Text style={styles.buttonText}>
+              {' '}
+              Crear Nueva Guía de Despacho{' '}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
+      <FoliosRequestModal
+        modalVisible={modalVisible}
+        handleGetFolios={handleGetFolios}
+      />
     </View>
   );
 }
@@ -128,7 +170,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: {
-    flex: 9,
+    flex: 9.5,
+    width: '100%',
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+  },
+  buttonsContainer: {
+    flex: 0.5,
     width: '100%',
     backgroundColor: colors.white,
     justifyContent: 'center',
@@ -143,11 +191,13 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: colors.secondary,
-    borderRadius: 12,
+    borderRadius: 15,
     padding: 15,
-    margin: 10,
-    marginBottom: '5%',
+    margin: 5,
     alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: 'gray',
   },
   buttonText: {
     color: colors.white,

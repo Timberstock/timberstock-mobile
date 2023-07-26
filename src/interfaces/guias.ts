@@ -23,7 +23,7 @@ export interface ReferenciaDTE {
 
 // 3rd Level Interfaces
 export interface Identificacion {
-  fecha?: string; // Optional because it's set in the function at the moment of creation
+  fecha?: Date; // Optional because it's set in the function at the moment of creation
   folio: number;
   tipo_traslado: string;
   tipo_despacho: string;
@@ -58,15 +58,6 @@ export interface Transporte {
 export interface Totales {
   monto_total: number;
   monto_neto: number;
-}
-
-export interface GuiaDespachoProps {
-  identificacion: Identificacion;
-  emisor: Emisor;
-  receptor: Receptor;
-  transporte: Transporte;
-  detalles: DetalleDTE[];
-  totales: Totales;
 }
 
 export interface GuiaDespachoSummaryProps {
