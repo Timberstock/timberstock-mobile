@@ -79,3 +79,26 @@ export const retrieveUserSafe = async (userUid: string) => {
     }
   }
 };
+
+export const updateUserFirestore = async (
+  userUid: string,
+  newFoliosReservados: number[],
+  newCafs?: string[]
+) => {
+  try {
+    if (!newCafs) {
+      await firestore().collection('usuarios').doc(userUid).update({
+        folios_reservados: newFoliosReservados,
+      });
+    } else {
+      await firestore().collection('usuarios').doc(userUid).update({
+        folios_reservados: newFoliosReservados,
+        cafs: newCafs,
+      });
+    }
+    return 200;
+  } catch (e) {
+    console.error(e);
+    throw new Error('Error al actualizar usuario');
+  }
+};

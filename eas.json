@@ -24,6 +24,12 @@
     "production": {}
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "mateo.o1998p@gmail.com",
+        "ascAppId": "6447784213",
+        "appleTeamId": "ZHHL8Y7RZR"
+      }
+    }
   }
 }

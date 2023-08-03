@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-} from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { GuiaDespachoSummaryProps } from '../interfaces/guias';
 import { EmpresaSubCollectionsData } from '../interfaces/firestore';
 import { Empresa } from '../interfaces/empresa';
@@ -25,11 +19,6 @@ type AppContextType = {
   updateEmpresa: (empresa: Empresa) => void;
   subCollectionsData: EmpresaSubCollectionsData;
   updateSubCollectionsData: (data: EmpresaSubCollectionsData) => void;
-  foliosDisp: number[];
-  updateFoliosDisp: (
-    newGuias: GuiaDespachoSummaryProps[],
-    caf_n: number
-  ) => void;
 };
 
 const initialState = {
@@ -48,14 +37,12 @@ const initialState = {
   },
   updateEmpresa: () => {},
   subCollectionsData: {
-    foliosDisp: [],
     proveedores: [],
     predios: [],
     productos: [],
     clientes: [],
   },
   updateSubCollectionsData: () => {},
-  foliosDisp: [],
   updateFoliosDisp: () => {},
 };
 
@@ -63,7 +50,6 @@ export const AppContext = createContext<AppContextType>(initialState);
 
 const AppProvider = ({ children }: any) => {
   const { user } = useContext(UserContext);
-  const [foliosDisp, setFoliosDisp] = useState<number[]>([]);
 
   const [guiasSummary, setGuiasSummary] = useState<GuiaDespachoSummaryProps[]>(
     initialState.guiasSummary
@@ -75,14 +61,6 @@ const AppProvider = ({ children }: any) => {
 
   const updateEmpresa = (empresa: Empresa) => {
     setEmpresa(empresa);
-  };
-
-  const updateFoliosDisp = (
-    newGuias: GuiaDespachoSummaryProps[],
-    caf_n: number
-  ) => {
-    const newFoliosDisp = customHelpers.getFoliosDisp(newGuias, caf_n);
-    setFoliosDisp(newFoliosDisp);
   };
 
   const updateGuiasSummary = (newState: GuiaDespachoSummaryProps[]) => {
@@ -112,19 +90,14 @@ const AppProvider = ({ children }: any) => {
                 estado: data?.estado,
                 total: data?.total,
                 receptor: data?.receptor,
-                fecha: data?.identificacion.fecha,
+                // we parse firestore timestamp to string
+                fecha: data?.identificacion.fecha.toDate().toISOString(),
                 url: data?.url,
               };
               return newGuias.push(guiaData);
             }
           }
         );
-        // CUANDO SE QUIERE ELIMINAR ALGO DE LA LISTA
-        // DE FIREBASE, Y QUE SE VEA REFLEJADO EN LA APP
-        // SI SE BORRA, Y LUEGO TE MUEVES MUY RAPIDO A
-        // LA PANTALLA DE 'CREAR GUIA', NO SE ALCANZAN A ACTUALIZAR
-        // LOS FOLIOS DISPONIBLES, PERO BASTA CON IR ATRAS Y REFRESCAR.
-        updateFoliosDisp(newGuias, empresa.caf_n);
         updateGuiasSummary(newGuias);
       });
     if (user?.empresa_id) {
@@ -140,7 +113,6 @@ const AppProvider = ({ children }: any) => {
             subCollectionsFetched as EmpresaSubCollectionsData
           );
           updateGuiasSummary(guiasSummaryFetched);
-          updateFoliosDisp(guiasSummaryFetched, empresaFetched.caf_n);
         } catch (err: any) {
           console.log(err);
           Alert.alert(err);
@@ -158,8 +130,6 @@ const AppProvider = ({ children }: any) => {
     updateEmpresa,
     subCollectionsData,
     updateSubCollectionsData,
-    foliosDisp,
-    updateFoliosDisp,
   };
   return (
     <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './src/screens/Home';
@@ -18,7 +18,7 @@ const Stack = createNativeStackNavigator();
 
 // This works really weird, try playing with emulator and with index.js if doesn't work
 // import firestore from '@react-native-firebase/firestore';
-firestore().useEmulator('localhost', 8080);
+// firestore().useEmulator('localhost', 8080);
 
 export default function App() {
   const deleteCache = async (): Promise<number> => {
@@ -40,7 +40,7 @@ export default function App() {
   const handleLoadApp = () => {
     console.log('Loading the app...');
     setLoadApp(true);
-    // Implement your app loading logic here
+    // TODO: arreglar los re renders y cosas entre medio que hacen que se vea feo
   };
 
   const handleClearCache = async () => {

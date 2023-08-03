@@ -29,7 +29,8 @@ import { UserContext } from '../context/UserContext';
 // TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
   const { navigation } = props;
-  const { empresa, subCollectionsData, foliosDisp } = useContext(AppContext);
+  const { empresa, subCollectionsData } = useContext(AppContext);
+  const { user } = useContext(UserContext);
 
   const {
     options,
@@ -50,14 +51,17 @@ export default function CreateGuia(props: any) {
   const planDeManejoRef = useRef() as MutableRefObject<SelectRef>;
 
   useEffect(() => {
+    // After loading the screen, update all the options that we will need with the latest possible values
+    console.log(`CreateGuiaScreen user: ${user?.folios_reservados}`);
     setOptions({
       ...options,
-      folios: foliosOptions(foliosDisp),
+      // in stead of updating with foliosDisp, we update with the folios from the user.
+      folios: foliosOptions(user?.folios_reservados || []),
       clientes: clientesOptions(subCollectionsData.clientes),
       predios: prediosOptions(subCollectionsData.predios),
       proveedores: proveedoresOptions(subCollectionsData.proveedores),
     });
-  }, []);
+  }, [user]);
 
   const handleAddProductos = () => {
     if (
