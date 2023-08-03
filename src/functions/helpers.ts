@@ -1,5 +1,4 @@
 import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import { GuiaDespachoSummaryProps } from '../interfaces/guias';
 import { PreGuia } from '../interfaces/firestore';
 import { DetallesPDF } from '../interfaces/detalles';
 
@@ -36,38 +35,11 @@ const formatDate = (date: Date) => {
   ].join(':')}`;
 };
 
-const getFoliosDisp = (guias: GuiaDespachoSummaryProps[], caf_n: number) => {
-  const folios: number[] = [];
-  const foliosNoDisp: number[] = [];
-
-  // Primero agregamos todos los folios que ya estan bloqueados
-  // a la lista de folios no disponibles
-  try {
-    guias.map((guia) => {
-      if (
-        guia.estado === 'aceptada' ||
-        guia.estado === 'emitida' ||
-        guia.estado === 'pendiente' ||
-        guia.estado === 'sin conexion'
-      )
-        foliosNoDisp.push(guia.folio);
-    });
-    // Luego agregamos todos los folios que esten disponibles desde el 1
-    // hasta el maximo folio posible, segun el numero de CAFs solicitados
-    // en la empresa.
-    // TODO: probablemente sea un numero mayor a 5, actualizar cuando se decida.
-    const max_folio_posible = caf_n * 5;
-    for (let i = 1; i <= max_folio_posible; i++) {
-      if (!foliosNoDisp.includes(i)) folios.push(i);
-    }
-    return folios;
-  } catch (e) {
-    console.log(e);
-    return [];
-  }
-};
-
-const createPDFHTMLString = (DTE: PreGuia, guiaDate: string) => {
+const createPDFHTMLString = async (
+  DTE: PreGuia,
+  guiaDate: string,
+  barcode: { uri: string; width: number; height: number }
+) => {
   const _detallesToDescripcionTable = (detallesList: DetallesPDF[]) => {
     const _productosToTags = (productosList: DetallesPDF[]) => {
       // returns object of strings composed of concatenated <p> tags with the product names, quantities and prices
@@ -446,6 +418,7 @@ const createPDFHTMLString = (DTE: PreGuia, guiaDate: string) => {
     </table>
   `;
 
+  // change pdf417 for its recommended size if it can't be read easily from device '<img src="${barcode.uri}" style="width: ${barcode.width}px; height: ${barcode.height}px" />'
   const htmlBody = `
     <body>
       ${empresaInfo}
@@ -453,6 +426,9 @@ const createPDFHTMLString = (DTE: PreGuia, guiaDate: string) => {
       ${detalles}
       ${totales}
       <p><br /></p>
+      <div style="text-align: center; style="position: absolute; left: 187.5px">
+      '<img src="${barcode.uri}" style="width: 275px; height: 132px" />'
+      </div>
     </body>
   `;
 
@@ -470,7 +446,6 @@ const customHelpers = {
   fromFirebaseDateToJSDate,
   daysSinceFirestoreTimestamp,
   formatDate,
-  getFoliosDisp,
   createPDFHTMLString,
 };
 

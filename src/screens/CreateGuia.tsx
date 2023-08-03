@@ -29,7 +29,7 @@ import { UserContext } from '../context/UserContext';
 // TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
   const { navigation } = props;
-  const { empresa, subCollectionsData, foliosDisp } = useContext(AppContext);
+  const { empresa, subCollectionsData } = useContext(AppContext);
   const { user } = useContext(UserContext);
 
   const {

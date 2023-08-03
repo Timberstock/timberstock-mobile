@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState, useCallback } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   FlatList,
   Linking,
-  Modal,
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
@@ -19,22 +18,19 @@ import { Alert } from 'react-native';
 import { AppContext } from '../context/AppContext';
 
 import { UserContext } from '../context/UserContext';
-import customHelpers from '../functions/helpers';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {
   _createGuiaTest,
   fetchGuiasDocs,
 } from '../functions/firebase/firestore/guias';
 
-import { generatePDF } from '../functions/screenFunctions';
-
 export default function Home(props: HomeScreenProps) {
   const { navigation } = props;
   const { user, updateUserReservedFolios } = useContext(UserContext);
-  const { empresa, guiasSummary, updateGuiasSummary, updateFoliosDisp } =
-    useContext(AppContext);
+  const { guiasSummary, updateGuiasSummary } = useContext(AppContext);
 
   const [loading, setLoading] = useState(true);
+  const [foliosRequestLoading, setFoliosRequestLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
@@ -42,10 +38,12 @@ export default function Home(props: HomeScreenProps) {
   }, []);
 
   const handleGetFolios = async (numFolios: number) => {
-    //TODO: Loading icon
+    //TODO: Fix the Loading icon to not make the size of the Modal change
 
     // Call the function to reserve the folios
     if (user === null || user.firebaseAuth === null || numFolios <= 0) return;
+
+    setFoliosRequestLoading(true);
 
     const response = await requestReservarFolios(
       user.firebaseAuth.uid,
@@ -56,6 +54,7 @@ export default function Home(props: HomeScreenProps) {
     await updateUserReservedFolios(response.folios_reservados, response.cafs);
 
     // Close the modal after successful action
+    setFoliosRequestLoading(false);
     setModalVisible(false);
   };
 
@@ -129,7 +128,6 @@ export default function Home(props: HomeScreenProps) {
             <Text style={styles.buttonText}> Solicitar Folios </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            // style={styles.button}
             style={[
               styles.button,
               user?.folios_reservados.length === 0 && styles.disabledButton,
@@ -142,9 +140,19 @@ export default function Home(props: HomeScreenProps) {
                 : true
             }
             // Just for testing
+            // style={styles.button}
             // onPress={async () => {
-            // await _createGuiaTest(2);
-            // await generatePDF();
+            //   const testFolio = 4;
+            //   const testCAFNumber = Math.floor((testFolio - 1) / 5);
+            //   const testGuia = await _createGuiaTest(testFolio);
+            //   const date = new Date();
+            //   if (user && user.cafs) {
+            //     await generatePDF(
+            //       testGuia,
+            //       date.toISOString(),
+            //       user.cafs[testCAFNumber]
+            //     );
+            //   }
             // }}
           >
             <Text style={styles.buttonText}>
@@ -155,6 +163,7 @@ export default function Home(props: HomeScreenProps) {
         </View>
       </View>
       <FoliosRequestModal
+        foliosRequestLoading={foliosRequestLoading}
         modalVisible={modalVisible}
         handleGetFolios={handleGetFolios}
       />
@@ -206,5 +215,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     right: '5%',
+  },
+  box: {
+    width: 200,
+    height: 200,
+    marginVertical: 20,
   },
 });

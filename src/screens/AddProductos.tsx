@@ -108,12 +108,14 @@ export default function AddProductos(props: any) {
       console.log('Creando Guía...');
       if (user && user.firebaseAuth && user.empresa_id) {
         // When we upload guias, we need Firebase to be able to parse the date correctly
-        console.log(guia);
 
         // We retrieve the date on which the guia was created as ISOString for consistency and not using Date (mutable object warning)
         const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
 
-        await generatePDF(guia, guiaDate as string);
+        const CAF = user.cafs[Math.floor((guia.identificacion.folio - 1) / 5)];
+
+        // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
+        await generatePDF(guia, guiaDate as string, CAF);
 
         // Remove the folio from the list of folios_reserved
         const newFoliosReserved = user.folios_reservados.filter(

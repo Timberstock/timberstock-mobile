@@ -80,7 +80,7 @@ export const UserContextProvider = ({ children }: any) => {
           folios_reservados: [
             ...new Set([...user.folios_reservados, ...newReservedFolios]),
           ],
-          cafs: [...user.cafs, ...newCafs],
+          cafs: { ...user.cafs, ...newCafs },
         };
       } else {
         // case we are not updating the user's cafs

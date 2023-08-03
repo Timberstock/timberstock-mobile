@@ -37,11 +37,11 @@ export const createGuiaDoc = async (
   }
 };
 
-export const _createGuiaTest = (folio: number) => {
+export const _createGuiaTest = async (folio: number) => {
   console.log('[TEST GUIA CREATION]');
   const rutEmpresa = '770685532';
   const guia = {
-    despacho: {
+    transporte: {
       chofer: {
         nombre: 'Chofer de Prueba',
         rut: '19810662-3',
@@ -104,10 +104,9 @@ export const _createGuiaTest = (folio: number) => {
   };
 
   try {
-    console.log(guia);
     const guiaDocumentId =
       'DTE_GD_' + rutEmpresa + 'f' + guia.identificacion.folio.toString();
-    firestore()
+    await firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
       .doc(guiaDocumentId)
       .set(guia);
@@ -116,6 +115,7 @@ export const _createGuiaTest = (folio: number) => {
       'Guía agregada correctamente',
       `Guía de folio: ${guia.identificacion.folio}`
     );
+    return guia;
   } catch (e) {
     console.error('Error adding document: ', e);
     Alert.alert('Error al agregar guía');

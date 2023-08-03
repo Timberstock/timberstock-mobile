@@ -7,10 +7,11 @@ import {
   Modal,
   TextInput,
   Text,
+  ActivityIndicator,
 } from 'react-native';
 
 const FoliosRequestModal = (props: any) => {
-  const { modalVisible, handleGetFolios } = props;
+  const { foliosRequestLoading, modalVisible, handleGetFolios } = props;
   const [numFolios, setNumFolios] = useState('');
 
   return (
@@ -35,6 +36,9 @@ const FoliosRequestModal = (props: any) => {
             >
               <Text style={styles.acceptButtonText}>Accept</Text>
             </TouchableOpacity>
+            {foliosRequestLoading && (
+              <ActivityIndicator size="large" color="#4E4E4E" />
+            )}
           </View>
         </View>
       </Modal>

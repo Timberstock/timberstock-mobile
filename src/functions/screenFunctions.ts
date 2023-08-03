@@ -5,9 +5,13 @@ import { Cliente, PreGuia, Trozo } from '../interfaces/firestore';
 import { Receptor, Transporte } from '../interfaces/guias';
 import { IOptions } from '../interfaces/screens';
 import CustomHelpers from '../functions/helpers';
+import getTED from '../functions/timbre';
 import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
+
+// @ts-ignore
+import { pdf417 } from 'bwip-js';
 
 export const handleSelectClienteLogic = (
   option: IOptions | null,
@@ -150,10 +154,32 @@ export const handleSelectProveedorLogic = (
   });
 };
 
-export const generatePDF = async (guia: PreGuia, guiaDate: string) => {
+export const generatePDF = async (
+  guia: PreGuia,
+  guiaDate: string,
+  CAF: string
+) => {
   try {
-    // Prepare the HTML content for the PDF
-    const html = CustomHelpers.createPDFHTMLString(guia, guiaDate);
+    // get TED
+    const TED = await getTED(CAF, guia);
+    console.log('TED GENERADO');
+
+    // Generate the barcode
+    const barcode = await pdf417({
+      bcid: 'pdf417',
+      text: TED,
+    });
+
+    console.log('barcode GENERADO');
+
+    // Prepare the HTML content for the PDF with the barcode
+    const html = await CustomHelpers.createPDFHTMLString(
+      guia,
+      guiaDate,
+      barcode
+    );
+
+    console.log('html GENERADO');
 
     // Generate the PDF using Expo's print module
     const { uri } = await Print.printToFileAsync({ html: html });
