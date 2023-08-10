@@ -90,7 +90,7 @@ const AppProvider = ({ children }: any) => {
                 estado: data?.estado,
                 total: data?.total,
                 receptor: data?.receptor,
-                // we parse firestore timestamp to string
+                // parse firestore timestamp to string
                 fecha: data?.identificacion.fecha.toDate().toISOString(),
                 url: data?.url,
               };

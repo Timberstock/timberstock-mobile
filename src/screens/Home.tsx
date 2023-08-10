@@ -59,7 +59,7 @@ export default function Home(props: HomeScreenProps) {
   };
 
   const handleRefresh = async () => {
-    // THIS ONLY WILL BE RUN IF WE ARE LOGGED IN
+    // THIS SHOULD ONLY BE RUN IF WE ARE LOGGED IN
     if (user === null) return;
     if (user.empresa_id) {
       try {

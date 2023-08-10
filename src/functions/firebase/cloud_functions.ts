@@ -6,8 +6,12 @@ export async function requestReservarFolios(
   n_folios: number
 ): Promise<requestReservarFoliosResponse> {
   try {
+    console.log('Solicitando folios...');
     const response = await axios.post(
-      `http://127.0.0.1:5001/timberstock-firebase/us-central1/reservarFolios`,
+      //dev
+      // `http://127.0.0.1:5001/timberstock-firebase/us-central1/reservarFolios`,
+      //prod
+      `https://us-central1-timberstock-firebase.cloudfunctions.net/reservarFolios`,
       {
         data: {
           uid: uid,
@@ -15,6 +19,7 @@ export async function requestReservarFolios(
         },
       }
     );
+    console.log(`Folios recibidos: ${n_folios}`);
     return response.data;
   } catch (error) {
     console.error(`Error: ${error}`);
