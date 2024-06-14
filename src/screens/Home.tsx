@@ -38,7 +38,7 @@ export default function Home(props: HomeScreenProps) {
   }, []);
 
   const handleGetFolios = async (numFolios: number) => {
-    //TODO: Fix the Loading icon to not make the size of the Modal change
+    // TODO: Fix the Loading icon to not make the size of the Modal change
 
     // Call the function to reserve the folios
     if (user === null || user.firebaseAuth === null || numFolios <= 0) return;
@@ -120,51 +120,49 @@ export default function Home(props: HomeScreenProps) {
           onRefresh={handleRefresh}
           refreshing={loading}
         />
-        <View style={styles.buttonsContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.buttonText}> Solicitar Folios </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              user?.folios_reservados.length === 0 && styles.disabledButton,
-            ]}
-            onPress={() => navigation.push('CreateGuia')}
-            disabled={
-              user?.folios_reservados?.length &&
-              user.folios_reservados.length > 0
-                ? false
-                : true
-            }
-            // Just for testing
-            // style={styles.button}
-            // onPress={async () => {
-            //   const testFolio = 4;
-            //   const testCAFNumber = Math.floor((testFolio - 1) / 5);
-            //   const testGuia = await _createGuiaTest(testFolio);
-            //   const date = new Date();
-            //   if (user && user.cafs) {
-            //     await generatePDF(
-            //       testGuia,
-            //       date.toISOString(),
-            //       user.cafs[testCAFNumber]
-            //     );
-            //   }
-            // }}
-          >
-            <Text style={styles.buttonText}>
-              {' '}
-              Crear Nueva Guía de Despacho{' '}
-            </Text>
-          </TouchableOpacity>
-        </View>
+      </View>
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.buttonText}> Solicitar Folios </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            user?.folios_reservados.length === 0 && styles.disabledButton,
+          ]}
+          onPress={() => navigation.push('CreateGuia')}
+          disabled={
+            // TESTING:
+            user?.folios_reservados?.length && user.folios_reservados.length > 0
+              ? false
+              : true
+          }
+          // Just for testing
+          // style={styles.button}
+          // onPress={async () => {
+          //   const testFolio = 4;
+          //   const testCAFNumber = Math.floor((testFolio - 1) / 5);
+          //   const testGuia = await _createGuiaTest(testFolio);
+          //   const date = new Date();
+          //   if (user && user.cafs) {
+          //     await generatePDF(
+          //       testGuia,
+          //       date.toISOString(),
+          //       user.cafs[testCAFNumber]
+          //     );
+          //   }
+          // }}
+        >
+          <Text style={styles.buttonText}> Crear Nueva Guía de Despacho </Text>
+        </TouchableOpacity>
       </View>
       <FoliosRequestModal
         foliosRequestLoading={foliosRequestLoading}
         modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
         handleGetFolios={handleGetFolios}
       />
     </View>
@@ -179,13 +177,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: {
-    flex: 9.5,
+    flex: 8,
     width: '100%',
     backgroundColor: colors.white,
     justifyContent: 'center',
   },
   buttonsContainer: {
-    flex: 0.5,
+    flex: 2,
     width: '100%',
     backgroundColor: colors.white,
     justifyContent: 'center',

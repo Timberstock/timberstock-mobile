@@ -1,127 +1,307 @@
-import React, { useEffect, useRef, MutableRefObject, useContext } from 'react';
+// Arreglo de renderkeys para que se actualicen los selects desde https://github.com/MobileReality/react-native-select-pro/issues/237
+import React, {
+  useEffect,
+  useRef,
+  MutableRefObject,
+  useContext,
+  useState,
+} from 'react';
 import {
   StyleSheet,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
-import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
 import {
-  clientesOptions,
-  foliosOptions,
-  prediosOptions,
-  proveedoresOptions,
-} from '../resources/options';
-import {
-  handleSelectPredioLogic,
-  handleSelectClienteLogic,
-  handleSelectProveedorLogic,
-} from '../functions/screenFunctions';
-import { createGuiaScreenHooks } from '../functions/screenHooks';
+  Select,
+  SelectRef,
+  SelectStyles,
+} from '@mobile-reality/react-native-select-pro';
+import { CheckBox } from 'react-native-elements';
 import { AppContext } from '../context/AppContext';
 import { UserContext } from '../context/UserContext';
+import { CreateGuiaContext } from '../context/CreateGuiaContext';
+import { IOption } from '../interfaces/screens';
+import {
+  ContratosFiltered,
+  CreateGuiaOptions,
+  GuiaInCreateGuiaScreen,
+  IOptionTransportes,
+} from '../interfaces/screens/createGuia';
+import {
+  parseClientesFromContratosVenta,
+  parseFaenasFromContratosVenta,
+  parseProveedoresFromContratosCompra,
+  parseTransportesOptionsFromContratosCompra,
+  tipoDespachoOptions,
+  tipoTrasladoOptions,
+} from '../resources/options';
+import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
+import { Cliente, ContratoVenta } from '../interfaces/contratos/contratoVenta';
+import { createGuiaInitialStates } from '../resources/initialStates';
+import {
+  getInitializationOptions,
+  isGuiaValid,
+  selectClienteLogic,
+  selectPredioLogic,
+} from '../functions/screens/createGuia';
+import OverlayLoading from '../resources/OverlayLoading';
 
+// TODO: Before entering this screen, we have to make sure that the user was logged in correctly and that we have the data loaded.
 // TODO 1: ADD FIELDS VALIDATIONS, BOTH FOR COMPLETENESS AND CORRECTNESS
 // TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
   const { navigation } = props;
-  const { empresa, subCollectionsData } = useContext(AppContext);
+  const { empresa } = useContext(AppContext);
   const { user } = useContext(UserContext);
+  const { contratosCompra, contratosVenta } = useContext(AppContext);
+  const [renderKey, setRenderKey] = useState(0);
 
-  const {
-    options,
-    setOptions,
-    identificacion,
-    setIdentificacion,
-    receptor,
-    setReceptor,
-    despacho,
-    setDespacho,
-    predio,
-    setPredio,
-    proveedor,
-    setProveedor,
-  } = createGuiaScreenHooks();
+  const [contratosFiltered, setContratosFiltered] = useState<ContratosFiltered>(
+    createGuiaInitialStates.contratosFiltered
+  );
 
-  const despachoRef = useRef() as MutableRefObject<SelectRef>;
-  const planDeManejoRef = useRef() as MutableRefObject<SelectRef>;
+  const [options, setOptions] = useState<CreateGuiaOptions>(
+    createGuiaInitialStates.options
+  );
+
+  // TODO: Only guia could be managed in GuiaContext
+  const [guia, setGuia] = useState<GuiaInCreateGuiaScreen>(
+    createGuiaInitialStates.guia
+  );
+
+  const [certChecked, setCertChecked] = useState(false);
+
+  const predioRef = useRef() as MutableRefObject<SelectRef>;
+  const proveedorRef = useRef() as MutableRefObject<SelectRef>;
+  const direccionDespachoRef = useRef() as MutableRefObject<SelectRef>;
+  const empresaTransporteRef = useRef() as MutableRefObject<SelectRef>;
+  const choferRef = useRef() as MutableRefObject<SelectRef>;
+  const camionRef = useRef() as MutableRefObject<SelectRef>;
+
+  const [optionsInitialized, setOptionsInitialized] = useState(false);
+
+  const getClientesOptions = (contratosVenta: any[]) => {
+    const uniqueClientes = new Map();
+
+    contratosVenta.forEach((contrato) => {
+      if (contrato.cliente) {
+        const { razon_social, rut } = contrato.cliente;
+
+        // Avoiding duplicates by using the 'rut' as a unique key
+        if (!uniqueClientes.has(rut)) {
+          uniqueClientes.set(rut, {
+            label: razon_social,
+            value: rut,
+          });
+        }
+      }
+    });
+
+    return Array.from(uniqueClientes.values());
+  };
+
+  const contratosVentaDummy = [
+    {
+      cliente: {
+        comuna: 'NACIMIENTO',
+        destinos: [],
+        direccion: 'AVDA JULIO HEMMELMANN 320',
+        razon_social: 'CMPC PULP SPA',
+        rut: '96532330-9',
+      },
+      faenas: [[], []],
+      fecha_caducidad: [],
+      fecha_firma: [],
+      id: '3hd9gBxL0b4FXalZjPJS',
+      productos: [[], []],
+      vigente: true,
+    },
+    // {
+    //   cliente: {
+    //     comuna: 'SAN PEDRO DE LA PAZ',
+    //     destinos: [],
+    //     direccion: 'CAMINO A CORONEL 6058',
+    //     razon_social: 'BLOCKS AND CUTSTOCK S A ',
+    //     rut: '96862800-3',
+    //   },
+    //   faenas: [[], []],
+    //   fecha_caducidad: [],
+    //   fecha_firma: [],
+    //   id: 'b0hpJSUmQijPAgTpgTEV',
+    //   id_contrato_anterior: 'PdABelZhx4OZRptw29Tk',
+    //   productos: [[]],
+    //   vigente: true,
+    // },
+  ];
+
+  const clientesOptions = getClientesOptions(contratosVentaDummy);
+
+  const renderCount = useRef(0);
+  useEffect(() => {
+    renderCount.current = renderCount.current + 1;
+    console.log('options', options);
+    console.log(`Render number: ${renderCount.current}`);
+  });
 
   useEffect(() => {
-    // After loading the screen, update all the options that we will need with the latest possible values
-    console.log(`CreateGuiaScreen user: ${user?.folios_reservados}`);
-    setOptions({
-      ...options,
-      // in stead of updating with foliosDisp, we update with the folios from the user.
-      folios: foliosOptions(user?.folios_reservados || []),
-      clientes: clientesOptions(subCollectionsData.clientes),
-      predios: prediosOptions(subCollectionsData.predios),
-      proveedores: proveedoresOptions(subCollectionsData.proveedores),
-    });
-  }, [user]);
-
-  const handleAddProductos = () => {
+    // Run only once after loading contratosCompraFiltered and contratosVentaFiltered for the first time
     if (
-      !(
-        identificacion.folio &&
-        identificacion.tipo_despacho &&
-        identificacion.tipo_traslado
-      ) ||
-      !(receptor.razon_social && receptor.direccion) ||
-      !(
-        despacho.chofer.nombre &&
-        despacho.chofer.rut &&
-        despacho.patente &&
-        despacho.rut_transportista
-      ) ||
-      !predio.rol ||
-      !proveedor.razon_social
+      !optionsInitialized &&
+      contratosCompra.length > 0 &&
+      contratosVenta.length > 0 &&
+      user
     ) {
+      const contratos = {
+        compra: contratosCompra,
+        venta: contratosVenta,
+      };
+      // If I modify contratosFiltered will it modify contratosCompra and contratosVenta?
+      setContratosFiltered({
+        compra: contratosCompra,
+        venta: contratosVenta,
+      });
+      const newOptions = getInitializationOptions(
+        contratos,
+        user.folios_reservados
+      );
+      setRenderKey((prevKey) => prevKey + 1);
+      setOptions(newOptions);
+      setOptionsInitialized(true);
+    }
+  }, [contratosCompra, contratosVenta, user]);
+
+  // useEffect(() => {
+  //   console.log('\n\n');
+  //   console.log('GUIA:');
+  //   console.log(guia);
+  //   console.log('OPTIONS:');
+  //   console.log(options);
+  //   console.log('CONTRATOS:');
+  //   console.log(contratosFiltered);
+  // });
+
+  const handleCertToggle = () => {
+    setCertChecked(!certChecked);
+  };
+
+  const handleNavigateToAddProductos = () => {
+    if (!isGuiaValid(guia)) {
       alert('Debes llenar todos los campos');
       return;
     }
-    navigation.push('AddProductos', {
+    if (!certChecked) {
+      guia.predio.certificado = '';
+    }
+    return;
+
+    navigation.push('Products', {
       data: {
         guia: {
+          identificacion: guia.identificacion,
+          receptor: guia.receptor,
+          predio: guia.predio,
+          proveedor: guia.proveedor,
           emisor: empresa.emisor,
-          identificacion,
-          receptor,
-          transporte: despacho, // Just to keep structure correct with PreGuia
-          predio,
+          transporte: guia.despacho, // Just to keep structure correct with PreGuia
         },
+        // contratoVenta: contratosVentaFiltered[0],
       },
     });
   };
 
-  const handleSelectCliente = (option: any) => {
-    handleSelectClienteLogic(
-      option,
-      subCollectionsData,
-      options,
-      despachoRef,
-      despacho,
-      setDespacho,
-      setReceptor
-    );
-  };
+  function selectFolioHandler(option: IOption | null) {
+    setGuia({
+      ...guia,
+      identificacion: {
+        ...guia.identificacion,
+        folio: parseInt(option?.value || '-1'),
+      },
+    });
+  }
 
-  const handleSelectPredio = (option: any) => {
-    handleSelectPredioLogic(
-      option,
-      subCollectionsData,
-      options,
-      planDeManejoRef,
-      predio,
-      setPredio
-    );
-  };
+  function selectTipoDespachoHandler(option: IOption | null) {
+    setGuia({
+      ...guia,
+      identificacion: {
+        ...guia.identificacion,
+        tipo_despacho: option?.value || '',
+      },
+    });
+  }
 
-  const handleSelectProveedor = (option: any) => {
-    handleSelectProveedorLogic(option, subCollectionsData, setProveedor);
-  };
+  function selectTipoTrasladoHandler(option: IOption | null) {
+    setGuia({
+      ...guia,
+      identificacion: {
+        ...guia.identificacion,
+        tipo_traslado: option?.value || '',
+      },
+    });
+  }
+
+  function selectClienteHandler(option: IOption | null) {
+    const { newGuia, newContratosFiltered, newOptions } = selectClienteLogic(
+      option,
+      options,
+      guia,
+      contratosCompra,
+      contratosVenta
+    );
+
+    direccionDespachoRef.current?.clear();
+    proveedorRef.current?.clear();
+    predioRef.current?.clear();
+    empresaTransporteRef.current?.clear();
+    choferRef.current?.clear();
+    camionRef.current?.clear();
+
+    setGuia(newGuia);
+    setOptions(newOptions);
+    setRenderKey((prevKey) => prevKey + 1);
+    setContratosFiltered(newContratosFiltered);
+  }
+
+  function selectDireccionDespachoHandler(option: IOption | null) {
+    empresaTransporteRef.current?.clear();
+    choferRef.current?.clear();
+    camionRef.current?.clear();
+
+    setGuia({
+      ...guia,
+      despacho: {
+        ...createGuiaInitialStates.guia.despacho, // Reset empresa chofer and camion
+        direccion_destino: option?.value || '',
+      },
+    });
+  }
+
+  function selectPredioHandler(option: IOption | null) {
+    const { newGuia, newContratosFiltered, newOptions } = selectPredioLogic(
+      option,
+      options,
+      guia,
+      contratosFiltered,
+      contratosCompra,
+      contratosVenta
+    );
+
+    console.log('newOptions', newOptions.proveedores);
+
+    proveedorRef.current?.clear();
+    empresaTransporteRef.current?.clear();
+    choferRef.current?.clear();
+    camionRef.current?.clear();
+
+    setGuia(newGuia);
+    setOptions(newOptions);
+    setRenderKey((prevKey) => prevKey + 1);
+    setContratosFiltered(newContratosFiltered);
+  }
+
   return (
     <View style={styles.screen}>
       <Header
@@ -129,261 +309,254 @@ export default function CreateGuia(props: any) {
         empresa={empresa.emisor.razon_social}
         {...props}
       />
+      <OverlayLoading loading={!optionsInitialized} />
       <View style={styles.body}>
         <ScrollView style={styles.scrollView}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}> Identificación </Text>
+            <Select
+              styles={selectStyles}
+              placeholderText="Nº Folio"
+              animation={true}
+              options={options.folios}
+              defaultOption={options.folios.find(
+                (option) =>
+                  option.value === guia.identificacion.folio.toString()
+              )}
+              onSelect={selectFolioHandler}
+              key={`folios-${renderKey}`}
+            />
             <View style={styles.row}>
-              <Select
-                selectContainerStyle={selectStyles.container}
-                // @ts-ignore
-                selectControlStyle={{
-                  ...selectStyles.input,
-                  ...selectStyles.input.folio,
-                }}
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Nº Folio"
-                animated={true}
-                options={options.folios}
-                onSelect={(option) =>
-                  setIdentificacion({
-                    ...identificacion,
-                    folio: parseInt(option?.value || '-1'),
-                  })
-                }
-              />
-            </View>
-            <View style={styles.row}>
-              <Select
-                selectContainerStyle={selectStyles.container}
-                selectControlStyle={selectStyles.input}
-                selectControlButtonsContainerStyle={
-                  selectStyles.buttonsContainer
-                }
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Tipo Despacho"
-                animated={true}
-                options={options.tipoDespacho}
-                onSelect={(option) =>
-                  setIdentificacion({
-                    ...identificacion,
-                    tipo_despacho: option ? option.value : '',
-                  })
-                }
-              />
-              <Select
-                selectContainerStyle={selectStyles.container}
-                selectControlStyle={selectStyles.input}
-                selectControlButtonsContainerStyle={
-                  selectStyles.buttonsContainer
-                }
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Tipo Traslado"
-                animated={true}
-                options={options.tipoTraslado}
-                onSelect={(option) =>
-                  setIdentificacion({
-                    ...identificacion,
-                    tipo_traslado: option ? option.value : '',
-                  })
-                }
-              />
+              <View style={styles.container}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Tipo Despacho"
+                  animation={true}
+                  options={options.tipoDespacho}
+                  defaultOption={options.tipoDespacho.find(
+                    (option) =>
+                      option.value === guia.identificacion.tipo_despacho
+                  )}
+                  onSelect={selectTipoDespachoHandler}
+                />
+              </View>
+              <View style={styles.container}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Tipo Traslado"
+                  animation={true}
+                  options={options.tipoTraslado}
+                  defaultOption={options.tipoTraslado.find(
+                    (option) =>
+                      option.value === guia.identificacion.tipo_traslado
+                  )}
+                  onSelect={selectTipoTrasladoHandler}
+                />
+              </View>
             </View>
           </View>
           <View style={{ ...styles.section, ...styles.section.receptor }}>
             <Text style={styles.sectionTitle}> Receptor </Text>
-            <View style={styles.row}>
-              <Select
-                selectContainerStyle={selectStyles.container}
-                // @ts-ignore
-                selectControlStyle={{
-                  ...selectStyles.input,
-                }}
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Razon Social"
-                animated={true}
-                options={options.clientes}
-                onSelect={handleSelectCliente}
-              />
-            </View>
-            <View style={styles.row}>
-              <Select
-                selectContainerStyle={selectStyles.container}
-                // @ts-ignore
-                selectControlStyle={{
-                  ...selectStyles.input,
-                }}
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Direccion Despacho"
-                animated={true}
-                disabled={receptor.razon_social === ''}
-                options={options.destinos}
-                ref={despachoRef}
-                onSelect={(option) =>
-                  setDespacho({
-                    ...despacho,
-                    direccion_destino: option?.value as unknown as string,
-                  })
-                }
-              />
-            </View>
+            <Select
+              placeholderText="Razon Social"
+              styles={selectStyles}
+              animation={true}
+              options={options.clientes}
+              defaultOption={options.clientes.find(
+                (option) => option.value === guia.receptor.razon_social
+              )}
+              onSelect={selectClienteHandler}
+              key={`clientes-${renderKey}`}
+            />
+            <Select
+              styles={selectStyles}
+              placeholderText="Direccion Despacho"
+              animation={true}
+              ref={direccionDespachoRef}
+              disabled={guia.receptor.razon_social === ''}
+              options={options.destinos}
+              defaultOption={options.destinos.find(
+                (option) => option.value === guia.despacho.direccion_destino
+              )}
+              onSelect={selectDireccionDespachoHandler}
+              key={`despachos-${renderKey}`}
+            />
             <View style={styles.row}>
               <View style={styles.textContainer}>
-                {receptor.rut !== '' && (
+                {guia.receptor.rut !== '' && (
                   <Text style={styles.text}>
-                    RUT: {receptor.rut} || Comuna: {receptor.comuna}
+                    RUT: {guia.receptor.rut} || Comuna: {guia.receptor.comuna}
                   </Text>
                 )}
-                {receptor.rut !== '' && (
+                {guia.receptor.rut !== '' && (
                   <Text style={styles.text}>
-                    Direccion: {receptor.direccion}
+                    Direccion: {guia.receptor.direccion}
                   </Text>
                 )}
-              </View>
-            </View>
-          </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}> Datos Despacho </Text>
-            <View style={styles.row}>
-              <View style={styles.container}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nombre Chofer"
-                  value={despacho.chofer.nombre}
-                  onChangeText={(e) => {
-                    setDespacho({
-                      ...despacho,
-                      chofer: {
-                        ...despacho.chofer,
-                        nombre: e,
-                      },
-                    });
-                  }}
-                />
-              </View>
-              <View style={styles.container}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="RUT (sin puntos c/ guión)"
-                  value={despacho.chofer.rut}
-                  onChangeText={(e) => {
-                    setDespacho({
-                      ...despacho,
-                      chofer: {
-                        ...despacho.chofer,
-                        rut: e,
-                      },
-                    });
-                  }}
-                />
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.container}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Patente"
-                  value={despacho.patente}
-                  onChangeText={(e) => {
-                    setDespacho({
-                      ...despacho,
-                      patente: e,
-                    });
-                  }}
-                />
-              </View>
-              <View style={styles.container}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="RUT Transportista"
-                  value={despacho.rut_transportista}
-                  onChangeText={(e) => {
-                    setDespacho({
-                      ...despacho,
-                      rut_transportista: e,
-                    });
-                  }}
-                />
               </View>
             </View>
           </View>
           <View style={{ ...styles.section, ...styles.section.predio }}>
             <Text style={styles.sectionTitle}> Origen </Text>
-            <View style={styles.row}>
-              <Select
-                selectContainerStyle={selectStyles.container}
-                selectControlStyle={{
-                  ...selectStyles.input,
-                }}
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Comuna - Predio (Origen)"
-                // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
-                // searchable={true}
-                animated={true}
-                options={options.predios}
-                onSelect={handleSelectPredio}
-              />
-            </View>
-            <View style={styles.row}>
-              <Select
-                selectContainerStyle={selectStyles.container}
-                selectControlStyle={{
-                  ...selectStyles.input,
-                }}
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Plan de Manejo"
-                animated={true}
-                disabled={predio.manzana === ''}
-                ref={planDeManejoRef}
-                options={options.planesDeManejo}
-                onSelect={(option) =>
-                  setPredio({
-                    ...predio,
-                    plan_de_manejo: [option?.value as unknown as string],
-                  })
-                }
-              />
-            </View>
+            <Select
+              styles={selectStyles}
+              placeholderText="Comuna - Predio (Origen)"
+              // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
+              // searchable={true}
+              ref={predioRef}
+              animation={true}
+              options={options.predios}
+              defaultOption={options.predios.find(
+                (option) =>
+                  option.value === `${guia.predio.comuna} | ${guia.predio.rol}`
+              )}
+              disabled={guia.receptor.razon_social === ''}
+              onSelect={selectPredioHandler}
+              key={`predios-${renderKey}`}
+            />
             <View style={styles.row}>
               <View style={styles.textContainer}>
-                {predio.rol !== '' && (
+                {guia.predio.rol !== '' && (
+                  <Text style={styles.text}>Predio: {guia.predio.rol}</Text>
+                )}
+                {guia.predio.rol !== '' && (
                   <Text style={styles.text}>
-                    Predio: {predio.manzana} - {predio.rol}
+                    GEO: {guia.predio.georreferencia.latitude},
+                    {guia.predio.georreferencia.longitude}
                   </Text>
                 )}
-                {predio.rol !== '' && (
+                {guia.predio.rol !== '' && (
                   <Text style={styles.text}>
-                    GEO: {predio.georreferencia.latitude},
-                    {predio.georreferencia.longitude}
+                    Plan de Manejo o Uso Suelo: {guia.predio.plan_de_manejo}
                   </Text>
-                )}
-                {predio.rol !== '' && (
-                  <Text style={styles.text}>CERT: {predio.certificado}</Text>
                 )}
               </View>
             </View>
+            {guia.predio.rol !== '' && (
+              <View style={styles.row}>
+                <CheckBox
+                  checked={certChecked}
+                  onPress={handleCertToggle}
+                  containerStyle={styles.checkboxContainer}
+                  textStyle={{
+                    color: certChecked ? '#2ecc71' : colors.crudo,
+                  }}
+                  // checkedColor={colors.white}
+                />
+                <Text style={styles.textCertificate}>
+                  CERT: {guia.predio.certificado}
+                </Text>
+              </View>
+            )}
           </View>
           <View style={{ ...styles.section }}>
             <Text style={styles.sectionTitle}> Proveedor A Pagar </Text>
+            <Select
+              styles={selectStyles}
+              placeholderText="Proveedor"
+              // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
+              // searchable={true}
+              animation={true}
+              disabled={
+                guia.predio.rol === '' || guia.receptor.razon_social === ''
+              }
+              options={options.proveedores}
+              ref={proveedorRef}
+              defaultOption={options.proveedores.find(
+                (option) => option.value === guia.proveedor.razon_social
+              )}
+              // onDropdownOpened={() => {
+              //   console.log(
+              //     'Render number onDropdownOpened: ',
+              //     renderCount.current
+              //   );
+              //   console.log(options.proveedores);
+              // }}
+              // onSelect={(option) => {
+              //   handleSelectProveedorLogic(
+              //     option,
+              //     empresaTransporteRef,
+              //     choferRef,
+              //     camionRef
+              //   );
+              // }}
+              key={`proveedores-${renderKey}`}
+            />
+          </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}> Datos Despacho </Text>
+            <Select
+              styles={selectStyles}
+              placeholderText="Empresa Transportista"
+              animation={true}
+              disabled={
+                guia.proveedor.razon_social === '' ||
+                guia.despacho.direccion_destino === ''
+              }
+              options={options.empresasTransporte}
+              key={`transportistas-${renderKey}`}
+              // ref={empresaTransporteRef}
+              // onSelect={(option) => {
+              //   return handleSelectEmpresaTransporteLogic(
+              //     // We add the whole transporte object to the options, so we can access the choferes and camiones
+              //     option as IOptionsTransportes,
+              //     contratosCompraFiltered,
+              //     direccionDespachoRef,
+              //     choferRef,
+              //     camionRef
+              //   );
+              // }}
+            />
             <View style={styles.row}>
-              <Select
-                selectContainerStyle={selectStyles.container}
-                selectControlStyle={{
-                  ...selectStyles.input,
-                }}
-                selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                placeholderText="Proveedores"
-                // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
-                // searchable={true}
-                animated={true}
-                options={options.proveedores}
-                onSelect={handleSelectProveedor}
-              />
+              <View style={styles.container}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Chofer"
+                  animation={true}
+                  // ref={choferRef}
+                  disabled={guia.despacho.rut_transportista === ''}
+                  options={options.choferes}
+                  key={`choferes-${renderKey}`}
+                  // onSelect={(option) => {
+                  //   const parsedChoferOption = {
+                  //     nombre: option?.value.split('/')[0] || '',
+                  //     rut: option?.value.split('/')[1] || '',
+                  //   };
+                  //   updateDespacho({
+                  //     ...despacho,
+                  //     chofer: {
+                  //       nombre: parsedChoferOption.nombre,
+                  //       rut: parsedChoferOption.rut,
+                  //     },
+                  //   });
+                  // }}
+                />
+              </View>
+              <View style={styles.container}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Camion"
+                  animation={true}
+                  // ref={camionRef}
+                  options={options.camiones}
+                  disabled={guia.despacho.rut_transportista === ''}
+                  key={`camiones-${renderKey}`}
+                  // onSelect={(option) => {
+                  //   updateDespacho({
+                  //     ...despacho,
+                  //     patente: option?.value || '',
+                  //   });
+                  // }}
+                />
+              </View>
             </View>
           </View>
         </ScrollView>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleAddProductos}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleNavigateToAddProductos}
+      >
         <Text style={styles.buttonText}> Agregar Productos </Text>
       </TouchableOpacity>
     </View>
@@ -427,11 +600,11 @@ const styles = StyleSheet.create({
   },
   row: {
     flex: 1,
-    dispaly: 'flex',
+    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     width: '100%',
+    borderStyle: 'solid',
   },
   input: {
     borderWidth: 2,
@@ -452,6 +625,11 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     margin: 5,
   },
+  textCertificate: {
+    fontSize: 14,
+    fontWeight: 'normal',
+    textAlign: 'left',
+  },
   textContainer: {
     flex: 1,
     flexDirection: 'column',
@@ -469,29 +647,30 @@ const styles = StyleSheet.create({
   buttonText: {
     color: colors.white,
   },
+  checkboxContainer: {
+    padding: 0,
+    margin: 0,
+    // backgroundColor: 'transparent',
+    borderWidth: 0,
+    backgroundColor: colors.white,
+    left: 5,
+  },
 });
 
-const selectStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#cccccc',
-    borderRadius: 13,
-    alignSelf: 'center',
-    width: '90%',
-    folio: {
-      width: '45%',
+const selectStyles: SelectStyles = {
+  select: {
+    container: {
+      // flex: 1,
+      borderWidth: 2,
+      borderColor: '#cccccc',
+      borderRadius: 13,
       alignSelf: 'center',
-      marginLeft: '2.5%',
+      width: '90%',
+      // folio: {
+      //   width: '45%',
+      //   alignSelf: 'center',
+      //   marginLeft: '2.5%',
+      // },
     },
   },
-  buttonsContainer: {
-    tintColor: colors.secondary,
-    width: 10,
-    alignSelf: 'center',
-    alignContent: 'flex-end',
-    alignItems: 'center',
-  },
-});
+};

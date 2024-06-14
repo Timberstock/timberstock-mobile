@@ -7,71 +7,100 @@ import {
   Chofer,
 } from '../interfaces/guias';
 import { IOptions } from '../interfaces/screens';
+import {
+  CreateGuiaOptions,
+  GuiaInCreateGuiaScreen,
+  IOptionsTransportes,
+} from '../interfaces/screens/createGuia';
 import { tipoDespachoOptions, tipoTrasladoOptions } from '../resources/options';
+import { Banco } from '../interfaces/productos';
+import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
+import { ContratoVenta } from '../interfaces/contratos/contratoVenta';
 
-export const createGuiaScreenHooks = () => {
-  const [options, setOptions] = useState({
-    tipoDespacho: tipoDespachoOptions,
-    tipoTraslado: tipoTrasladoOptions,
-    folios: [] as IOptions[],
-    clientes: [] as IOptions[],
-    destinos: [] as IOptions[],
-    predios: [] as IOptions[],
-    planesDeManejo: [] as IOptions[],
-    proveedores: [] as IOptions[],
-  });
-
-  const [identificacion, setIdentificacion] = useState<Identificacion>({
-    folio: -1,
-    tipo_despacho: '',
-    tipo_traslado: '',
-  });
-  const [receptor, setReceptor] = useState<Receptor>({
-    razon_social: '',
-    rut: '',
-    giro: '',
-    direccion: '',
-    comuna: '',
-  });
-  const [despacho, setDespacho] = useState<Transporte>({
-    chofer: {
-      nombre: '',
-      rut: '',
-    } as Chofer,
-    patente: '',
-    rut_transportista: '',
-    direccion_destino: '',
+export const tipoProductHooks = () => {
+  // case tipo == 'Aserrable'
+  const [clasesDiametricas, _setClasesDiametricas] = useState({
+    14: 0,
+    16: 0,
+    18: 0,
+    20: 0,
   });
 
-  const [predio, setPredio] = useState<Predio>({
-    certificado: '',
-    comuna: '',
-    georreferencia: {
-      latitude: 0,
-      longitude: 0,
+  const updateClaseDiametricaValue = (label: string, value: number) => {
+    // Values are to be updated one row at a time, which are identified by the label
+    _setClasesDiametricas((prevValue: any) => ({
+      ...prevValue,
+      [label]: value,
+    }));
+  };
+
+  const increaseNumberOfClasesDiametricas = () => {
+    // get the number of clases diametricas and starting with 14, add a new row that's 2cm bigger that the last one
+    _setClasesDiametricas((prevValue: any) => {
+      const numberOfClasesDiametricas = Object.keys(prevValue).length;
+      const biggestClaseDiametrica = 14 + 2 * (numberOfClasesDiametricas - 1);
+      return {
+        ...prevValue,
+        [`${biggestClaseDiametrica + 2}`]: 0,
+      };
+    });
+  };
+
+  // case tipo == 'Pulpable'
+  const [bancosPulpable, _setBancosPulpable] = useState({
+    banco1: {
+      altura1: 0,
+      altura2: 0,
+      ancho: 0,
     },
-    manzana: '',
-    nombre: '',
-    plan_de_manejo: [],
-    rol: '',
+    banco2: {
+      altura1: 0,
+      altura2: 0,
+      ancho: 0,
+    },
+    banco3: {
+      altura1: 0,
+      altura2: 0,
+      ancho: 0,
+    },
+    banco4: {
+      altura1: 0,
+      altura2: 0,
+      ancho: 0,
+    },
+    banco5: {
+      altura1: 0,
+      altura2: 0,
+      ancho: 0,
+    },
+    banco6: {
+      altura1: 0,
+      altura2: 0,
+      ancho: 0,
+    },
   });
 
-  const [proveedor, setProveedor] = useState<Proveedor>({
-    razon_social: '',
-    rut: '',
-  });
+  const updateBancoPulpableValue = (
+    bancoIndex: number,
+    dimension: keyof Banco,
+    value: number
+  ) => {
+    // const prevValue = [...bancosPulpable];
+    // prevValue[bancoIndex][dimension] = value;
+    _setBancosPulpable((prevState) => ({
+      ...prevState,
+      [`banco${bancoIndex}`]: {
+        ...prevState[`banco${bancoIndex}` as keyof typeof prevState],
+        [dimension]: value,
+      },
+    }));
+  };
+
   return {
-    options,
-    setOptions,
-    identificacion,
-    setIdentificacion,
-    receptor,
-    setReceptor,
-    despacho,
-    setDespacho,
-    predio,
-    setPredio,
-    proveedor,
-    setProveedor,
+    clasesDiametricas,
+    updateClaseDiametricaValue,
+    increaseNumberOfClasesDiametricas,
+    bancosPulpable,
+    updateBancoPulpableValue,
   };
 };

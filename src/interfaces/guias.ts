@@ -23,10 +23,10 @@ export interface ReferenciaDTE {
 
 // 3rd Level Interfaces
 export interface Identificacion {
-  fecha?: Date; // Optional because it's set in the function at the moment of creation
   folio: number;
   tipo_traslado: string;
   tipo_despacho: string;
+  fecha?: Date; // Optional because it's set in the function at the moment of creation
 }
 
 export interface Emisor {
@@ -39,8 +39,8 @@ export interface Emisor {
 }
 
 export interface Receptor {
-  rut: string;
   razon_social: string;
+  rut: string;
   giro: string;
   direccion: string;
   comuna: string;

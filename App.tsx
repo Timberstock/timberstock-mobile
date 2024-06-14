@@ -7,12 +7,13 @@ import { SelectProvider } from '@mobile-reality/react-native-select-pro';
 import 'expo-dev-client';
 import { StyleSheet, TouchableOpacity, View, Text, Alert } from 'react-native';
 
-import AddProductos from './src/screens/AddProductos';
+import Products from './src/screens/Products';
 
 import UserContextProvider from './src/context/UserContext';
 import AuthWrapper from './src/AuthWrapper';
 import firestore from '@react-native-firebase/firestore';
 import { logoutUser } from './src/functions/firebase/auth';
+// import CreateGuiaProvider from './src/context/CreateGuiaContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +22,7 @@ const Stack = createNativeStackNavigator();
 // firestore().useEmulator('localhost', 8080);
 
 export default function App() {
+  console.log('APP STARTED');
   const deleteCache = async (): Promise<number> => {
     try {
       await logoutUser();
@@ -74,9 +76,9 @@ export default function App() {
   }
 
   return (
-    <UserContextProvider>
-      <AuthWrapper>
-        <SelectProvider>
+    <SelectProvider>
+      <UserContextProvider>
+        <AuthWrapper>
           <NavigationContainer>
             <Stack.Navigator>
               <Stack.Screen
@@ -90,15 +92,15 @@ export default function App() {
                 component={CreateGuia}
               />
               <Stack.Screen
-                name="AddProductos"
+                name="Products"
                 options={{ headerShown: false }}
-                component={AddProductos}
+                component={Products}
               />
             </Stack.Navigator>
           </NavigationContainer>
-        </SelectProvider>
-      </AuthWrapper>
-    </UserContextProvider>
+        </AuthWrapper>
+      </UserContextProvider>
+    </SelectProvider>
   );
 }
 

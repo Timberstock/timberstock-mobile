@@ -1,11 +1,22 @@
-import { Proveedor, Predio, Producto } from './detalles';
+import { Proveedor, Predio, Producto, Georreferencia } from './detalles';
 import { Emisor, Identificacion, Receptor, Transporte } from './guias';
+import GeoPoint from '@react-native-firebase/firestore';
 
-export interface Trozo extends Producto {
+export interface ProductoDetalle extends Producto {
   cantidad: number;
   volumen?: number;
   claseDiametrica?: string;
   total?: number;
+}
+
+export interface FaenaFirestore {
+  rol: string;
+  nombre: string;
+  comuna: string;
+  georreferencia: Georreferencia;
+  certificado: string;
+  plan_de_manejo: string;
+  productos: string[];
 }
 
 export interface Cliente {
@@ -34,12 +45,6 @@ export interface Contrato {
   productos: Producto[];
 }
 
-export interface ContratoVenta {
-  fecha_firma: string;
-  precio_venta: number;
-  clientes: Cliente[];
-}
-
 export interface EmpresaSubCollectionsData {
   clientes: Cliente[];
   predios: Predio[];
@@ -52,9 +57,12 @@ export interface PreGuia {
   emisor: Emisor;
   receptor: Receptor;
   transporte: Transporte;
-  productos: Trozo[];
+  productos: ProductoDetalle[];
   predio: Predio;
+  volumen_total: number;
   precio_ref: number;
+  total_ref: number;
+  precio: number;
   total: number;
 }
 

@@ -14,15 +14,18 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "googleServicesFile": "./firebase_services_files/GoogleService-Info.plist",
+      "googleServicesFile": "./SpecificPlatformFiles/ios/GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.atc.timberstockapp",
+      "useFrameworks": "static", // got from https://rnfirebase.io/#configure-react-native-firebase-modules
       "buildNumber": "0.11" // new builds change this
     },
     "android": {
-      "googleServicesFile": "./firebase_services_files/google-services.json",
+      "googleServicesFile": "./SpecificPlatformFiles/android/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/dallelogo.png",
         "backgroundColor": "#FFFFFF"
@@ -37,6 +40,9 @@
     "plugins": [
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
+      "@react-native-firebase/firestore"
+      // https://github.com/invertase/react-native-firebase/issues/6990
+      // https://github.com/invertase/react-native-firebase/pull/7502/files
       [
         "expo-build-properties",
         {

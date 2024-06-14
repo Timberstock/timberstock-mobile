@@ -1,17 +1,17 @@
 // Deepest Interfaces
-interface Georreferencia {
+export interface Georreferencia {
   latitude: number;
   longitude: number;
 }
 // 2nd Level
 export interface Predio {
-  certificado: string;
+  rol: string;
+  nombre: string;
   comuna: string;
   georreferencia: Georreferencia;
-  manzana: string;
-  nombre: string;
-  plan_de_manejo: string[];
-  rol: string;
+  certificado: string;
+  plan_de_manejo: string;
+  manzana?: string;
 }
 
 export interface Producto {

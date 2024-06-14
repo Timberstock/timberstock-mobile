@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import colors from '../resources/Colors';
+import colors from '../../resources/Colors';
 import {
   StyleSheet,
   View,
@@ -12,14 +12,10 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 
 // TODO: fix types
-const FoliosRequestModal = (props: any) => {
-  const {
-    foliosRequestLoading,
-    modalVisible,
-    setModalVisible,
-    handleGetFolios,
-  } = props;
-  const [numFolios, setNumFolios] = useState('');
+const PrecioModal = (props: any) => {
+  const { createGuiaLoading, modalVisible, setModalVisible, handleCreateGuia } =
+    props;
+  const [totalGuia, setTotalGuia] = useState('');
 
   return (
     <View>
@@ -33,23 +29,24 @@ const FoliosRequestModal = (props: any) => {
               <Icon name="close-circle" size={25} color="grey" />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>
-              Cuántos Folios quieres reservar para hoy?
+              Valor Total de la Guía de Despacho
             </Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
-              value={numFolios}
-              onChangeText={setNumFolios}
-              placeholder="Enter the number of folios"
+              value={totalGuia}
+              onChangeText={setTotalGuia}
             />
             <TouchableOpacity
               style={styles.acceptButton}
               // Error handling for empty input (disable the button)
-              onPress={() => handleGetFolios(numFolios)}
+              onPress={() => {
+                handleCreateGuia(totalGuia);
+              }}
             >
-              <Text style={styles.acceptButtonText}>Accept</Text>
+              <Text style={styles.acceptButtonText}>Crear</Text>
             </TouchableOpacity>
-            {foliosRequestLoading && (
+            {createGuiaLoading && (
               <ActivityIndicator size="large" color="#4E4E4E" />
             )}
           </View>
@@ -83,6 +80,7 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: 'white',
     padding: 20,
+    paddingTop: 50,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -91,6 +89,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  closeIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
   input: {
     borderWidth: 1,
@@ -111,11 +114,6 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
   },
-  closeIconContainer: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
 });
 
-export default FoliosRequestModal;
+export default PrecioModal;

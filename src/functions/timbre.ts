@@ -1,8 +1,7 @@
-// @ts-ignore
 import * as xml2js from 'react-native-xml2js';
 // This next library is very small from https://github.com/michaelrothkopf/react-native-rsa-expo
 
-// @ts-ignore
+// this library is not maintained anymore, but it works... however it raises a high severity vulnerability with no fix available for node-forge
 import { Crypt } from 'hybrid-crypto-js';
 
 import { DD } from '../interfaces/timbre';
@@ -79,7 +78,7 @@ const getTED = async (cafString: string, DTE: PreGuia) => {
     FE: todayString,
     RR: DTE.receptor.rut,
     RSR: DTE.receptor.razon_social,
-    MNT: DTE.total,
+    MNT: DTE.total * 1.19,
     IT1: `Productos Total (ref): ${DTE.total}`,
     CAF: CAF_XML_String,
     TSTED: todayStringWithTime,

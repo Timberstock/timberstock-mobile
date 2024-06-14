@@ -4,6 +4,8 @@ import firestore, {
 import { Cliente } from '../../../interfaces/firestore';
 import { Predio, Producto, Proveedor } from '../../../interfaces/detalles';
 import { Alert } from 'react-native';
+import { ContratoCompra } from '../../../interfaces/contratos/contratoCompra';
+import { ContratoVenta } from '../../../interfaces/contratos/contratoVenta';
 
 // This function is used to retrieve data form Firestore and then
 // push it to an array that is passed.
@@ -22,6 +24,7 @@ const getIndividualData = async (
     .doc(docId)
     .collection(collection2Name)
     .get({ source: source });
+  // TODO: Make sure when we get the contratos that we only get contratos vigentes
   collection.docs.map((document) => {
     arrayToPush.push(document.data());
   });
@@ -126,6 +129,86 @@ export const fetchSubCollections = async (
       const empresaFromCache = await empresaSubCollectionRequest('cache');
       const response = empresaFromCache;
       return response;
+    } catch (e: any) {
+      console.log(e);
+      throw new Error(`Error sub colecciones (server y cache): ${e}`);
+    }
+  }
+};
+
+export const fetchContratosCompra = async (
+  empresaId: string
+): Promise<ContratoCompra[]> => {
+  const contratosCompraCollectionReq = firestore()
+    .collection('empresas')
+    .doc(empresaId)
+    .collection('contratos_compra')
+    .where('vigente', '==', true);
+
+  try {
+    const contratosCompraCollectionFromServer =
+      await contratosCompraCollectionReq.get({ source: 'server' });
+    const response = contratosCompraCollectionFromServer;
+    // TODO: parse the data from the docs?
+    const contratosCompra = [];
+    for (const doc of response.docs) {
+      const contratoCompra = doc.data();
+      contratoCompra.id = doc.id;
+      contratosCompra.push(contratoCompra as ContratoCompra);
+    }
+    return contratosCompra;
+  } catch (e: any) {
+    try {
+      const contratosCompraCollectionFromCache =
+        await contratosCompraCollectionReq.get({ source: 'cache' });
+      const response = contratosCompraCollectionFromCache;
+      const contratosCompra = [];
+      for (const doc of response.docs) {
+        const contratoCompra = doc.data();
+        contratoCompra.id = doc.id;
+        contratosCompra.push(contratoCompra as ContratoCompra);
+      }
+      return contratosCompra;
+    } catch (e: any) {
+      console.log(e);
+      throw new Error(`Error sub colecciones (server y cache): ${e}`);
+    }
+  }
+};
+export const fetchContratosVenta = async (
+  empresaId: string
+): Promise<ContratoVenta[]> => {
+  const contratosVentaCollectionReq = firestore()
+    .collection('empresas')
+    .doc(empresaId)
+    .collection('contratos_venta')
+    .where('vigente', '==', true);
+
+  try {
+    const contratosVentaCollectionFromServer =
+      await contratosVentaCollectionReq.get({ source: 'server' });
+    const response = contratosVentaCollectionFromServer;
+    // TODO: parse the data from the docs?
+    const contratosVenta = [];
+    for (const doc of response.docs) {
+      const contratoVenta = doc.data();
+      contratoVenta.id = doc.id;
+      contratosVenta.push(contratoVenta as ContratoVenta);
+    }
+    return contratosVenta;
+  } catch (e: any) {
+    try {
+      const contratosVentaCollectionFromServer =
+        await contratosVentaCollectionReq.get({ source: 'cache' });
+      const response = contratosVentaCollectionFromServer;
+      // TODO: parse the data from the docs?
+      const contratosVenta = [];
+      for (const doc of response.docs) {
+        const contratoVenta = doc.data();
+        contratoVenta.id = doc.id;
+        contratosVenta.push(contratoVenta as ContratoVenta);
+      }
+      return contratosVenta;
     } catch (e: any) {
       console.log(e);
       throw new Error(`Error sub colecciones (server y cache): ${e}`);

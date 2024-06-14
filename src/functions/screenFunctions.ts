@@ -1,110 +1,160 @@
 import { SelectRef } from '@mobile-reality/react-native-select-pro';
 import { MutableRefObject } from 'react';
 import { Predio, Producto, Proveedor } from '../interfaces/detalles';
-import { Cliente, PreGuia, Trozo } from '../interfaces/firestore';
+import { Cliente, PreGuia, ProductoDetalle } from '../interfaces/firestore';
 import { Receptor, Transporte } from '../interfaces/guias';
-import { IOptions } from '../interfaces/screens';
+import { IOption } from '../interfaces/screens';
 import CustomHelpers from '../functions/helpers';
 import getTED from '../functions/timbre';
 import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
 
-// @ts-ignore
 import { pdf417 } from 'bwip-js';
+import 'react-zlib-js'; // side effects only
+// import bwipjs from 'bwip-js';
 
-export const handleSelectClienteLogic = (
-  option: IOptions | null,
-  retrievedData: {
-    clientes: Cliente[];
-  },
-  options: {
-    destinos: IOptions[];
-  },
-  despachoRef: any,
-  despacho: Transporte,
-  setDespacho: (value: Transporte) => void,
-  setReceptor: (value: Receptor) => void
-) => {
-  const cliente = retrievedData.clientes.find(
-      (cliente) => cliente.razon_social === option?.value
-    ),
-    destinos = cliente?.destinos.map((destino) => ({
-      label: destino,
-      value: destino,
-    }));
-  options.destinos = destinos || [];
-  setReceptor({
-    razon_social: cliente?.razon_social || '',
-    rut: cliente?.rut || '',
-    giro: '',
-    direccion: cliente?.direccion || '',
-    comuna: cliente?.comuna || '',
-  });
-  if (option === null) {
-    despachoRef?.current.clear();
-    setDespacho({
-      ...despacho,
-      direccion_destino: '',
-    });
-  }
-};
+import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
+import { ContratoVenta } from '../interfaces/contratos/contratoVenta';
 
-export const handleSelectPredioLogic = (
-  option: IOptions | null,
+// export const handleSelectClienteLogic = (
+//   option: IOptions | null,
+//   retrievedData: {
+//     clientes: Cliente[];
+//   },
+//   options: {
+//     destinos: IOptions[];
+//   },
+//   despachoRef: any,
+//   despacho: Transporte,
+//   setDespacho: (value: Transporte) => void,
+//   setReceptor: (value: Receptor) => void,
+//   contratosCompra: ContratoCompra[],
+//   contratosVenta: ContratoVenta[],
+//   setContratosCompraFiltered: (value: ContratoCompra[]) => void,
+//   setContratosVentaFiltered: (value: ContratoVenta[]) => void
+// ) => {
+//   const cliente = retrievedData.clientes.find(
+//       (cliente) => cliente.razon_social === option?.value
+//     ),
+//     destinos = cliente?.destinos.map((destino) => ({
+//       label: destino,
+//       value: destino,
+//     }));
+//   options.destinos = destinos || [];
+//   setReceptor({
+//     razon_social: cliente?.razon_social || '',
+//     rut: cliente?.rut || '',
+//     giro: '',
+//     direccion: cliente?.direccion || '',
+//     comuna: cliente?.comuna || '',
+//   });
+//   if (option === null) {
+//     despachoRef?.current.clear();
+//     setDespacho({
+//       ...despacho,
+//       direccion_destino: '',
+//     });
+//     setContratosCompraFiltered(contratosCompra);
+//     setContratosVentaFiltered(contratosVenta);
+//   }
+//   // Only leave the contratos that have the selected cliente
+//   setContratosCompraFiltered(
+//     contratosCompra.filter((contrato) => {
+//       for (const cliente of contrato.clientes) {
+//         if (cliente.razon_social === option?.value) {
+//           return true;
+//         }
+//       }
+//       return false;
+//     })
+//   );
+//   setContratosVentaFiltered(
+//     contratosVenta.filter(
+//       (contrato) => contrato.cliente?.razon_social === option?.value
+//     )
+//   );
+// };
+
+// export const handleSelectPredioLogic = (
+//   option: IOptions | null,
+//   retrievedData: {
+//     predios: Predio[];
+//   },
+//   options: {
+//     planesDeManejo: IOptions[];
+//   },
+//   planDeManejoRef: any,
+//   predio: Predio,
+//   setPredio: (value: Predio) => void,
+//   contratosVenta: ContratoVenta[],
+//   contratosVentaFiltered: ContratoVenta[],
+//   contratosCompra: ContratoCompra[],
+//   contratosCompraFiltered: ContratoCompra[],
+//   setContratosCompraFiltered: (value: ContratoCompra[]) => void,
+//   setContratosVentaFiltered: (value: ContratoVenta[]) => void,
+//   // For filtering purposes
+//   receptor: Cliente
+// ) => {
+//   const predioSplit = option?.value.split('-');
+//   const { comuna, manzana, rol } = {
+//     comuna: predioSplit ? predioSplit[0] : '',
+//     manzana: predioSplit ? predioSplit[1] : '',
+//     rol: predioSplit ? predioSplit[2] : '',
+//   };
+//   const newPredio = retrievedData.predios.find(
+//       (newPredio) =>
+//         newPredio.comuna === comuna &&
+//         newPredio.manzana === manzana &&
+//         newPredio.rol === rol
+//     ),
+//     planesDeManejo =
+//       newPredio?.plan_de_manejo.map((plan) => ({
+//         label: plan,
+//         value: plan,
+//       })) || [];
+//   options.planesDeManejo = planesDeManejo;
+//   setPredio({
+//     certificado: newPredio?.certificado || '',
+//     comuna: newPredio?.comuna || '',
+//     georreferencia: {
+//       latitude: newPredio?.georreferencia.latitude || 0,
+//       longitude: newPredio?.georreferencia.longitude || 0,
+//     },
+//     manzana: newPredio?.manzana || '',
+//     rol: newPredio?.rol || '',
+//     nombre: newPredio?.nombre || '',
+//     plan_de_manejo: predio.plan_de_manejo || [],
+//   });
+//   if (option === null) {
+//     planDeManejoRef?.current.clear();
+//     if (receptor) {
+//       setContratosCompraFiltered(contratosCompra);
+//     }
+//   }
+// };
+
+export const handleSelectProveedorLogic = (
+  option: IOption | null,
   retrievedData: {
-    predios: Predio[];
+    proveedores: Proveedor[];
   },
-  options: {
-    planesDeManejo: IOptions[];
-  },
-  planDeManejoRef: any,
-  predio: Predio,
-  setPredio: (value: Predio) => void
+  setProveedor: (value: Proveedor) => void
 ) => {
-  const predioSplit = option?.value.split('-');
-  const { comuna, manzana, rol } = {
-    comuna: predioSplit ? predioSplit[0] : '',
-    manzana: predioSplit ? predioSplit[1] : '',
-    rol: predioSplit ? predioSplit[2] : '',
-  };
-  const newPredio = retrievedData.predios.find(
-      (newPredio) =>
-        newPredio.comuna === comuna &&
-        newPredio.manzana === manzana &&
-        newPredio.rol === rol
-    ),
-    planesDeManejo =
-      newPredio?.plan_de_manejo.map((plan) => ({
-        label: plan,
-        value: plan,
-      })) || [];
-  options.planesDeManejo = planesDeManejo;
-  setPredio({
-    certificado: newPredio?.certificado || '',
-    comuna: newPredio?.comuna || '',
-    georreferencia: {
-      latitude: newPredio?.georreferencia.latitude || 0,
-      longitude: newPredio?.georreferencia.longitude || 0,
-    },
-    manzana: newPredio?.manzana || '',
-    rol: newPredio?.rol || '',
-    nombre: newPredio?.nombre || '',
-    plan_de_manejo: predio.plan_de_manejo || [],
+  const newProveedor = retrievedData.proveedores.find(
+    (newProveedor) => newProveedor.razon_social === option?.value
+  );
+  setProveedor({
+    razon_social: newProveedor?.razon_social || '',
+    rut: newProveedor?.rut || '',
   });
-  if (option === null) {
-    planDeManejoRef?.current.clear();
-  }
 };
 
 export const handleSelectProductoLogic = (
-  option: IOptions | null,
+  option: IOption | null,
   retrievedData: {
     productos: Producto[];
-  },
-  claseDiametricaRef: MutableRefObject<SelectRef>,
-  actualTrozo: Trozo,
-  setActualTrozo: (value: Trozo) => void
+  }
 ) => {
   const productoSplit = option?.value.split(' - ');
   const { especie, tipo, calidad, largo, precio_ref } = {
@@ -122,7 +172,7 @@ export const handleSelectProductoLogic = (
       selectedTrozo.largo === parseFloat(largo) &&
       selectedTrozo.precio_ref === parseFloat(precio_ref)
   );
-  setActualTrozo({
+  return {
     especie: selectedTrozo?.especie || '',
     tipo: selectedTrozo?.tipo || '',
     calidad: selectedTrozo?.calidad || '',
@@ -130,28 +180,7 @@ export const handleSelectProductoLogic = (
     unidad: selectedTrozo?.unidad || '',
     cantidad: selectedTrozo?.cantidad || 0,
     precio_ref: selectedTrozo?.precio_ref || 0,
-    claseDiametrica:
-      selectedTrozo?.tipo === 'Asserrable' ? actualTrozo.claseDiametrica : '',
-  });
-  if (option === null || selectedTrozo?.tipo !== 'Aserrable') {
-    claseDiametricaRef.current?.clear();
-  }
-};
-
-export const handleSelectProveedorLogic = (
-  option: IOptions | null,
-  retrievedData: {
-    proveedores: Proveedor[];
-  },
-  setProveedor: (value: Proveedor) => void
-) => {
-  const newProveedor = retrievedData.proveedores.find(
-    (newProveedor) => newProveedor.razon_social === option?.value
-  );
-  setProveedor({
-    razon_social: newProveedor?.razon_social || '',
-    rut: newProveedor?.rut || '',
-  });
+  };
 };
 
 export const generatePDF = async (
@@ -165,6 +194,11 @@ export const generatePDF = async (
     console.log('TED GENERADO');
 
     // Generate the barcode
+    // const barcode = await pdf417({
+    //   bcid: 'pdf417',
+    //   text: TED,
+    // });
+
     const barcode = await pdf417({
       bcid: 'pdf417',
       text: TED,

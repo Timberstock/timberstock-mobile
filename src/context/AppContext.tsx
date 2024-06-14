@@ -1,5 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { GuiaDespachoSummaryProps } from '../interfaces/guias';
+import { ContratoVenta } from '../interfaces/contratos/contratoVenta';
+import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
 import { EmpresaSubCollectionsData } from '../interfaces/firestore';
 import { Empresa } from '../interfaces/empresa';
 import firestore, {
@@ -7,7 +9,11 @@ import firestore, {
 } from '@react-native-firebase/firestore';
 import { UserContext } from './UserContext';
 import customHelpers from '../functions/helpers';
-import { fetchSubCollections } from '../functions/firebase/firestore/subcollections';
+import {
+  fetchContratosCompra,
+  fetchContratosVenta,
+  fetchSubCollections,
+} from '../functions/firebase/firestore/subcollections';
 import { fetchEmpresaDoc } from '../functions/firebase/firestore/empresa';
 import { fetchGuiasDocs } from '../functions/firebase/firestore/guias';
 import { Alert } from 'react-native';
@@ -17,6 +23,9 @@ type AppContextType = {
   updateGuiasSummary: (guiasSummary: GuiaDespachoSummaryProps[]) => void;
   empresa: Empresa;
   updateEmpresa: (empresa: Empresa) => void;
+  // TODO: Maybe should be one single state for both?
+  contratosCompra: ContratoCompra[];
+  contratosVenta: ContratoVenta[];
   subCollectionsData: EmpresaSubCollectionsData;
   updateSubCollectionsData: (data: EmpresaSubCollectionsData) => void;
 };
@@ -36,6 +45,8 @@ const initialState = {
     caf_n: -1,
   },
   updateEmpresa: () => {},
+  contratosVenta: [],
+  contratosCompra: [],
   subCollectionsData: {
     proveedores: [],
     predios: [],
@@ -58,6 +69,13 @@ const AppProvider = ({ children }: any) => {
     initialState.subCollectionsData
   );
   const [empresa, setEmpresa] = useState<Empresa>(initialState.empresa);
+
+  const [contratosCompra, setContratosCompra] = useState<ContratoCompra[]>(
+    initialState.contratosCompra
+  );
+  const [contratosVenta, setContratosVenta] = useState<ContratoVenta[]>(
+    initialState.contratosVenta
+  );
 
   const updateEmpresa = (empresa: Empresa) => {
     setEmpresa(empresa);
@@ -102,13 +120,23 @@ const AppProvider = ({ children }: any) => {
       });
     if (user?.empresa_id) {
       const poblateData = async () => {
+        // Should be onSnap instead as well? Test again this approach while disconnected...
         try {
+          const contratosCompraFetched = await fetchContratosCompra(
+            user.empresa_id
+          );
+          const contratosVentaFetched = await fetchContratosVenta(
+            user.empresa_id
+          );
+
           const subCollectionsFetched = await fetchSubCollections(
             user.empresa_id
           );
           const empresaFetched = await fetchEmpresaDoc(user.empresa_id);
           const guiasSummaryFetched = await fetchGuiasDocs(user.empresa_id);
           updateEmpresa(empresaFetched);
+          setContratosCompra(contratosCompraFetched);
+          setContratosVenta(contratosVentaFetched);
           updateSubCollectionsData(
             subCollectionsFetched as EmpresaSubCollectionsData
           );
@@ -126,6 +154,8 @@ const AppProvider = ({ children }: any) => {
   const contextValue: AppContextType = {
     guiasSummary,
     updateGuiasSummary,
+    contratosCompra,
+    contratosVenta,
     empresa,
     updateEmpresa,
     subCollectionsData,

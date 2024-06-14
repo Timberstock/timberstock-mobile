@@ -1,6 +1,57 @@
 import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import { PreGuia } from '../interfaces/firestore';
+import { PreGuia, ProductoDetalle } from '../interfaces/firestore';
 import { DetallesPDF } from '../interfaces/detalles';
+import { BancosPulpable, clasesDiametricas } from '../interfaces/productos';
+
+const buildAserrableProductsArray = (
+  actualProduct: ProductoDetalle,
+  clasesDiametricas: clasesDiametricas
+): ProductoDetalle[] => {
+  // For each claseDiametrica that has a value, create a new product with the same values as the original product and add it to the array with the claseDiametrica as a property
+  const aserrableProducts = [];
+  const diametros = Object.keys(clasesDiametricas);
+  for (const diametro of diametros) {
+    if (clasesDiametricas[diametro] === 0) continue;
+    const cantidad = clasesDiametricas[diametro];
+    const aserrableProduct = {
+      ...actualProduct,
+      unidad: 'm3',
+      claseDiametrica: diametro,
+      cantidad: cantidad,
+      volumen:
+        cantidad *
+        actualProduct.largo *
+        Math.PI *
+        (parseFloat(diametro) / (2 * 100)) ** 2, // pasamos diametro de centimetros a metros,
+    };
+    aserrableProducts.push(aserrableProduct);
+  }
+  return aserrableProducts;
+};
+
+const buildPulpableProductArray = (
+  actualProduct: ProductoDetalle,
+  bancosPulpable: BancosPulpable
+): ProductoDetalle[] => {
+  const bancos = Object.entries(bancosPulpable);
+
+  // calculate total volumen
+  let volumenTotal = 0;
+  for (const [key, banco] of bancos) {
+    const { altura1, altura2, ancho } = banco;
+    const volumen = ((altura1 * 0.01 + altura2 * 0.01) * ancho * 0.01) / 2; // pasamos de centimetros a metros
+    volumenTotal += volumen;
+  }
+  // TODO: largo is not considered here?
+  return [
+    {
+      ...actualProduct,
+      unidad: 'mr',
+      // TODO: dividir por 2.44 [estandarizar por largo]
+      volumen: volumenTotal * actualProduct.largo,
+    },
+  ];
+};
 
 const fromFirebaseDateToJSDate = (firebaseDate: any) => {
   const date = new Date(
@@ -102,11 +153,19 @@ const createPDFHTMLString = async (
           <p class="s2">${/* [Predio] 4th part */ detallesList[4].nombre}</p>
           <p class="s2">${/* [Predio] 5th part */ detallesList[5].nombre}</p>
           <p class="s2">${/* [Predio] 6th part */ detallesList[6].nombre}</p>
+          <p class="s2">${/* [Predio] 6th part */ detallesList[7].nombre}</p>
           ${productosAsPTags.nombres}
         </td>
         <td class="cellwithborders">
-          <p class="s2">${/* representative */ detallesList[0].cantidad}</p>
-          ${`<p class="s2">.</p>`.repeat(7) /* skip some spaces */}
+          <p class="s2">${
+            /* representative */ detallesList[0].cantidad.toFixed(4)
+          }</p>
+          ${
+            // If it doesn't have certificado, only skip 7 spaces
+            detallesList[7].nombre === ' '
+              ? `<p class="s2">.</p>`.repeat(7)
+              : `<p class="s2">.</p>`.repeat(8) /* skip some spaces */
+          }
           ${productosAsPTags.cantidades}
         </td>
         <td class="cellwithborders">
@@ -356,7 +415,10 @@ const createPDFHTMLString = async (
   const productosDetalles = [];
   let volumenTotal = 0;
   for (const producto of DTE.productos) {
-    const nombreProducto = `${producto.especie}-${producto.tipo}-${producto.calidad}-${producto.largo}-${producto.claseDiametrica}`;
+    const nombreProducto =
+      producto.tipo === 'Aserrable'
+        ? `${producto.especie}-${producto.tipo}-${producto.calidad}-${producto.largo}-${producto.claseDiametrica}`
+        : `${producto.especie}-${producto.tipo}-${producto.calidad}-${producto.largo}`;
     volumenTotal += producto.volumen ? producto.volumen : 0;
     productosDetalles.push(_stringToProducto(nombreProducto, producto.volumen));
   }
@@ -364,8 +426,8 @@ const createPDFHTMLString = async (
   // TODO: NOT SURE ABOUT THIS APPROACH, MUST BE FIXED ASAP
   const productoTotalDetalle = {
     nombre: `Productos Total (ref): ${DTE.total}`,
-    cantidad: volumenTotal,
-    precio: DTE.precio_ref,
+    cantidad: DTE.volumen_total,
+    precio: DTE.precio,
     montoItem: DTE.total,
   };
 
@@ -443,6 +505,8 @@ const createPDFHTMLString = async (
 };
 
 const customHelpers = {
+  buildAserrableProductsArray,
+  buildPulpableProductArray,
   fromFirebaseDateToJSDate,
   daysSinceFirestoreTimestamp,
   formatDate,
