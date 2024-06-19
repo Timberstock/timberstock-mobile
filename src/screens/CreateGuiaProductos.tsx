@@ -29,7 +29,7 @@ import { tipoProductHooks } from '../functions/screenHooks';
 import {
   generatePDF,
   handleSelectProductoLogic,
-} from '../functions/screenFunctions';
+} from '../functions/screens/createGuiaProductos';
 import PrecioModal from '../components/productos/PrecioModal';
 import customHelpers from '../functions/helpers';
 import { ContratoVenta } from '../interfaces/contratos/contratoVenta';

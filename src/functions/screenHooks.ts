@@ -1,21 +1,5 @@
 import { useState } from 'react';
-import { Proveedor, Predio } from '../interfaces/detalles';
-import {
-  Identificacion,
-  Receptor,
-  Transporte,
-  Chofer,
-} from '../interfaces/guias';
-import { IOptions } from '../interfaces/screens';
-import {
-  CreateGuiaOptions,
-  GuiaInCreateGuiaScreen,
-  IOptionsTransportes,
-} from '../interfaces/screens/createGuia';
-import { tipoDespachoOptions, tipoTrasladoOptions } from '../resources/options';
 import { Banco } from '../interfaces/productos';
-import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
-import { ContratoVenta } from '../interfaces/contratos/contratoVenta';
 
 export const tipoProductHooks = () => {
   // case tipo == 'Aserrable'
