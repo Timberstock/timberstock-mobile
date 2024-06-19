@@ -6,14 +6,11 @@ import CreateGuia from './src/screens/CreateGuia';
 import { SelectProvider } from '@mobile-reality/react-native-select-pro';
 import 'expo-dev-client';
 import { StyleSheet, TouchableOpacity, View, Text, Alert } from 'react-native';
-
-import Products from './src/screens/Products';
-
 import UserContextProvider from './src/context/UserContext';
 import AuthWrapper from './src/AuthWrapper';
 import firestore from '@react-native-firebase/firestore';
 import { logoutUser } from './src/functions/firebase/auth';
-// import CreateGuiaProvider from './src/context/CreateGuiaContext';
+import CreateGuiaProductos from './src/screens/CreateGuiaProductos';
 
 const Stack = createNativeStackNavigator();
 
@@ -92,9 +89,9 @@ export default function App() {
                 component={CreateGuia}
               />
               <Stack.Screen
-                name="Products"
+                name="CreateGuiaProductos"
                 options={{ headerShown: false }}
-                component={Products}
+                component={CreateGuiaProductos}
               />
             </Stack.Navigator>
           </NavigationContainer>

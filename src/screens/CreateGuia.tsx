@@ -44,7 +44,6 @@ import OverlayLoading from '../resources/OverlayLoading';
 
 // TODO: Before entering this screen, we have to make sure that the user was logged in correctly and that we have the data loaded.
 // TODO 1: ADD FIELDS VALIDATIONS, BOTH FOR COMPLETENESS AND CORRECTNESS
-// TODO 2: MAKE CERTIFICATE OPTIONAL
 export default function CreateGuia(props: any) {
   const { navigation } = props;
   const { empresa } = useContext(AppContext);
@@ -76,13 +75,11 @@ export default function CreateGuia(props: any) {
 
   const [optionsInitialized, setOptionsInitialized] = useState(false);
 
-  const renderCount = useRef(0);
-  useEffect(() => {
-    renderCount.current = renderCount.current + 1;
-    console.log('options', options);
-    console.log('guia', guia);
-    console.log(`Render number: ${renderCount.current}`);
-  });
+  // const renderCount = useRef(0);
+  // useEffect(() => {
+  //   renderCount.current = renderCount.current + 1;
+  //   console.log(`Render number: ${renderCount.current}`);
+  // });
 
   useEffect(() => {
     // Run only once after loading contratosCompraFiltered and contratosVentaFiltered for the first time
@@ -115,7 +112,7 @@ export default function CreateGuia(props: any) {
     setCertChecked(!certChecked);
   };
 
-  const handleNavigateToAddProductos = () => {
+  const handleNavigateToCreateGuiaProductos = () => {
     if (!isGuiaValid(guia)) {
       alert('Debes llenar todos los campos');
       return;
@@ -123,7 +120,7 @@ export default function CreateGuia(props: any) {
     if (!certChecked) {
       guia.predio.certificado = 'No Aplica';
     }
-    navigation.push('Products', {
+    navigation.push('CreateGuiaProductos', {
       data: {
         guia: {
           identificacion: guia.identificacion,
@@ -215,8 +212,6 @@ export default function CreateGuia(props: any) {
       contratosVenta
     );
 
-    console.log('newOptions', newOptions.proveedores);
-
     proveedorRef.current?.clear();
     empresaTransporteRef.current?.clear();
     choferRef.current?.clear();
@@ -248,7 +243,6 @@ export default function CreateGuia(props: any) {
   }
 
   function selectTransportistaHandler(option: IOption | null) {
-    console.log('ENTERED WITH OPTION', option);
     const { newGuia, newOptions } = selectTransportistaLogic(
       option,
       options,
@@ -509,7 +503,7 @@ export default function CreateGuia(props: any) {
           <View style={{ height: 50 }} />
           <TouchableOpacity
             style={styles.button}
-            onPress={handleNavigateToAddProductos}
+            onPress={handleNavigateToCreateGuiaProductos}
           >
             <Text style={styles.buttonText}> Agregar Productos </Text>
           </TouchableOpacity>
@@ -562,16 +556,6 @@ const styles = StyleSheet.create({
     width: '100%',
     borderStyle: 'solid',
   },
-  input: {
-    borderWidth: 2,
-    height: 35,
-    backgroundColor: colors.white,
-    padding: 7,
-    borderColor: '#cccccc',
-    borderRadius: 13,
-    alignSelf: 'center',
-    width: '90%',
-  },
   container: {
     flex: 1,
   },
@@ -606,7 +590,6 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     padding: 0,
     margin: 0,
-    // backgroundColor: 'transparent',
     borderWidth: 0,
     backgroundColor: colors.white,
     left: 5,
@@ -616,17 +599,11 @@ const styles = StyleSheet.create({
 const selectStyles: SelectStyles = {
   select: {
     container: {
-      // flex: 1,
       borderWidth: 2,
       borderColor: '#cccccc',
       borderRadius: 13,
       alignSelf: 'center',
       width: '90%',
-      // folio: {
-      //   width: '45%',
-      //   alignSelf: 'center',
-      //   marginLeft: '2.5%',
-      // },
     },
   },
 };

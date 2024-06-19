@@ -1,10 +1,4 @@
-import {
-  MutableRefObject,
-  useRef,
-  useEffect,
-  useState,
-  useContext,
-} from 'react';
+import { MutableRefObject, useRef, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -17,7 +11,11 @@ import {
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
-import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
+import {
+  Select,
+  SelectRef,
+  SelectStyles,
+} from '@mobile-reality/react-native-select-pro';
 import { AppContext } from '../context/AppContext';
 import { getProductosOptions, tipoOptions } from '../resources/options';
 import { UserContext } from '../context/UserContext';
@@ -37,7 +35,7 @@ import customHelpers from '../functions/helpers';
 import { ContratoVenta } from '../interfaces/contratos/contratoVenta';
 import { ContratosFiltered } from '../interfaces/screens/createGuia';
 
-export default function Products(props: any) {
+export default function CreateGuiaProductos(props: any) {
   // TODO: Add reference to the contratoVenta and Compra where the data was taken from
 
   // get data from args or call props
@@ -49,13 +47,13 @@ export default function Products(props: any) {
     props.route.params.data;
   const [renderKey, setRenderKey] = useState(0);
 
-  const contratoVenta = contratosFiltered.venta[0];
+  const contratoVenta: ContratoVenta = contratosFiltered.venta[0];
   console.log(contratoVenta);
   const { user, updateUserReservedFolios } = useContext(UserContext);
   const { subCollectionsData } = useContext(AppContext);
 
   // Main states
-  const [productOptions, setProductOptions] = useState<IOption[]>([]);
+  const [productoOptions, setProductoOptions] = useState<IOption[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
 
   // This would have to be managed with redux or context API to be able to persist
@@ -70,10 +68,10 @@ export default function Products(props: any) {
     unidad: '',
     volumen: 0,
   };
-  const [actualProduct, setActualProduct] =
+  const [actualProducto, setActualProducto] =
     useState<ProductoDetalle>(emptyProduct);
 
-  // States depending on actualProduct.tipo
+  // States depending on actualProducto.tipo
   const {
     clasesDiametricas,
     updateClaseDiametricaValue,
@@ -86,12 +84,12 @@ export default function Products(props: any) {
   const actualProductRef = useRef() as MutableRefObject<SelectRef>;
   const [createGuiaLoading, setCreateGuiaLoading] = useState(false);
 
-  console.log(productOptions);
+  console.log(productoOptions);
 
   const handleSelectTipo = (option: any) => {
-    // Whenever the tipo is changed, reset the actualProduct and assign the new tipo
+    // Whenever the tipo is changed, reset the actualProducto and assign the new tipo
 
-    setActualProduct({ ...emptyProduct, tipo: option?.value || null });
+    setActualProducto({ ...emptyProduct, tipo: option?.value || null });
     // const newOptions =
     //   getProductosOptions(
     //     subCollectionsData.productos,
@@ -102,10 +100,10 @@ export default function Products(props: any) {
       option?.value || null
     );
 
-    // necessary because setting tipo to null does not change visually the new selected option as null for actualProduct
+    // necessary because setting tipo to null does not change visually the new selected option as null for actualProducto
     actualProductRef.current?.clear();
 
-    setProductOptions(productosOptions);
+    setProductoOptions(productosOptions);
     setRenderKey((prevKey) => prevKey + 1);
   };
 
@@ -115,19 +113,19 @@ export default function Products(props: any) {
     const newActualProduct = option?.value
       ? // ? handleSelectProductoLogic(option, subCollectionsData)
         handleSelectProductoLogic(option, contratoVenta)
-      : // Else just keep the old tipo and reset the actualProduct
+      : // Else just keep the old tipo and reset the actualProducto
         {
           ...emptyProduct,
-          tipo: actualProduct.tipo,
+          tipo: actualProducto.tipo,
         };
-    setActualProduct(newActualProduct);
+    setActualProducto(newActualProduct);
   };
 
   const onOpenModalButtonPress = () => {
     let allowed = false;
     // Check if the user has entered any value in the products actual values
     // TODO FIRST: FIX THIS VALIDATION
-    if (actualProduct.tipo === 'Aserrable') {
+    if (actualProducto.tipo === 'Aserrable') {
       for (const value of Object.values(clasesDiametricas)) {
         if (value !== 0) {
           // If any aserrable product has any valid clase diametrica, allow
@@ -135,7 +133,7 @@ export default function Products(props: any) {
           break;
         }
       }
-    } else if (actualProduct.tipo === 'Pulpable') {
+    } else if (actualProducto.tipo === 'Pulpable') {
       for (const value of Object.values(bancosPulpable)) {
         if (value.altura1 !== 0 && value.altura2 !== 0 && value.ancho !== 0) {
           // If any pulpable product has any valid banco, allow
@@ -162,31 +160,31 @@ export default function Products(props: any) {
       }
       setCreateGuiaLoading(true);
       if (user && user.firebaseAuth && user.empresa_id) {
-        // products depend on actualProduct.tipo
+        // products depend on actualProducto.tipo
         guia.productos =
-          actualProduct.tipo === 'Aserrable'
+          actualProducto.tipo === 'Aserrable'
             ? customHelpers.buildAserrableProductsArray(
-                actualProduct,
+                actualProducto,
                 clasesDiametricas
               )
             : customHelpers.buildPulpableProductArray(
-                actualProduct,
+                actualProducto,
                 bancosPulpable
               );
 
         guia.volumen_total = guia.productos.reduce(
-          (acc: any, product: any) => acc + product.volumen,
+          (acc: any, producto: any) => acc + producto.volumen,
           0
         );
         guia.total = totalGuia;
         guia.total_ref = Math.trunc(
-          actualProduct.precio_ref * guia.volumen_total
+          actualProducto.precio_ref * guia.volumen_total
         );
 
         // Divide the total amount by the total volume of products to get the "non_ref_price"
         guia.precio = Math.trunc(totalGuia / guia.volumen_total);
         // Same as guia
-        guia.precio_ref = actualProduct.precio_ref;
+        guia.precio_ref = actualProducto.precio_ref;
 
         // When we upload guias, we need Firebase to be able to parse the date correctly
 
@@ -229,45 +227,33 @@ export default function Products(props: any) {
           keyboardVerticalOffset={200}
         >
           <ScrollView style={styles.scrollView}>
-            <Text style={styles.sectionTitle}>Producto</Text>
-
             <View style={{ ...styles.section, ...styles.section.producto }}>
-              <View style={styles.row}>
-                <Select
-                  selectContainerStyle={selectStyles.container}
-                  // @ts-ignore
-                  selectControlStyle={{
-                    ...selectStyles.input,
-                  }}
-                  placeholderTextColor="#cccccc"
-                  placeholderText="Seleccione el tipo del Producto"
-                  selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                  options={tipoOptions}
-                  onSelect={handleSelectTipo}
-                  key={`tipo-${renderKey}`}
-                />
-              </View>
-              <View style={styles.row}>
-                <Select
-                  selectContainerStyle={selectStyles.container}
-                  // @ts-ignore
-                  selectControlStyle={{
-                    ...selectStyles.input,
-                    backgroundColor: props.disabled ? 'grey' : colors.white,
-                  }}
-                  placeholderTextColor="#cccccc"
-                  placeholderText="Seleccione el Producto"
-                  selectControlArrowImageStyle={selectStyles.buttonsContainer}
-                  options={productOptions}
-                  disabled={actualProduct?.tipo === null}
-                  ref={actualProductRef}
-                  onSelect={handleSelectProduct}
-                  key={`producto-${renderKey}`}
-                />
-              </View>
+              <Text style={styles.sectionTitle}>Producto</Text>
+              <Select
+                styles={selectStyles}
+                placeholderTextColor="#cccccc"
+                placeholderText="Seleccione el tipo del Producto"
+                options={tipoOptions}
+                onSelect={handleSelectTipo}
+                defaultOption={tipoOptions.find(
+                  (option) => option.value === actualProducto.tipo
+                )}
+                key={`tipo-${renderKey}`}
+                onRemove={() => handleSelectTipo(null)}
+              />
+              <Select
+                styles={selectStyles}
+                placeholderTextColor="#cccccc"
+                placeholderText="Seleccione el Producto"
+                options={productoOptions}
+                disabled={actualProducto?.tipo === null}
+                ref={actualProductRef}
+                onSelect={handleSelectProduct}
+                key={`producto-${renderKey}`}
+              />
             </View>
             <Text style={styles.sectionTitle}> Detalle </Text>
-            {actualProduct?.tipo === 'Aserrable' ? (
+            {actualProducto?.tipo === 'Aserrable' ? (
               <View style={{ ...styles.section, ...styles.section.detalle }}>
                 <Aserrable
                   clasesDiametricas={clasesDiametricas}
@@ -278,7 +264,7 @@ export default function Products(props: any) {
                   }
                 />
               </View>
-            ) : actualProduct?.tipo === 'Pulpable' ? (
+            ) : actualProducto?.tipo === 'Pulpable' ? (
               <View style={{ ...styles.section, ...styles.section.detalle }}>
                 <Pulpable
                   bancosPulpable={bancosPulpable}
@@ -293,9 +279,9 @@ export default function Products(props: any) {
           style={{
             ...styles.button,
             backgroundColor:
-              actualProduct.calidad === '' ? 'grey' : colors.secondary,
+              actualProducto.calidad === '' ? 'grey' : colors.secondary,
           }}
-          disabled={actualProduct.calidad === ''}
+          disabled={actualProducto.calidad === ''}
           onPress={onOpenModalButtonPress}
         >
           <Text style={styles.buttonText}> Crear Guía Despacho </Text>
@@ -420,31 +406,39 @@ const styles = StyleSheet.create({
   },
 });
 
-const selectStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    claseDiametrica: {
-      flex: 0.5,
-      marginRight: '4.5%',
-    },
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#cccccc',
-    borderRadius: 13,
-    alignSelf: 'center',
-    width: '90%',
-    folio: {
-      width: '45%',
+const selectStyles: SelectStyles = {
+  select: {
+    container: {
+      // flex: 1,
+      borderWidth: 2,
+      marginTop: '4%',
+      borderColor: '#cccccc',
+      borderRadius: 13,
       alignSelf: 'center',
-      marginLeft: '2.5%',
+      width: '90%',
+      // claseDiametrica: {
+      //   flex: 0.5,
+      //   marginRight: '4.5%',
+      // },
     },
+    // input: {
+    //   borderWidth: 2,
+    //   borderColor: '#cccccc',
+    //   borderRadius: 13,
+    //   alignSelf: 'center',
+    //   width: '90%',
+    //   folio: {
+    //     width: '45%',
+    //     alignSelf: 'center',
+    //     marginLeft: '2.5%',
+    //   },
+    // },
+    // buttonsContainer: {
+    //   tintColor: colors.secondary,
+    //   width: 10,
+    //   alignSelf: 'center',
+    //   alignContent: 'flex-end',
+    //   alignItems: 'center',
+    // },
   },
-  buttonsContainer: {
-    tintColor: colors.secondary,
-    width: 10,
-    alignSelf: 'center',
-    alignContent: 'flex-end',
-    alignItems: 'center',
-  },
-});
+};
