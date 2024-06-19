@@ -23,30 +23,22 @@ import {
 import { CheckBox } from 'react-native-elements';
 import { AppContext } from '../context/AppContext';
 import { UserContext } from '../context/UserContext';
-import { CreateGuiaContext } from '../context/CreateGuiaContext';
 import { IOption } from '../interfaces/screens';
 import {
   ContratosFiltered,
   CreateGuiaOptions,
   GuiaInCreateGuiaScreen,
-  IOptionTransportes,
 } from '../interfaces/screens/createGuia';
-import {
-  parseClientesFromContratosVenta,
-  parseFaenasFromContratosVenta,
-  parseProveedoresFromContratosCompra,
-  parseTransportesOptionsFromContratosCompra,
-  tipoDespachoOptions,
-  tipoTrasladoOptions,
-} from '../resources/options';
-import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
-import { Cliente, ContratoVenta } from '../interfaces/contratos/contratoVenta';
 import { createGuiaInitialStates } from '../resources/initialStates';
 import {
   getInitializationOptions,
   isGuiaValid,
   selectClienteLogic,
   selectPredioLogic,
+  selectProveedorLogic,
+  selectTransportistaLogic,
+  selectChoferLogic,
+  selectCamionLogic,
 } from '../functions/screens/createGuia';
 import OverlayLoading from '../resources/OverlayLoading';
 
@@ -84,66 +76,11 @@ export default function CreateGuia(props: any) {
 
   const [optionsInitialized, setOptionsInitialized] = useState(false);
 
-  const getClientesOptions = (contratosVenta: any[]) => {
-    const uniqueClientes = new Map();
-
-    contratosVenta.forEach((contrato) => {
-      if (contrato.cliente) {
-        const { razon_social, rut } = contrato.cliente;
-
-        // Avoiding duplicates by using the 'rut' as a unique key
-        if (!uniqueClientes.has(rut)) {
-          uniqueClientes.set(rut, {
-            label: razon_social,
-            value: rut,
-          });
-        }
-      }
-    });
-
-    return Array.from(uniqueClientes.values());
-  };
-
-  const contratosVentaDummy = [
-    {
-      cliente: {
-        comuna: 'NACIMIENTO',
-        destinos: [],
-        direccion: 'AVDA JULIO HEMMELMANN 320',
-        razon_social: 'CMPC PULP SPA',
-        rut: '96532330-9',
-      },
-      faenas: [[], []],
-      fecha_caducidad: [],
-      fecha_firma: [],
-      id: '3hd9gBxL0b4FXalZjPJS',
-      productos: [[], []],
-      vigente: true,
-    },
-    // {
-    //   cliente: {
-    //     comuna: 'SAN PEDRO DE LA PAZ',
-    //     destinos: [],
-    //     direccion: 'CAMINO A CORONEL 6058',
-    //     razon_social: 'BLOCKS AND CUTSTOCK S A ',
-    //     rut: '96862800-3',
-    //   },
-    //   faenas: [[], []],
-    //   fecha_caducidad: [],
-    //   fecha_firma: [],
-    //   id: 'b0hpJSUmQijPAgTpgTEV',
-    //   id_contrato_anterior: 'PdABelZhx4OZRptw29Tk',
-    //   productos: [[]],
-    //   vigente: true,
-    // },
-  ];
-
-  const clientesOptions = getClientesOptions(contratosVentaDummy);
-
   const renderCount = useRef(0);
   useEffect(() => {
     renderCount.current = renderCount.current + 1;
     console.log('options', options);
+    console.log('guia', guia);
     console.log(`Render number: ${renderCount.current}`);
   });
 
@@ -174,16 +111,6 @@ export default function CreateGuia(props: any) {
     }
   }, [contratosCompra, contratosVenta, user]);
 
-  // useEffect(() => {
-  //   console.log('\n\n');
-  //   console.log('GUIA:');
-  //   console.log(guia);
-  //   console.log('OPTIONS:');
-  //   console.log(options);
-  //   console.log('CONTRATOS:');
-  //   console.log(contratosFiltered);
-  // });
-
   const handleCertToggle = () => {
     setCertChecked(!certChecked);
   };
@@ -194,10 +121,8 @@ export default function CreateGuia(props: any) {
       return;
     }
     if (!certChecked) {
-      guia.predio.certificado = '';
+      guia.predio.certificado = 'No Aplica';
     }
-    return;
-
     navigation.push('Products', {
       data: {
         guia: {
@@ -208,9 +133,10 @@ export default function CreateGuia(props: any) {
           emisor: empresa.emisor,
           transporte: guia.despacho, // Just to keep structure correct with PreGuia
         },
-        // contratoVenta: contratosVentaFiltered[0],
+        contratosFiltered: contratosFiltered,
       },
     });
+    return;
   };
 
   function selectFolioHandler(option: IOption | null) {
@@ -302,6 +228,55 @@ export default function CreateGuia(props: any) {
     setContratosFiltered(newContratosFiltered);
   }
 
+  function selectProveedorHandler(option: IOption | null) {
+    const { newGuia, newContratosFiltered, newOptions } = selectProveedorLogic(
+      option,
+      options,
+      guia,
+      contratosFiltered,
+      contratosCompra
+    );
+
+    empresaTransporteRef.current?.clear();
+    choferRef.current?.clear();
+    camionRef.current?.clear();
+
+    setGuia(newGuia);
+    setOptions(newOptions);
+    setRenderKey((prevKey) => prevKey + 1);
+    setContratosFiltered(newContratosFiltered);
+  }
+
+  function selectTransportistaHandler(option: IOption | null) {
+    console.log('ENTERED WITH OPTION', option);
+    const { newGuia, newOptions } = selectTransportistaLogic(
+      option,
+      options,
+      guia
+    );
+
+    choferRef.current?.clear();
+    camionRef.current?.clear();
+
+    setGuia(newGuia);
+    setRenderKey((prevKey) => prevKey + 1);
+    setOptions(newOptions);
+  }
+
+  function selectChoferHandler(option: IOption | null) {
+    const newGuia = selectChoferLogic(option, options, guia);
+
+    setGuia(newGuia);
+    setRenderKey((prevKey) => prevKey + 1);
+  }
+
+  function selectCamionHandler(option: IOption | null) {
+    const newGuia = selectCamionLogic(option, guia);
+
+    setGuia(newGuia);
+    setRenderKey((prevKey) => prevKey + 1);
+  }
+
   return (
     <View style={styles.screen}>
       <Header
@@ -324,6 +299,7 @@ export default function CreateGuia(props: any) {
                   option.value === guia.identificacion.folio.toString()
               )}
               onSelect={selectFolioHandler}
+              onRemove={() => selectFolioHandler(null)}
               key={`folios-${renderKey}`}
             />
             <View style={styles.row}>
@@ -338,6 +314,7 @@ export default function CreateGuia(props: any) {
                       option.value === guia.identificacion.tipo_despacho
                   )}
                   onSelect={selectTipoDespachoHandler}
+                  onRemove={() => selectTipoDespachoHandler(null)}
                 />
               </View>
               <View style={styles.container}>
@@ -351,6 +328,7 @@ export default function CreateGuia(props: any) {
                       option.value === guia.identificacion.tipo_traslado
                   )}
                   onSelect={selectTipoTrasladoHandler}
+                  onRemove={() => selectTipoTrasladoHandler(null)}
                 />
               </View>
             </View>
@@ -366,6 +344,7 @@ export default function CreateGuia(props: any) {
                 (option) => option.value === guia.receptor.razon_social
               )}
               onSelect={selectClienteHandler}
+              onRemove={() => selectClienteHandler(null)}
               key={`clientes-${renderKey}`}
             />
             <Select
@@ -379,6 +358,7 @@ export default function CreateGuia(props: any) {
                 (option) => option.value === guia.despacho.direccion_destino
               )}
               onSelect={selectDireccionDespachoHandler}
+              onRemove={() => selectDireccionDespachoHandler(null)}
               key={`despachos-${renderKey}`}
             />
             <View style={styles.row}>
@@ -412,6 +392,7 @@ export default function CreateGuia(props: any) {
               )}
               disabled={guia.receptor.razon_social === ''}
               onSelect={selectPredioHandler}
+              onRemove={() => selectPredioHandler(null)}
               key={`predios-${renderKey}`}
             />
             <View style={styles.row}>
@@ -465,21 +446,8 @@ export default function CreateGuia(props: any) {
               defaultOption={options.proveedores.find(
                 (option) => option.value === guia.proveedor.razon_social
               )}
-              // onDropdownOpened={() => {
-              //   console.log(
-              //     'Render number onDropdownOpened: ',
-              //     renderCount.current
-              //   );
-              //   console.log(options.proveedores);
-              // }}
-              // onSelect={(option) => {
-              //   handleSelectProveedorLogic(
-              //     option,
-              //     empresaTransporteRef,
-              //     choferRef,
-              //     camionRef
-              //   );
-              // }}
+              onSelect={selectProveedorHandler}
+              onRemove={() => selectProveedorHandler(null)}
               key={`proveedores-${renderKey}`}
             />
           </View>
@@ -494,18 +462,13 @@ export default function CreateGuia(props: any) {
                 guia.despacho.direccion_destino === ''
               }
               options={options.empresasTransporte}
+              defaultOption={options.empresasTransporte.find(
+                (option) => option.value === guia.despacho.rut_transportista
+              )}
+              ref={empresaTransporteRef}
               key={`transportistas-${renderKey}`}
-              // ref={empresaTransporteRef}
-              // onSelect={(option) => {
-              //   return handleSelectEmpresaTransporteLogic(
-              //     // We add the whole transporte object to the options, so we can access the choferes and camiones
-              //     option as IOptionsTransportes,
-              //     contratosCompraFiltered,
-              //     direccionDespachoRef,
-              //     choferRef,
-              //     camionRef
-              //   );
-              // }}
+              onSelect={selectTransportistaHandler}
+              onRemove={() => selectTransportistaHandler(null)}
             />
             <View style={styles.row}>
               <View style={styles.container}>
@@ -513,23 +476,15 @@ export default function CreateGuia(props: any) {
                   styles={selectStyles}
                   placeholderText="Chofer"
                   animation={true}
-                  // ref={choferRef}
+                  ref={choferRef}
                   disabled={guia.despacho.rut_transportista === ''}
                   options={options.choferes}
+                  defaultOption={options.choferes.find(
+                    (option) => option.value === guia.despacho.chofer.rut
+                  )}
+                  onSelect={selectChoferHandler}
+                  onRemove={() => selectChoferHandler(null)}
                   key={`choferes-${renderKey}`}
-                  // onSelect={(option) => {
-                  //   const parsedChoferOption = {
-                  //     nombre: option?.value.split('/')[0] || '',
-                  //     rut: option?.value.split('/')[1] || '',
-                  //   };
-                  //   updateDespacho({
-                  //     ...despacho,
-                  //     chofer: {
-                  //       nombre: parsedChoferOption.nombre,
-                  //       rut: parsedChoferOption.rut,
-                  //     },
-                  //   });
-                  // }}
                 />
               </View>
               <View style={styles.container}>
@@ -537,28 +492,29 @@ export default function CreateGuia(props: any) {
                   styles={selectStyles}
                   placeholderText="Camion"
                   animation={true}
-                  // ref={camionRef}
+                  ref={camionRef}
                   options={options.camiones}
+                  defaultOption={options.camiones.find(
+                    (option) => option.value === guia.despacho.patente
+                  )}
                   disabled={guia.despacho.rut_transportista === ''}
+                  onSelect={selectCamionHandler}
+                  onRemove={() => selectCamionHandler(null)}
                   key={`camiones-${renderKey}`}
-                  // onSelect={(option) => {
-                  //   updateDespacho({
-                  //     ...despacho,
-                  //     patente: option?.value || '',
-                  //   });
-                  // }}
                 />
               </View>
             </View>
           </View>
+          {/* Add an empty space */}
+          <View style={{ height: 50 }} />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleNavigateToAddProductos}
+          >
+            <Text style={styles.buttonText}> Agregar Productos </Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleNavigateToAddProductos}
-      >
-        <Text style={styles.buttonText}> Agregar Productos </Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -581,7 +537,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   section: {
-    marginTop: '2%',
+    marginTop: '4%',
     height: 150,
     backgroundColor: colors.crudo,
     borderRadius: 15,

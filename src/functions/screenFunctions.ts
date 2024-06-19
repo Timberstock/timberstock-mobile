@@ -225,6 +225,7 @@ export const generatePDF = async (
       UTI: '.pdf',
       mimeType: 'application/pdf',
     });
+    console.log(permanentUri);
 
     console.log('PDF file generated:', permanentUri);
   } catch (error) {

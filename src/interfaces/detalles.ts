@@ -11,7 +11,6 @@ export interface Predio {
   georreferencia: Georreferencia;
   certificado: string;
   plan_de_manejo: string;
-  manzana?: string;
 }
 
 export interface Producto {

@@ -76,7 +76,7 @@ export const _createGuiaTest = async (folio: number) => {
       manzana: '243',
       nombre: 'LOTE 3',
       plan_de_manejo: ['N.M. 311/32-13/21'],
-      rol: '62',
+      rol: '243-62',
     },
     productos: [
       {

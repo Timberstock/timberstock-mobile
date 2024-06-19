@@ -1,6 +1,9 @@
 import { Chofer } from '../interfaces/guias';
 import { IOption } from '../interfaces/screens';
-import { IOptionTransportes } from '../interfaces/screens/createGuia';
+import {
+  IOptionChoferes,
+  IOptionTransportes,
+} from '../interfaces/screens/createGuia';
 import { tipoDespachoOptions, tipoTrasladoOptions } from './options';
 
 export const createGuiaInitialStates = {
@@ -15,7 +18,7 @@ export const createGuiaInitialStates = {
     clientes: [] as IOption[],
     destinos: [] as IOption[],
     empresasTransporte: [] as IOptionTransportes[],
-    choferes: [] as IOption[],
+    choferes: [] as IOptionChoferes[],
     camiones: [] as IOption[],
     predios: [] as IOption[],
     planesDeManejo: [] as IOption[],

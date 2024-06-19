@@ -4,6 +4,7 @@ import {
 } from '../../resources/options';
 import { IOption } from '../screens';
 import {
+  Chofer,
   ContratoCompra,
   TransporteDestinoContratoCompra,
 } from '../contratos/contratoCompra';
@@ -13,6 +14,10 @@ import { ContratoVenta } from '../contratos/contratoVenta';
 
 export interface IOptionTransportes extends IOption {
   transporteObject: TransporteDestinoContratoCompra;
+}
+
+export interface IOptionChoferes extends IOption {
+  choferObject: Chofer;
 }
 
 export interface CreateGuiaOptions {
@@ -25,7 +30,7 @@ export interface CreateGuiaOptions {
   planesDeManejo: IOption[];
   proveedores: IOption[];
   empresasTransporte: IOptionTransportes[];
-  choferes: IOption[];
+  choferes: IOptionChoferes[];
   camiones: IOption[];
 }
 

@@ -17,11 +17,7 @@ import {
 } from 'react-native';
 import colors from '../resources/Colors';
 import Header from '../components/Header';
-import {
-  Select,
-  SelectRef,
-  SelectStyles,
-} from '@mobile-reality/react-native-select-pro';
+import { Select, SelectRef } from '@mobile-reality/react-native-select-pro';
 import { AppContext } from '../context/AppContext';
 import { getProductosOptions, tipoOptions } from '../resources/options';
 import { UserContext } from '../context/UserContext';
@@ -233,30 +229,42 @@ export default function Products(props: any) {
           keyboardVerticalOffset={200}
         >
           <ScrollView style={styles.scrollView}>
+            <Text style={styles.sectionTitle}>Producto</Text>
+
             <View style={{ ...styles.section, ...styles.section.producto }}>
-              <Text style={styles.sectionTitle}>Producto</Text>
-              <Select
-                styles={selectStyles}
-                placeholderTextColor="#cccccc"
-                placeholderText="Seleccione el tipo del Producto"
-                options={tipoOptions}
-                onSelect={handleSelectTipo}
-                defaultOption={tipoOptions.find(
-                  (option) => option.value === actualProduct.tipo
-                )}
-                key={`tipo-${renderKey}`}
-                onRemove={() => handleSelectTipo(null)}
-              />
-              <Select
-                styles={selectStyles}
-                placeholderTextColor="#cccccc"
-                placeholderText="Seleccione el Producto"
-                options={productOptions}
-                disabled={actualProduct?.tipo === null}
-                ref={actualProductRef}
-                onSelect={handleSelectProduct}
-                key={`producto-${renderKey}`}
-              />
+              <View style={styles.row}>
+                <Select
+                  selectContainerStyle={selectStyles.container}
+                  // @ts-ignore
+                  selectControlStyle={{
+                    ...selectStyles.input,
+                  }}
+                  placeholderTextColor="#cccccc"
+                  placeholderText="Seleccione el tipo del Producto"
+                  selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                  options={tipoOptions}
+                  onSelect={handleSelectTipo}
+                  key={`tipo-${renderKey}`}
+                />
+              </View>
+              <View style={styles.row}>
+                <Select
+                  selectContainerStyle={selectStyles.container}
+                  // @ts-ignore
+                  selectControlStyle={{
+                    ...selectStyles.input,
+                    backgroundColor: props.disabled ? 'grey' : colors.white,
+                  }}
+                  placeholderTextColor="#cccccc"
+                  placeholderText="Seleccione el Producto"
+                  selectControlArrowImageStyle={selectStyles.buttonsContainer}
+                  options={productOptions}
+                  disabled={actualProduct?.tipo === null}
+                  ref={actualProductRef}
+                  onSelect={handleSelectProduct}
+                  key={`producto-${renderKey}`}
+                />
+              </View>
             </View>
             <Text style={styles.sectionTitle}> Detalle </Text>
             {actualProduct?.tipo === 'Aserrable' ? (
@@ -412,39 +420,31 @@ const styles = StyleSheet.create({
   },
 });
 
-const selectStyles: SelectStyles = {
-  select: {
-    container: {
-      // flex: 1,
-      borderWidth: 2,
-      marginTop: '4%',
-      borderColor: '#cccccc',
-      borderRadius: 13,
-      alignSelf: 'center',
-      width: '90%',
-      // claseDiametrica: {
-      //   flex: 0.5,
-      //   marginRight: '4.5%',
-      // },
+const selectStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    claseDiametrica: {
+      flex: 0.5,
+      marginRight: '4.5%',
     },
-    // input: {
-    //   borderWidth: 2,
-    //   borderColor: '#cccccc',
-    //   borderRadius: 13,
-    //   alignSelf: 'center',
-    //   width: '90%',
-    //   folio: {
-    //     width: '45%',
-    //     alignSelf: 'center',
-    //     marginLeft: '2.5%',
-    //   },
-    // },
-    // buttonsContainer: {
-    //   tintColor: colors.secondary,
-    //   width: 10,
-    //   alignSelf: 'center',
-    //   alignContent: 'flex-end',
-    //   alignItems: 'center',
-    // },
   },
-};
+  input: {
+    borderWidth: 2,
+    borderColor: '#cccccc',
+    borderRadius: 13,
+    alignSelf: 'center',
+    width: '90%',
+    folio: {
+      width: '45%',
+      alignSelf: 'center',
+      marginLeft: '2.5%',
+    },
+  },
+  buttonsContainer: {
+    tintColor: colors.secondary,
+    width: 10,
+    alignSelf: 'center',
+    alignContent: 'flex-end',
+    alignItems: 'center',
+  },
+});

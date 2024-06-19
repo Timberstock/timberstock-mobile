@@ -114,7 +114,7 @@ const createPDFHTMLString = async (
       return HTMLStringsObject;
     };
 
-    const productosAsPTags = _productosToTags(detallesList.slice(8));
+    const productosAsPTags = _productosToTags(detallesList.slice(7));
 
     let detallesListTableContentString = `
     <table style="border-collapse: collapse; width: 650px" cellspacing="0">
@@ -153,26 +153,20 @@ const createPDFHTMLString = async (
           <p class="s2">${/* [Predio] 4th part */ detallesList[4].nombre}</p>
           <p class="s2">${/* [Predio] 5th part */ detallesList[5].nombre}</p>
           <p class="s2">${/* [Predio] 6th part */ detallesList[6].nombre}</p>
-          <p class="s2">${/* [Predio] 6th part */ detallesList[7].nombre}</p>
           ${productosAsPTags.nombres}
         </td>
         <td class="cellwithborders">
           <p class="s2">${
             /* representative */ detallesList[0].cantidad.toFixed(4)
           }</p>
-          ${
-            // If it doesn't have certificado, only skip 7 spaces
-            detallesList[7].nombre === ' '
-              ? `<p class="s2">.</p>`.repeat(7)
-              : `<p class="s2">.</p>`.repeat(8) /* skip some spaces */
-          }
+          ${`<p class="s2">.</p>`.repeat(7) /* Skip Predio parts */} 
           ${productosAsPTags.cantidades}
         </td>
         <td class="cellwithborders">
           <p class="s2">
             ${
               /* We can do it like this since each GUIA has same unit for all products */
-              detallesList[8].nombre.includes('Metro Ruma') ? 'MR' : 'M3'
+              detallesList[7].nombre.includes('Metro Ruma') ? 'MR' : 'M3'
             }
           </p>
         </td>
@@ -181,7 +175,7 @@ const createPDFHTMLString = async (
         </td>
         <td class="cellwithborders">
           <p class="s2">
-            ${detallesList[8].nombre.includes('Metro Ruma') ? 'P' : 'AF'}
+            ${detallesList[7].nombre.includes('Metro Ruma') ? 'P' : 'AF'}
           </p>
         </td>
         <td class="cellwithborders">
@@ -398,26 +392,23 @@ const createPDFHTMLString = async (
   `;
 
   const predioDetalles = [
-    _stringToProducto(`[Predio] Manzana: ${DTE.predio.manzana}`),
-    _stringToProducto(`[Predio] Rol: ${DTE.predio.rol}`),
-    _stringToProducto(`[Predio] Nombre: ${DTE.predio.nombre}`),
-    _stringToProducto(`[Predio] Comuna: ${DTE.predio.comuna}`),
+    _stringToProducto(`Rol: ${DTE.predio.rol}`),
+    _stringToProducto(`Nombre: ${DTE.predio.nombre}`),
+    _stringToProducto(`Comuna: ${DTE.predio.comuna}`),
     _stringToProducto(
-      `[Predio] GEO: (${DTE.predio.georreferencia.latitude},${DTE.predio.georreferencia.longitude})`
+      `(${DTE.predio.georreferencia.latitude},${DTE.predio.georreferencia.longitude})`
     ),
-    _stringToProducto(`[Predio] Plan de Manejo: ${DTE.predio.plan_de_manejo}`),
     _stringToProducto(
-      DTE.predio.certificado
-        ? `[Predio] Certificado: ${DTE.predio.certificado}`
-        : ' '
+      `Plan de Manejo o Uso Suelo: ${DTE.predio.plan_de_manejo}`
     ),
+    _stringToProducto(`${DTE.predio.certificado}`),
   ];
   const productosDetalles = [];
   let volumenTotal = 0;
   for (const producto of DTE.productos) {
     const nombreProducto =
       producto.tipo === 'Aserrable'
-        ? `${producto.especie}-${producto.tipo}-${producto.calidad}-${producto.largo}-${producto.claseDiametrica}`
+        ? `${producto.especie}-${producto.tipo}-${producto.calidad}-${producto.largo}-${producto.claseDiametrica}: ${producto.cantidad}`
         : `${producto.especie}-${producto.tipo}-${producto.calidad}-${producto.largo}`;
     volumenTotal += producto.volumen ? producto.volumen : 0;
     productosDetalles.push(_stringToProducto(nombreProducto, producto.volumen));
@@ -425,7 +416,7 @@ const createPDFHTMLString = async (
 
   // TODO: NOT SURE ABOUT THIS APPROACH, MUST BE FIXED ASAP
   const productoTotalDetalle = {
-    nombre: `Productos Total (ref): ${DTE.total}`,
+    nombre: `Total: ${DTE.total}`,
     cantidad: DTE.volumen_total,
     precio: DTE.precio,
     montoItem: DTE.total,
