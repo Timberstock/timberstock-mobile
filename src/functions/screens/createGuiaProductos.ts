@@ -7,9 +7,9 @@ import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
 
-import { pdf417 } from 'bwip-js';
+// import { pdf417 } from 'bwip-js';
 import 'react-zlib-js'; // side effects only
-// import bwipjs from 'bwip-js';
+import BwipJs from 'bwip-js';
 
 export const handleSelectProductoLogic = (
   option: IOption | null,
@@ -55,7 +55,7 @@ export const generatePDF = async (
     console.log('TED GENERADO');
 
     // Generate the barcode
-    const barcode = await pdf417({
+    const barcode = await BwipJs.toDataURL({
       bcid: 'pdf417',
       text: TED,
     });
