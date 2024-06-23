@@ -56,14 +56,17 @@ export interface PreGuia {
   identificacion: Identificacion;
   emisor: Emisor;
   receptor: Receptor;
-  transporte: Transporte;
-  productos: ProductoDetalle[];
   predio: Predio;
+  transporte: Transporte;
+  proveedor: Proveedor;
+  productos: ProductoDetalle[];
   volumen_total: number;
   precio_ref: number;
   total_ref: number;
   precio: number;
   total: number;
+  contrato_venta: string;
+  contrato_compra: string;
 }
 
 export interface GuiaDespachoFirebase extends PreGuia {

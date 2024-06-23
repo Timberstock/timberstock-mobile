@@ -124,10 +124,10 @@ export default function CreateGuia(props: any) {
       data: {
         guia: {
           identificacion: guia.identificacion,
+          emisor: empresa.emisor,
           receptor: guia.receptor,
           predio: guia.predio,
           proveedor: guia.proveedor,
-          emisor: empresa.emisor,
           transporte: guia.despacho, // Just to keep structure correct with PreGuia
         },
         contratosFiltered: contratosFiltered,

@@ -16,7 +16,6 @@ import {
   SelectRef,
   SelectStyles,
 } from '@mobile-reality/react-native-select-pro';
-import { AppContext } from '../context/AppContext';
 import { getProductosOptions, tipoOptions } from '../resources/options';
 import { UserContext } from '../context/UserContext';
 import OverlayLoading from '../resources/OverlayLoading';
@@ -34,6 +33,7 @@ import PrecioModal from '../components/productos/PrecioModal';
 import customHelpers from '../functions/helpers';
 import { ContratoVenta } from '../interfaces/contratos/contratoVenta';
 import { ContratosFiltered } from '../interfaces/screens/createGuia';
+import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
 
 export default function CreateGuiaProductos(props: any) {
   // TODO: Add reference to the contratoVenta and Compra where the data was taken from
@@ -48,9 +48,9 @@ export default function CreateGuiaProductos(props: any) {
   const [renderKey, setRenderKey] = useState(0);
 
   const contratoVenta: ContratoVenta = contratosFiltered.venta[0];
+  const contratoCompra: ContratoCompra = contratosFiltered.compra[0];
   console.log(contratoVenta);
   const { user, updateUserReservedFolios } = useContext(UserContext);
-  const { subCollectionsData } = useContext(AppContext);
 
   // Main states
   const [productoOptions, setProductoOptions] = useState<IOption[]>([]);
@@ -187,6 +187,8 @@ export default function CreateGuiaProductos(props: any) {
         guia.precio_ref = actualProducto.precio_ref;
 
         // When we upload guias, we need Firebase to be able to parse the date correctly
+        guia.contrato_compra = contratoCompra.id;
+        guia.contrato_venta = contratoVenta.id;
 
         // We retrieve the date on which the guia was created as ISOString for consistency and not using Date (mutable object warning)
         const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish

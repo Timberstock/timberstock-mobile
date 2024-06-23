@@ -78,15 +78,15 @@ const getTED = async (cafString: string, DTE: PreGuia) => {
     FE: todayString,
     RR: DTE.receptor.rut,
     RSR: DTE.receptor.razon_social,
-    MNT: DTE.total * 1.19,
-    IT1: `Productos Total (ref): ${DTE.total}`,
+    MNT: Math.floor(DTE.total * 1.19),
+    IT1: `Total: ${DTE.total}`,
     CAF: CAF_XML_String,
     TSTED: todayStringWithTime,
   };
   const DD_XML_String = `<RE>${DD.RE}</RE><TD>${DD.TD}</TD><F>${DD.F}</F><FE>${DD.FE}</FE><RR>${DD.RR}</RR><RSR>${DD.RSR}</RSR><MNT>${DD.MNT}</MNT><IT1>${DD.IT1}</IT1>${DD.CAF}<TSTED>${DD.TSTED}</TSTED>`;
 
+  // Sign the DD_XML_String with the RSASK, Both public keys given by the CAF are the same?
   const crypt = new Crypt({ md: 'sha1' });
-
   const FRMT = JSON.parse(crypt.signature(RSASK, DD_XML_String));
 
   const TED = `<TED version="1.0"><DD>${DD_XML_String}</DD><FRMT algoritmo="SHA1withRSA">${FRMT.signature}</FRMT></TED>`;

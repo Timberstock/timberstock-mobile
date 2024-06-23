@@ -41,7 +41,7 @@ const PrecioModal = (props: any) => {
               style={styles.acceptButton}
               // Error handling for empty input (disable the button)
               onPress={() => {
-                handleCreateGuia(totalGuia);
+                handleCreateGuia(parseInt(totalGuia));
               }}
             >
               <Text style={styles.acceptButtonText}>Crear</Text>

@@ -432,8 +432,10 @@ const createPDFHTMLString = async (
 
   const Totales = {
     MontoNeto: DTE.total,
-    IVA: 0.19 * Math.floor(DTE.total),
-    Total: DTE.total + 0.19 * Math.floor(DTE.total),
+    IVA: Math.floor(0.19 * DTE.total),
+    Total:
+      parseInt(DTE.total.toString()) +
+      parseInt(Math.floor(0.19 * DTE.total).toString()),
   };
 
   const totales = `
