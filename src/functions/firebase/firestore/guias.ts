@@ -1,17 +1,18 @@
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
-import { GuiaDespachoSummaryProps } from '../../../interfaces/guias';
-import { GuiaDespachoFirebase, PreGuia } from '../../../interfaces/firestore';
+import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
+// import { GuiaDespachoFirebase, PreGuia } from '@/interfaces/firestore';
 import { Alert } from 'react-native';
+import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
 
 export const createGuiaDoc = async (
   rutEmpresa: string,
-  preGuia: PreGuia
+  preGuia: GuiaDespachoFirestore
 ): Promise<string | null> => {
   if (!rutEmpresa) return null;
   const creationDate = new Date();
-  const guia: GuiaDespachoFirebase = {
+  const guia: GuiaDespachoFirestore = {
     ...preGuia,
     identificacion: { ...preGuia.identificacion, fecha: creationDate },
     estado: 'pendiente',
@@ -141,10 +142,10 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
       const guiaData = {
         folio: data.identificacion.folio,
         estado: data.estado,
-        total: data.total,
+        total_guia: data.total_guia || data.monto_total_guia,
         receptor: data.receptor,
         // We parse the firestore timestamp to a string
-        fecha: data.identificacion.fecha.toDate().toISOString(),
+        fecha: formatDateToYYYYMMDD(data.identificacion.fecha.toDate()),
         url: data?.pdf_url ? data.pdf_url : '',
       };
       guiasSummary.push(guiaData);
@@ -154,4 +155,11 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
     console.error('Error read document: ', e);
     throw new Error(`Error al leer guía(s): ${e}`);
   }
+};
+
+const formatDateToYYYYMMDD = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };

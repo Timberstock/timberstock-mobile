@@ -1,11 +1,9 @@
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
-import { Cliente } from '../../../interfaces/firestore';
-import { Predio, Producto, Proveedor } from '../../../interfaces/detalles';
-import { Alert } from 'react-native';
-import { ContratoCompra } from '../../../interfaces/contratos/contratoCompra';
-import { ContratoVenta } from '../../../interfaces/contratos/contratoVenta';
+import { ContratoCompra } from '@/interfaces/contratos/contratoCompra';
+import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
+import { Cliente, Faena, Producto, Proveedor } from '@/interfaces/esenciales';
 
 // This function is used to retrieve data form Firestore and then
 // push it to an array that is passed.
@@ -33,7 +31,7 @@ const getIndividualData = async (
 
 const empresaSubCollectionRequestConstructor = (empresaId: string) => {
   const proveedores: any[] = [];
-  const predios: FirebaseFirestoreTypes.DocumentData[] = [];
+  const faenas: FirebaseFirestoreTypes.DocumentData[] = [];
   const productos: FirebaseFirestoreTypes.DocumentData[] = [];
   const clientes: FirebaseFirestoreTypes.DocumentData[] = [];
 
@@ -61,8 +59,8 @@ const empresaSubCollectionRequestConstructor = (empresaId: string) => {
         empresaId,
         doc.id,
         'contratos',
-        'predios',
-        predios
+        'faenas',
+        faenas
       );
 
       await getIndividualData(
@@ -87,7 +85,7 @@ const empresaSubCollectionRequestConstructor = (empresaId: string) => {
     }
     return {
       proveedores: proveedores,
-      predios: predios as Predio[],
+      faenas: faenas as Faena[],
       productos: productos as Producto[],
       clientes: clientes as Cliente[],
     };
@@ -113,7 +111,7 @@ export const fetchSubCollections = async (
   empresaId: string
 ): Promise<{
   proveedores: Proveedor[];
-  predios: Predio[];
+  faenas: Faena[];
   productos: Producto[];
   clientes: Cliente[];
 }> => {
@@ -153,7 +151,7 @@ export const fetchContratosCompra = async (
     const contratosCompra = [];
     for (const doc of response.docs) {
       const contratoCompra = doc.data();
-      contratoCompra.id = doc.id;
+      contratoCompra.firestore_id = doc.id;
       contratosCompra.push(contratoCompra as ContratoCompra);
     }
     return contratosCompra;
@@ -165,7 +163,7 @@ export const fetchContratosCompra = async (
       const contratosCompra = [];
       for (const doc of response.docs) {
         const contratoCompra = doc.data();
-        contratoCompra.id = doc.id;
+        contratoCompra.firestore_id = doc.id;
         contratosCompra.push(contratoCompra as ContratoCompra);
       }
       return contratosCompra;
@@ -192,7 +190,7 @@ export const fetchContratosVenta = async (
     const contratosVenta = [];
     for (const doc of response.docs) {
       const contratoVenta = doc.data();
-      contratoVenta.id = doc.id;
+      contratoVenta.firestore_id = doc.id;
       contratosVenta.push(contratoVenta as ContratoVenta);
     }
     return contratosVenta;
@@ -205,7 +203,7 @@ export const fetchContratosVenta = async (
       const contratosVenta = [];
       for (const doc of response.docs) {
         const contratoVenta = doc.data();
-        contratoVenta.id = doc.id;
+        contratoVenta.firestore_id = doc.id;
         contratosVenta.push(contratoVenta as ContratoVenta);
       }
       return contratosVenta;

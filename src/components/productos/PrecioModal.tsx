@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import colors from '../../resources/Colors';
 import {
   StyleSheet,
   View,
@@ -10,12 +9,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import colors from '@/resources/Colors';
 
 // TODO: fix types
 const PrecioModal = (props: any) => {
   const { createGuiaLoading, modalVisible, setModalVisible, handleCreateGuia } =
     props;
-  const [totalGuia, setTotalGuia] = useState('');
+  const [valorPrecioUnidadGuia, setValorPrecioUnidadGuia] = useState('');
 
   return (
     <View>
@@ -28,20 +28,18 @@ const PrecioModal = (props: any) => {
             >
               <Icon name="close-circle" size={25} color="grey" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              Valor Total de la Guía de Despacho
-            </Text>
+            <Text style={styles.modalTitle}>Precio Unitario</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
-              value={totalGuia}
-              onChangeText={setTotalGuia}
+              value={valorPrecioUnidadGuia}
+              onChangeText={setValorPrecioUnidadGuia}
             />
             <TouchableOpacity
               style={styles.acceptButton}
               // Error handling for empty input (disable the button)
               onPress={() => {
-                handleCreateGuia(parseInt(totalGuia));
+                handleCreateGuia(parseInt(valorPrecioUnidadGuia));
               }}
             >
               <Text style={styles.acceptButtonText}>Crear</Text>

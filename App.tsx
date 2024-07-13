@@ -1,16 +1,17 @@
 import React from 'react';
+import 'expo-dev-client';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Home from './src/screens/Home';
-import CreateGuia from './src/screens/CreateGuia';
 import { SelectProvider } from '@mobile-reality/react-native-select-pro';
-import 'expo-dev-client';
-import { StyleSheet, TouchableOpacity, View, Text, Alert } from 'react-native';
-import UserContextProvider from './src/context/UserContext';
-import AuthWrapper from './src/AuthWrapper';
 import firestore from '@react-native-firebase/firestore';
-import { logoutUser } from './src/functions/firebase/auth';
-import CreateGuiaProductos from './src/screens/CreateGuiaProductos';
+import { StyleSheet, TouchableOpacity, View, Text, Alert } from 'react-native';
+
+import UserContextProvider from '@/context/UserContext';
+import AuthWrapper from '@/AuthWrapper';
+import Home from '@/screens/Home';
+import { logoutUser } from '@/functions/firebase/auth';
+import CreateGuia from '@/screens/emision/Create';
+import CreateGuiaProductos from '@/screens/emision/Productos';
 
 const Stack = createNativeStackNavigator();
 

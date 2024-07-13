@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import colors from '../resources/Colors';
 import {
   StyleSheet,
   View,
@@ -9,6 +8,7 @@ import {
   Text,
   ActivityIndicator,
 } from 'react-native';
+import colors from '@/resources/Colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 // TODO: fix types

@@ -1,23 +1,25 @@
-import { Producto } from '../detalles';
-import { FaenaFirestore } from '../firestore';
-
-// Contrato
-export interface Cliente {
-  comuna: string;
-  destinos: string[];
-  direccion: string;
-  razon_social: string;
-  rut: string;
-  giro?: string | '';
-}
-
-interface ProductoContrato extends Producto {}
+import Timestamp from '@react-native-firebase/firestore';
+import { Cliente, Producto } from '../esenciales';
 
 export interface ContratoVenta {
-  id: string;
-  faenas: FaenaFirestore[];
-  productos: ProductoContrato[];
-  cliente: Cliente | null;
-  fecha_firma: Date | null;
-  // vigente: boolean; should be always true, filtered in the query to firestore
+  firestore_id: string;
+  cliente: ClienteContratoVenta;
+  fecha_firma: typeof Timestamp | Date;
+  fecha_caducidad: typeof Timestamp | Date;
+  vigente: boolean;
+  id_contrato_anterior?: string;
+}
+
+export interface ClienteContratoVenta extends Cliente {
+  destinos_contrato: DestinoContratoVenta[];
+}
+
+export interface DestinoContratoVenta {
+  nombre: string;
+  productos: ProductoContratoVenta[];
+}
+
+export interface ProductoContratoVenta extends Producto {
+  precio_unitario_venta: number;
+  precio_unitario_venta_ref?: number;
 }

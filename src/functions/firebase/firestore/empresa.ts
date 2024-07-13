@@ -1,7 +1,6 @@
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
-import { Emisor } from '../../../interfaces/guias';
 import { Alert } from 'react-native';
 
 // TODO: Optimize all this file along with ChatGPT after wrapping up the app.
@@ -16,16 +15,13 @@ export const fetchEmpresaDoc = async (empresaId: string) => {
     request: FirebaseFirestoreTypes.DocumentSnapshot<FirebaseFirestoreTypes.DocumentData>
   ) => {
     const empresaData = request.data();
-    const emisor: Emisor = {
+    const empresa = {
       rut: empresaData?.rut,
       razon_social: empresaData?.razon_social,
       giro: empresaData?.giro,
       direccion: empresaData?.direccion,
       comuna: empresaData?.comuna,
       actividad_economica: empresaData?.activ_econom,
-    };
-    const empresa = {
-      emisor: emisor,
       caf_n: empresaData?.caf_n,
     };
     console.log(`Empresa ${empresaData?.razon_social} fetched`);

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { requestReservarFoliosResponse } from '../../interfaces/cloud_functions';
+import { requestReservarFoliosResponse } from '@/interfaces/firestore/cloud_functions';
 
 export async function requestReservarFolios(
   uid: string,

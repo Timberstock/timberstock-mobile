@@ -6,32 +6,33 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import colors from '../../resources/Colors';
-import { AserrableType } from '../../interfaces/productos';
+import colors from '@/resources/Colors';
+import { ClaseDiametrica } from '@/interfaces/screens/emision/productos';
 
 export default function Aserrable({
   clasesDiametricas,
   updateClaseDiametricaValue,
   increaseNumberOfClasesDiametricas,
-}: AserrableType) {
+}: {
+  clasesDiametricas: ClaseDiametrica[];
+  updateClaseDiametricaValue: (clase: string, cantidad: number) => void;
+  increaseNumberOfClasesDiametricas: () => void;
+}) {
   return (
     <View style={styles.container}>
-      {
-        // For each [label, value] pair in the clasesDiametricas object, create a ClaseDiametricaRow component with the label and value as props
-        Object.entries(clasesDiametricas).map((entry, index) => (
-          <ClaseDiametricaRow
-            key={index}
-            label={entry[0]}
-            value={entry[1]}
-            // TODO: prop drilling bad practice
-            updateClaseDiametricaValue={updateClaseDiametricaValue}
-          />
-        ))
-      }
+      {clasesDiametricas.map((claseDiametrica, index) => (
+        <ClaseDiametricaRow
+          key={index}
+          clase={claseDiametrica.clase}
+          cantidad={claseDiametrica.cantidad}
+          // TODO: prop drilling bad practice
+          updateClaseDiametricaValue={updateClaseDiametricaValue}
+        />
+      ))}
       <View style={styles.row}>
         <TouchableOpacity
           style={{ ...styles.button, ...styles.button.claseDiametrica }}
-          onPress={() => increaseNumberOfClasesDiametricas()}
+          onPress={increaseNumberOfClasesDiametricas}
         >
           <Text style={styles.claseDiametricaButtonText}>
             + Clase Diametrica
@@ -43,31 +44,35 @@ export default function Aserrable({
 }
 
 const ClaseDiametricaRow = ({
-  label,
-  value,
+  clase,
+  cantidad,
   updateClaseDiametricaValue,
-}: any) => {
+}: {
+  clase: string;
+  cantidad: number;
+  updateClaseDiametricaValue: (clase: string, cantidad: number) => void;
+}) => {
   return (
     <View style={styles.row}>
-      <Text style={styles.text}>{label}</Text>
+      <Text style={styles.text}>{clase}</Text>
       <TouchableOpacity
-        disabled={value <= 0}
+        disabled={cantidad <= 0}
         style={styles.button}
-        // Decrease the value by 1
-        onPress={() => updateClaseDiametricaValue(label, value - 1)}
+        // Decrease the cantidad by 1
+        onPress={() => updateClaseDiametricaValue(clase, cantidad - 1)}
       >
         <Text style={styles.buttonText}>-</Text>
       </TouchableOpacity>
       <TextInput
         style={styles.input}
-        value={value.toString()}
+        value={cantidad.toString()}
         keyboardType="numeric"
-        // onChangeText={(text) => updateClaseDiametricaValue(label, parseInt(text))}
+        // onChangeText={(text) => updateClaseDiametricaValue(clase, parseInt(text))}
       />
       <TouchableOpacity
         style={styles.button}
-        // Increase the value by 1
-        onPress={() => updateClaseDiametricaValue(label, value + 1)}
+        // Increase the cantidad by 1
+        onPress={() => updateClaseDiametricaValue(clase, cantidad + 1)}
       >
         <Text style={styles.buttonText}>+</Text>
       </TouchableOpacity>

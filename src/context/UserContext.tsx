@@ -1,11 +1,11 @@
 import React, { createContext, useRef, useState } from 'react';
-import { Usuario } from '../interfaces/usuario';
+import { Usuario } from '@/interfaces/context/user';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import {
   retrieveUserFirestoreInformation,
   retrieveUserSafe,
-} from '../functions/firebase/firestore/usuarios';
-import { updateUserFirestore } from '../functions/firebase/firestore/usuarios';
+} from '@/functions/firebase/firestore/usuarios';
+import { updateUserFirestore } from '@/functions/firebase/firestore/usuarios';
 
 type UserContextType = {
   user: Usuario | null;

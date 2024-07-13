@@ -1,25 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, TextInput, Text } from 'react-native';
-import {
-  Banco,
-  PulpableType,
-  updateBancoPulpableValue,
-} from '../../interfaces/productos';
+import { Banco } from '@/interfaces/screens/emision/productos';
 
 export default function Pulpable({
   bancosPulpable,
   updateBancoPulpableValue,
-}: PulpableType) {
+}: {
+  bancosPulpable: Banco[];
+  updateBancoPulpableValue: (
+    bancoIndex: number,
+    dimension: keyof Banco,
+    value: number
+  ) => void;
+}) {
   return (
     <View style={styles.container}>
       {/* Banco reference is done by string `banco${index + 1}`  */}
-      {Object.entries(bancosPulpable).map(([key, value], index) => (
+      {bancosPulpable.map((banco, index) => (
         <BancoRow
           key={index}
-          bancoIndex={index + 1}
-          altura1={value.altura1}
-          altura2={value.altura2}
-          ancho={value.ancho}
+          bancoIndex={index}
+          altura1={banco.altura1}
+          altura2={banco.altura2}
+          ancho={banco.ancho}
           updateBancoPulpableValue={updateBancoPulpableValue}
         />
       ))}
@@ -27,21 +30,23 @@ export default function Pulpable({
   );
 }
 
-type BancoRowType = {
-  bancoIndex: number;
-  altura1: number;
-  altura2: number;
-  ancho: number;
-  updateBancoPulpableValue: updateBancoPulpableValue;
-};
-
 const BancoRow = ({
   bancoIndex,
   altura1,
   altura2,
   ancho,
   updateBancoPulpableValue,
-}: BancoRowType) => {
+}: {
+  bancoIndex: number;
+  altura1: number;
+  altura2: number;
+  ancho: number;
+  updateBancoPulpableValue: (
+    bancoIndex: number,
+    dimension: keyof Banco,
+    value: number
+  ) => void;
+}) => {
   // Function that generates the onChangeText handler according to the dimension (to avoid repeating code)
   // TODO: will the returned functions be re created every time the component re renders?
   const onChangeTextHandlerGenerator = (dimension: keyof Banco) => {
@@ -62,7 +67,7 @@ const BancoRow = ({
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          // TODO: this is a hacky solution to show now value when the value is 0
+          // TODO: this is a hacky solution to show no value when the value is 0
           value={altura1 !== 0 ? altura1.toString() : undefined}
           placeholder={'cm'}
           onChangeText={onChangeTextHandlerGenerator('altura1')}

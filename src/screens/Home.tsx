@@ -7,22 +7,22 @@ import {
   FlatList,
   Linking,
 } from 'react-native';
-import colors from '../resources/Colors';
-import Header from '../components/Header';
-import FoliosRequestModal from '../components/FoliosRequestModal';
-import { requestReservarFolios } from '../functions/firebase/cloud_functions';
-import { GuiaDespachoSummaryProps } from '../interfaces/guias';
-import { HomeScreenProps } from '../interfaces/screens';
 import { Alert } from 'react-native';
-
-import { AppContext } from '../context/AppContext';
-
-import { UserContext } from '../context/UserContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
+
+import { AppContext } from '@/context/AppContext';
+import { UserContext } from '@/context/UserContext';
+
+import colors from '@/resources/Colors';
+import Header from '@/components/Header';
+import FoliosRequestModal from '@/components/FoliosRequestModal';
+import { requestReservarFolios } from '@/functions/firebase/cloud_functions';
+import { GuiaDespachoSummaryProps } from '@/interfaces/guias';
+import { HomeScreenProps } from '@/interfaces/screens';
 import {
   _createGuiaTest,
   fetchGuiasDocs,
-} from '../functions/firebase/firestore/guias';
+} from '@/functions/firebase/firestore/guias';
 
 export default function Home(props: HomeScreenProps) {
   const { navigation } = props;
@@ -99,7 +99,7 @@ export default function Home(props: HomeScreenProps) {
         <Text> Estado: {guia.estado}</Text>
         <Text> Folio: {guia.folio}</Text>
         <Text> Receptor: {guia.receptor.razon_social}</Text>
-        <Text> Monto: {guia.total}</Text>
+        <Text> Monto: {guia.total_guia}</Text>
         <Icon
           name="external-link"
           size={30}

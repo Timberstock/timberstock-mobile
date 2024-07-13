@@ -26,7 +26,7 @@ export interface Identificacion {
   folio: number;
   tipo_traslado: string;
   tipo_despacho: string;
-  fecha?: Date; // Optional because it's set in the function at the moment of creation
+  fecha?: Date; // Optional because its set in the function at the moment of creation
 }
 
 export interface Emisor {
@@ -48,7 +48,7 @@ export interface Receptor {
 
 export interface Transporte {
   chofer: Chofer;
-  patente: string;
+  camion: string;
   rut_transportista: string;
   direccion_destino: string;
   comuna_destino?: string;
@@ -60,11 +60,12 @@ export interface Totales {
   monto_neto: number;
 }
 
-export interface GuiaDespachoSummaryProps {
-  folio: number;
-  estado: string;
-  total: number;
+export interface GuiaDespachoSII {
+  identificacion: Identificacion;
+  emisor: Emisor;
   receptor: Receptor;
-  fecha: string;
-  url: string;
+  transporte: Transporte;
+  totales: Totales;
+  detalles: DetalleDTE[];
+  referencias: ReferenciaDTE[];
 }

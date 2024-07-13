@@ -1,22 +1,20 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { GuiaDespachoSummaryProps } from '../interfaces/guias';
-import { ContratoVenta } from '../interfaces/contratos/contratoVenta';
-import { ContratoCompra } from '../interfaces/contratos/contratoCompra';
-import { EmpresaSubCollectionsData } from '../interfaces/firestore';
-import { Empresa } from '../interfaces/empresa';
+import { Alert } from 'react-native';
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
 import { UserContext } from './UserContext';
-import customHelpers from '../functions/helpers';
 import {
   fetchContratosCompra,
   fetchContratosVenta,
   fetchSubCollections,
-} from '../functions/firebase/firestore/subcollections';
-import { fetchEmpresaDoc } from '../functions/firebase/firestore/empresa';
-import { fetchGuiasDocs } from '../functions/firebase/firestore/guias';
-import { Alert } from 'react-native';
+} from '@/functions/firebase/firestore/subcollections';
+import { fetchEmpresaDoc } from '@/functions/firebase/firestore/empresa';
+import { fetchGuiasDocs } from '@/functions/firebase/firestore/guias';
+import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
+import { ContratoCompra } from '@/interfaces/contratos/contratoCompra';
+import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
+import { Empresa, EmpresaSubCollectionsData } from '@/interfaces/context/app';
 
 type AppContextType = {
   guiasSummary: GuiaDespachoSummaryProps[];
@@ -34,14 +32,12 @@ const initialState = {
   guiasSummary: [],
   updateGuiasSummary: () => {},
   empresa: {
-    emisor: {
-      razon_social: '',
-      rut: '',
-      giro: '',
-      direccion: '',
-      comuna: '',
-      actividad_economica: [],
-    },
+    razon_social: '',
+    rut: '',
+    giro: '',
+    direccion: '',
+    comuna: '',
+    actividad_economica: [],
     caf_n: -1,
   },
   updateEmpresa: () => {},
@@ -49,7 +45,7 @@ const initialState = {
   contratosCompra: [],
   subCollectionsData: {
     proveedores: [],
-    predios: [],
+    faenas: [],
     productos: [],
     clientes: [],
   },
@@ -106,7 +102,7 @@ const AppProvider = ({ children }: any) => {
               const guiaData = {
                 folio: data?.identificacion.folio,
                 estado: data?.estado,
-                total: data?.total,
+                total_guia: data?.total_guia,
                 receptor: data?.receptor,
                 // parse firestore timestamp to string
                 fecha: data?.identificacion.fecha.toDate().toISOString(),

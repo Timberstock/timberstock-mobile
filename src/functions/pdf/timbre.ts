@@ -4,8 +4,8 @@ import * as xml2js from 'react-native-xml2js';
 // this library is not maintained anymore, but it works... however it raises a high severity vulnerability with no fix available for node-forge
 import { Crypt } from 'hybrid-crypto-js';
 
-import { DD } from '../interfaces/timbre';
-import { PreGuia } from '../interfaces/firestore';
+import { DD } from '@/interfaces/sii/timbre';
+import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
 
 const parseCAF_File = (cafString: string): Promise<any> => {
   return new Promise((resolve, reject) => {
@@ -36,7 +36,7 @@ const parseCAF_File = (cafString: string): Promise<any> => {
   });
 };
 
-const getTED = async (cafString: string, DTE: PreGuia) => {
+const getTED = async (cafString: string, guia: GuiaDespachoFirestore) => {
   function formatDateToYYYYMMDD(date: Date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -70,16 +70,16 @@ const getTED = async (cafString: string, DTE: PreGuia) => {
   // TODO: CHECK backslashes that are being added in the XML string for the double quotes
   CAF_XML_String = CAF_XML_String.replace(/>[\s]+</g, '><');
 
-  // Set the DTE data
+  // Set the guia data
   const DD: DD = {
-    RE: DTE.emisor.rut,
+    RE: guia.emisor.rut,
     TD: 52,
-    F: DTE.identificacion.folio,
+    F: guia.identificacion.folio,
     FE: todayString,
-    RR: DTE.receptor.rut,
-    RSR: DTE.receptor.razon_social,
-    MNT: Math.floor(DTE.total * 1.19),
-    IT1: `Total: ${DTE.total}`,
+    RR: guia.receptor.rut,
+    RSR: guia.receptor.razon_social,
+    MNT: Math.floor(guia.monto_total_guia * 1.19),
+    IT1: `Total: ${guia.monto_total_guia}`,
     CAF: CAF_XML_String,
     TSTED: todayStringWithTime,
   };

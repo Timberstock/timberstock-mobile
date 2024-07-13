@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
-import { authenticateUser } from '../functions/firebase/auth';
-import colors from '../resources/Colors';
-import Loading from '../components/Loading';
+import { authenticateUser } from '@/functions/firebase/auth';
+import colors from '@/resources/Colors';
+import Loading from '@/components/Loading';
 
 export default function Login() {
   const [email, setEmail] = useState(''); //SACAR EL VALOR POR DEFECTO

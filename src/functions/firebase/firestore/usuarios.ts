@@ -1,7 +1,19 @@
-import firestore from '@react-native-firebase/firestore';
-import { UsuarioFirestoreData } from '../../../interfaces/usuario';
-import customHelpers from '../../helpers';
+import firestore, {
+  FirebaseFirestoreTypes,
+} from '@react-native-firebase/firestore';
+import { UsuarioFirestoreData } from '@/interfaces/context/user';
 import { Alert } from 'react-native';
+
+const daysSinceFirestoreTimestamp = (
+  timestamp: FirebaseFirestoreTypes.Timestamp
+): number => {
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+  const timestampDate = timestamp.toDate();
+  const currentDate = new Date();
+  const timeDiff = currentDate.getTime() - timestampDate.getTime();
+  const daysDiff = Math.round(timeDiff / millisecondsPerDay);
+  return daysDiff;
+};
 
 const fetchUserInfoFromCache = async (
   userUid: string
@@ -41,7 +53,7 @@ export const retrieveUserFirestoreInformation = async (
   try {
     // First try to get the user info from the cache
     const userDataFromCache = await fetchUserInfoFromCache(userUid);
-    const daysSinceLastLogin = customHelpers.daysSinceFirestoreTimestamp(
+    const daysSinceLastLogin = daysSinceFirestoreTimestamp(
       userDataFromCache.last_login
     );
     if (daysSinceLastLogin > 3) {

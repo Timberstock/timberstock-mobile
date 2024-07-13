@@ -1,9 +1,9 @@
 import React from 'react';
 import Constants from 'expo-constants';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { logoutUser } from '../functions/firebase/auth';
-import colors from '../resources/Colors';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { logoutUser } from '@/functions/firebase/auth';
+import colors from '@/resources/Colors';
 
 interface HeaderProps {
   screenName?: string;

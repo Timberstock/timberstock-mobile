@@ -1,58 +1,55 @@
-import { Producto, Proveedor } from '../detalles';
-import { FaenaFirestore } from '../firestore';
+import Timestamp from '@react-native-firebase/firestore';
+import { Cliente, Proveedor, Producto, Faena } from '../esenciales';
+import { Carguio, Cosecha, Otro, Transporte } from '../servicios';
 
-// Transporte
-
-export interface Camion {
-  marca: string;
-  patente: string;
-  patente_carro?: string;
+export interface ContratoCompra {
+  firestore_id: string;
+  clientes: ClienteContratoCompra[]; // All of the "potential" clientes
+  proveedor: Proveedor;
+  faena: Faena;
+  fecha_firma: typeof Timestamp | Date;
+  fecha_caducidad: typeof Timestamp | Date;
+  servicios: Servicios;
+  vigente: boolean;
+  id_contrato_anterior?: string;
 }
-
-export interface Chofer {
-  nombre: string;
-  rut: string;
-}
-
-export interface TransporteDestinoContratoCompra {
-  razon_social: string;
-  rut: string;
-  camiones: Camion[];
-  choferes: Chofer[];
-  precio_unidad?: number;
-}
-
-// Contrato
-export interface Cliente {
-  comuna: string;
-  destinos: string[];
-  direccion: string;
-  razon_social: string;
-  rut: string;
+export interface ClienteContratoCompra extends Cliente {
+  destinos_contrato: DestinoContratoCompra[];
 }
 
 export interface DestinoContratoCompra {
   nombre: string;
-  transportes?: TransporteDestinoContratoCompra[] | [];
+  transportes: TransporteContratoCompra[];
+  productos: ProductoContratoCompra[];
 }
 
-export interface ClienteContratoCompra extends Cliente {
-  // We have to add price according to the Transport and the distance to the destino
-  destinos_contrato: DestinoContratoCompra[];
+export interface ProductoContratoCompra extends Producto {
+  precio_unitario_compra: number;
+  precio_unitario_compra_ref?: number; // Ref price in case of same price for all destinos
 }
 
-interface ProductoContrato extends Producto {}
+export interface TransporteContratoCompra extends Transporte {
+  precio_unitario_transporte?: number; // Optional in case of Retail, where Transporte is not paid as a Servicio
+}
 
-export interface ContratoCompra {
-  id: string;
-  clientes: ClienteContratoCompra[]; // All of the "potential" clientes
-  proveedor: Proveedor;
-  faena: FaenaFirestore;
-  productos: ProductoContrato[];
-  giro: string;
-  fecha_firma: Date;
-  // vigente: boolean; should be always true, filtered in the query to firestore
+export interface CosechaContratoCompra {
+  empresa: Cosecha | null;
+  precio_m3?: number;
+  precio_mr?: number;
+}
 
-  // Not relevant for Guia but left for reference
-  // servicios: Servicios;
+export interface CarguioContratoCompra {
+  empresa: Carguio | null;
+  precio_m3?: number;
+  precio_mr?: number;
+}
+
+export interface OtroContratoCompra extends Otro {
+  precio: number;
+}
+
+export interface Servicios {
+  cosecha: CosechaContratoCompra[];
+  carguio: CarguioContratoCompra[];
+  otros: OtroContratoCompra[];
 }
