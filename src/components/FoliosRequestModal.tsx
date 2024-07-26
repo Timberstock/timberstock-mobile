@@ -32,7 +32,9 @@ const FoliosRequestModal = (props: any) => {
             >
               <Icon name="close-circle" size={25} color="grey" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Cuántos Folios a reservar?</Text>
+            <Text style={styles.modalTitle}>
+              (no deberia ver esto) Ingrese número de folios a reservar
+            </Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
