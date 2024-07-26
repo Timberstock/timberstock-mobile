@@ -33,7 +33,7 @@ const FoliosRequestModal = (props: any) => {
               <Icon name="close-circle" size={25} color="grey" />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>
-              Ingrese número de folios a reservar
+              (no deberia ver esto) Ingrese número de folios a reservar
             </Text>
             <TextInput
               style={styles.input}
