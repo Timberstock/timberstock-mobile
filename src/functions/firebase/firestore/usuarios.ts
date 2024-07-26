@@ -97,16 +97,51 @@ export const updateUserFirestore = async (
   newFoliosReservados: number[],
   newCafs?: string[]
 ) => {
+  function snapshotPromise(
+    ref: FirebaseFirestoreTypes.DocumentReference
+  ): Promise<FirebaseFirestoreTypes.DocumentSnapshot> {
+    // From https://github.com/firebase/firebase-js-sdk/issues/1497
+    // Workaround for the issue of createGuiaDoc not resolving when creating a new guia offline.
+    // The issue is that the set() function returns a promise that resolves only when the data is written to the server.
+    // So with this workaround, we are listening to the snapshot of the document, and resolving the promise when the snapshot is received.
+    return new Promise((resolve, reject) => {
+      var unsubscribe = ref.onSnapshot(
+        (doc) => {
+          resolve(doc);
+          unsubscribe();
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
+  }
+
   try {
     if (!newCafs) {
-      await firestore().collection('usuarios').doc(userUid).update({
+      console.log({
         folios_reservados: newFoliosReservados,
       });
+      const userDocRef = firestore().collection('usuarios').doc(userUid);
+      userDocRef.update({
+        folios_reservados: newFoliosReservados,
+      });
+
+      const userDoc = await snapshotPromise(userDocRef);
+
+      // if (userDoc.metadata.hasPendingWrites) {}
     } else {
-      await firestore().collection('usuarios').doc(userUid).update({
+      console.log({
         folios_reservados: newFoliosReservados,
         cafs: newCafs,
       });
+      const userDocRef = firestore().collection('usuarios').doc(userUid);
+      userDocRef.update({
+        folios_reservados: newFoliosReservados,
+        cafs: newCafs,
+      });
+      const userDoc = await snapshotPromise(userDocRef);
+      // if (userDoc.metadata.hasPendingWrites) {}
     }
     return 200;
   } catch (e) {

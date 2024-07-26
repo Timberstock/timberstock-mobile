@@ -1,11 +1,17 @@
 import { IOption } from '@/interfaces/screens/screens';
 import {
+  IOptionCarguio,
   IOptionChofer,
   IOptionClienteContratoCompra,
+  IOptionCosecha,
   IOptionDestinoContrato,
   IOptionTransporte,
 } from '@/interfaces/screens/emision/create';
-import { IOptionProducto } from '@/interfaces/screens/emision/productos';
+import {
+  IOptionProducto,
+  IOptionTipoProducto,
+} from '@/interfaces/screens/emision/productos';
+import { Producto } from '@/interfaces/esenciales';
 
 const tipoTrasladoOptions = [
   { value: 'Constituye venta', label: 'Venta' },
@@ -43,13 +49,15 @@ export const initialStatesCreate = {
     clientes: [] as IOptionClienteContratoCompra[],
     destinos_contrato: [] as IOptionDestinoContrato[],
     empresas_transporte: [] as IOptionTransporte[],
+    empresas_carguio: [] as IOptionCarguio[],
+    empresas_cosecha: [] as IOptionCosecha[],
     choferes: [] as IOptionChofer[],
     camiones: [] as IOption[],
     planesDeManejo: [] as IOption[],
   },
   guia: {
     identificacion: {
-      folio: -1,
+      folio: 0,
       tipo_despacho: '',
       tipo_traslado: '',
     },
@@ -93,24 +101,26 @@ export const initialStatesCreate = {
       nombre: '',
       rut: '',
     },
+    servicios: {},
     camion: '', // patente
     contrato_compra_id: '',
+    folio_guia_proveedor: 0,
   },
 };
 
 export const initialStatesProducto = {
   options: {
-    tipo: tipoProductoOptions,
+    tipo: tipoProductoOptions as IOptionTipoProducto[],
     productos: [] as IOptionProducto[],
   },
   producto: {
     codigo: '',
-    tipo: '' as '',
+    tipo: '',
     especie: '',
     calidad: '',
     largo: 0,
-    unidad: '' as '',
-  },
+    unidad: '',
+  } as Producto,
   clases_diametricas: [
     {
       clase: '14',
@@ -142,43 +152,3 @@ export const initialStatesProducto = {
     { altura1: 0, altura2: 0, ancho: 0 },
   ],
 };
-// const emitirGuiaInitialStates = {
-//   guia: {
-//     identificacion: {
-//       folio: -1,
-//       tipo_despacho: '',
-//       tipo_traslado: '',
-//     },
-//     receptor: {
-//       razon_social: '',
-//       rut: '',
-//       giro: '',
-//       direccion: '',
-//       comuna: '',
-//     },
-//     despacho: {
-//       chofer: {
-//         nombre: '',
-//         rut: '',
-//       },
-//       patente_camion: '',
-//       rut_transportista: '',
-//       direccion_destino: '',
-//     },
-//     predio: {
-//       certificado: '',
-//       comuna: '',
-//       georreferencia: {
-//         latitude: 0,
-//         longitude: 0,
-//       },
-//       nombre: '',
-//       plan_de_manejo: '',
-//       rol: '',
-//     },
-//     proveedor: {
-//       razon_social: '',
-//       rut: '',
-//     },
-//   },
-// };

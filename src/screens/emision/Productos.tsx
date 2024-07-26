@@ -1,4 +1,10 @@
-import { MutableRefObject, useRef, useState, useContext } from 'react';
+import {
+  MutableRefObject,
+  useRef,
+  useState,
+  useContext,
+  useEffect,
+} from 'react';
 import {
   View,
   Text,
@@ -28,6 +34,8 @@ import {
   handleIncreaseNumberOfClasesDiametricasLogic,
   handleUpdateBancoPulpableValueLogic,
   handleCreateGuiaLogic,
+  resetClasesDiametricas,
+  resetBancosPulpable,
 } from './productosLogic';
 import { GuiaDespacho } from '@/interfaces/screens/emision/create';
 import { AppContext } from '@/context/AppContext';
@@ -36,14 +44,10 @@ import {
   Banco,
   ClaseDiametrica,
   IOptionProducto,
+  IOptionTipoProducto,
   ProductoOptions,
 } from '@/interfaces/screens/emision/productos';
 import { Producto } from '@/interfaces/esenciales';
-
-// TODO: FINALIZE FROM GETTING THE PRODUCTO, IN PRODUCTOSLOGIC FILE THERE IS A FUNCTION THAT NEEDS TO BE IMPLEMENTED
-// WE HAVE TO WORRY ABOUT CALCULATING THE CORRECT VOLUMENES ACCORDING TO THE TIPO, CORRECTLY CREATE GUIAS WITH SII AND FIRESTORE
-// AND FINALLY ADD COSECHA, CARGUIO AND FOLIO_RECIBIDO SELECTIONS IN THE CREATE SCREEN.
-// AFTER THAT, WE CAN MOVE TO THE PROFORMA
 
 export default function CreateGuiaProductos(props: any) {
   const { navigation } = props;
@@ -56,10 +60,10 @@ export default function CreateGuiaProductos(props: any) {
     initialStatesProducto.producto
   );
   const [clasesDiametricas, setClasesDiametricas] = useState<ClaseDiametrica[]>(
-    initialStatesProducto.clases_diametricas
+    () => resetClasesDiametricas()
   );
-  const [bancosPulpable, setBancosPulpable] = useState<Banco[]>(
-    initialStatesProducto.bancos_pulpable
+  const [bancosPulpable, setBancosPulpable] = useState<Banco[]>(() =>
+    resetBancosPulpable()
   );
   const [options, setOptions] = useState<ProductoOptions>(
     initialStatesProducto.options
@@ -105,19 +109,25 @@ export default function CreateGuiaProductos(props: any) {
     setBancosPulpable(newBancosPulpable);
   };
 
-  const handleSelectTipo = (option: IOption | null) => {
+  const handleSelectTipo = (option: IOptionTipoProducto | null) => {
     const { newProducto, newOptions } = handleSelectTipoLogic(
       option,
       productosData
     );
+
     productoRef.current?.clear();
+    setClasesDiametricas(resetClasesDiametricas());
+    setBancosPulpable(resetBancosPulpable());
     setProducto(newProducto);
     setOptions(newOptions);
     setRenderKey((prevKey) => prevKey + 1);
   };
 
-  const handleSelectProduct = (option: IOptionProducto | null) => {
+  const handleSelectProducto = (option: IOptionProducto | null) => {
     const newProducto = handleSelectProductoLogic(option, producto);
+
+    setClasesDiametricas(resetClasesDiametricas());
+    setBancosPulpable(resetBancosPulpable());
     setProducto(newProducto);
     setRenderKey((prevKey) => prevKey + 1);
   };
@@ -152,7 +162,7 @@ export default function CreateGuiaProductos(props: any) {
 
   return (
     <View style={styles.screen}>
-      <Header screenName="Products" empresa={empresa.razon_social} {...props} />
+      <Header screenName="Products" empresa={'TimberBiz'} {...props} />
       <View style={styles.body}>
         {/* TODO: Fix the verticalOffset is showing a white rectangle */}
         <KeyboardAvoidingView
@@ -185,8 +195,9 @@ export default function CreateGuiaProductos(props: any) {
                 )}
                 disabled={producto.tipo === ''}
                 ref={productoRef}
-                onSelect={handleSelectProduct}
+                onSelect={handleSelectProducto}
                 key={`producto-${renderKey}`}
+                onRemove={() => handleSelectProducto(null)}
               />
             </View>
             <Text style={styles.sectionTitle}> Detalle </Text>

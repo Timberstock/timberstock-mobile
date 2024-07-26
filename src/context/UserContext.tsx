@@ -98,7 +98,7 @@ export const UserContextProvider = ({ children }: any) => {
       setUser(newUser);
       console.log('User reserved folios updated successfully');
     } catch (error) {
-      alert('Error updating user folios');
+      alert('Error al cargar folios');
       console.log(error);
     }
   };

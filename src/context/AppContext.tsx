@@ -87,6 +87,13 @@ const AppProvider = ({ children }: any) => {
     setSubCollectionsData(newEmpresaData);
   };
 
+  const formatDateToYYYYMMDD = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // TODO: useMemo could be interesting here
 
   useEffect(() => {
@@ -102,10 +109,12 @@ const AppProvider = ({ children }: any) => {
               const guiaData = {
                 folio: data?.identificacion.folio,
                 estado: data?.estado,
-                total_guia: data?.total_guia,
+                monto_total_guia: data?.monto_total_guia,
                 receptor: data?.receptor,
                 // parse firestore timestamp to string
-                fecha: data?.identificacion.fecha.toDate().toISOString(),
+                fecha: formatDateToYYYYMMDD(
+                  data?.identificacion.fecha.toDate()
+                ),
                 url: data?.url,
               };
               return newGuias.push(guiaData);

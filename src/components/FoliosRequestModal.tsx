@@ -32,15 +32,13 @@ const FoliosRequestModal = (props: any) => {
             >
               <Icon name="close-circle" size={25} color="grey" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              Cuántos Folios quieres reservar para hoy?
-            </Text>
+            <Text style={styles.modalTitle}>Cuántos Folios a reservar?</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
               value={numFolios}
               onChangeText={setNumFolios}
-              placeholder="Enter the number of folios"
+              placeholder="Número de folios"
             />
             <TouchableOpacity
               style={styles.acceptButton}
@@ -83,6 +81,7 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: 'white',
     padding: 20,
+    paddingTop: 40,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',

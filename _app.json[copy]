@@ -2,7 +2,7 @@
   "expo": {
     "name": "TimberStock",
     "slug": "timberstock-mobile-app",
-    "version": "0.0.10",
+    "version": "0.0.10", // new builds change this
     "orientation": "portrait",
     "icon": "./assets/dallelogo.png",
     "userInterfaceStyle": "light",
@@ -12,15 +12,16 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/77c3e023-bb35-4869-91e8-aef0a6820e4c"
+      "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "googleServicesFile": "./firebase_services_files/GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.atc.timberstockapp",
-      "buildNumber": "0.12"
+      "buildNumber": "0.12" // new builds change this
     },
     "android": {
       "googleServicesFile": "./firebase_services_files/google-services.json",
@@ -28,7 +29,7 @@
         "foregroundImage": "./assets/dallelogo.png",
         "backgroundColor": "#FFFFFF"
       },
-      "versionCode": 1,
+      "versionCode": 1, // new builds change this
       "package": "com.atc.timberstockandroid",
       "softwareKeyboardLayoutMode": "pan"
     },
@@ -51,9 +52,6 @@
       "eas": {
         "projectId": "77c3e023-bb35-4869-91e8-aef0a6820e4c"
       }
-    },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
     }
   }
 }

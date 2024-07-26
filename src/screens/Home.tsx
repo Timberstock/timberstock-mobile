@@ -17,14 +17,13 @@ import colors from '@/resources/Colors';
 import Header from '@/components/Header';
 import FoliosRequestModal from '@/components/FoliosRequestModal';
 import { requestReservarFolios } from '@/functions/firebase/cloud_functions';
-import { GuiaDespachoSummaryProps } from '@/interfaces/guias';
-import { HomeScreenProps } from '@/interfaces/screens';
 import {
   _createGuiaTest,
   fetchGuiasDocs,
 } from '@/functions/firebase/firestore/guias';
+import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
 
-export default function Home(props: HomeScreenProps) {
+export default function Home(props: any) {
   const { navigation } = props;
   const { user, updateUserReservedFolios } = useContext(UserContext);
   const { guiasSummary, updateGuiasSummary } = useContext(AppContext);
@@ -32,6 +31,8 @@ export default function Home(props: HomeScreenProps) {
   const [loading, setLoading] = useState(true);
   const [foliosRequestLoading, setFoliosRequestLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  console.log(guiasSummary);
 
   useEffect(() => {
     handleRefresh();
@@ -49,6 +50,8 @@ export default function Home(props: HomeScreenProps) {
       user.firebaseAuth.uid,
       numFolios
     );
+
+    console.log('REQUEST RESERVAR FOLIOS RESPONSE:', response);
 
     // Update the user's folios locally
     await updateUserReservedFolios(response.folios_reservados, response.cafs);
@@ -99,7 +102,7 @@ export default function Home(props: HomeScreenProps) {
         <Text> Estado: {guia.estado}</Text>
         <Text> Folio: {guia.folio}</Text>
         <Text> Receptor: {guia.receptor.razon_social}</Text>
-        <Text> Monto: {guia.total_guia}</Text>
+        <Text> Monto: {guia.monto_total_guia}</Text>
         <Icon
           name="external-link"
           size={30}

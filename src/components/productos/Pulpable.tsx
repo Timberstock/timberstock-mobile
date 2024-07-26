@@ -61,7 +61,10 @@ const BancoRow = ({
 
   return (
     <View style={styles.row}>
-      <Text style={styles.bancoLabel}> Banco{bancoIndex.toString()} </Text>
+      <Text style={styles.bancoLabel}>
+        {' '}
+        Banco{(bancoIndex + 1).toString()}{' '}
+      </Text>
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Altura 1</Text>
         <TextInput

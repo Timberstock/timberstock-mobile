@@ -1,3 +1,5 @@
+import { TransporteContratoCompra } from '../contratos/contratoCompra';
+
 // 2nd Level Interfaces
 export interface Chofer {
   nombre: string;
@@ -49,7 +51,10 @@ export interface Receptor {
 export interface Transporte {
   chofer: Chofer;
   camion: string;
-  rut_transportista: string;
+  empresa: {
+    rut: string;
+    razon_social: string;
+  };
   direccion_destino: string;
   comuna_destino?: string;
   ciudad_destino?: string;
@@ -60,7 +65,8 @@ export interface Totales {
   monto_neto: number;
 }
 
-export interface GuiaDespachoSII {
+// For reference
+interface GuiaDespachoSII {
   identificacion: Identificacion;
   emisor: Emisor;
   receptor: Receptor;

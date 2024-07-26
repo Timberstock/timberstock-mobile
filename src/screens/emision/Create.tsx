@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import {
   Select,
@@ -31,6 +32,8 @@ import {
   IOptionDestinoContrato,
   IOptionTransporte,
   IOptionChofer,
+  IOptionCarguio,
+  IOptionCosecha,
 } from '@/interfaces/screens/emision/create';
 import { initialStatesCreate } from '@/resources/initialStates';
 import {
@@ -44,11 +47,12 @@ import {
   selectCamionLogic,
   selectFaenaLogic,
   selectDestinoContratoLogic,
+  selectCarguioLogic,
+  selectCosechaLogic,
+  folioProveedorChangeLogic,
 } from './createLogic';
 import OverlayLoading from '@/components/OverlayLoading';
 
-// TODO: Before entering this screen, we have to make sure that the user was logged in correctly and that we have the data loaded.
-// TODO 1: ADD FIELDS VALIDATIONS, BOTH FOR COMPLETENESS AND CORRECTNESS
 export default function CreateGuia(props: any) {
   const { navigation } = props;
   const { empresa } = useContext(AppContext);
@@ -73,8 +77,11 @@ export default function CreateGuia(props: any) {
   const empresaTransporteRef = useRef() as MutableRefObject<
     SelectRef<IOptionTransporte>
   >;
+  const carguioRef = useRef() as MutableRefObject<SelectRef<IOptionCarguio>>;
+  const cosechaRef = useRef() as MutableRefObject<SelectRef<IOptionCosecha>>;
   const choferRef = useRef() as MutableRefObject<SelectRef<IOptionChofer>>;
   const camionRef = useRef() as MutableRefObject<SelectRef>;
+
   const [certChecked, setCertChecked] = useState(false);
 
   const [optionsInitialized, setOptionsInitialized] = useState(false);
@@ -164,6 +171,12 @@ export default function CreateGuia(props: any) {
     setRenderKey((prevKey) => prevKey + 1);
   }
 
+  function folioProveedorChangeHandler(folio: string) {
+    const newGuia = folioProveedorChangeLogic(folio, guia);
+
+    setGuia(newGuia);
+  }
+
   function selectFaenaHandler(option: IOption | null) {
     const { newGuia, newOptions } = selectFaenaLogic(
       option,
@@ -230,6 +243,19 @@ export default function CreateGuia(props: any) {
     setRenderKey((prevKey) => prevKey + 1);
   }
 
+  function selectCarguioHandler(option: IOptionCarguio | null) {
+    const newGuia = selectCarguioLogic(option, guia);
+
+    setGuia(newGuia);
+    setRenderKey((prevKey) => prevKey + 1);
+  }
+  function selectCosechaHandler(option: IOptionCosecha | null) {
+    const newGuia = selectCosechaLogic(option, guia);
+
+    setGuia(newGuia);
+    setRenderKey((prevKey) => prevKey + 1);
+  }
+
   function selectChoferHandler(option: IOptionChofer | null) {
     const newGuia = selectChoferLogic(option, guia);
 
@@ -246,29 +272,29 @@ export default function CreateGuia(props: any) {
 
   return (
     <View style={styles.screen}>
-      <Header
-        screenName="CreateGuia"
-        empresa={empresa.razon_social}
-        {...props}
-      />
+      <Header screenName="CreateGuia" empresa={'TimberBiz'} {...props} />
       <OverlayLoading loading={!optionsInitialized} />
       <View style={styles.body}>
         <ScrollView style={styles.scrollView}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}> Identificación </Text>
-            <Select
-              styles={selectStyles}
-              placeholderText="Nº Folio"
-              animation={true}
-              options={foliosOptions}
-              defaultOption={foliosOptions.find(
-                (option) =>
-                  option.value === guia.identificacion.folio.toString()
-              )}
-              onSelect={selectFolioHandler}
-              onRemove={() => selectFolioHandler(null)}
-              key={`folios-${renderKey}`}
-            />
+            <Text style={styles.sectionTitle}> Identificación Guia </Text>
+            <View style={styles.row}>
+              <View style={styles.container}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Nº Folio"
+                  animation={true}
+                  options={foliosOptions}
+                  defaultOption={foliosOptions.find(
+                    (option) =>
+                      option.value === guia.identificacion.folio.toString()
+                  )}
+                  onSelect={selectFolioHandler}
+                  onRemove={() => selectFolioHandler(null)}
+                  key={`folios-${renderKey}`}
+                />
+              </View>
+            </View>
             <View style={styles.row}>
               <View style={styles.container}>
                 <Select
@@ -317,6 +343,19 @@ export default function CreateGuia(props: any) {
               onRemove={() => selectProveedorHandler(null)}
               key={`proveedores-${renderKey}`}
             />
+            <View style={styles.container}>
+              <TextInput
+                style={styles.input}
+                value={
+                  guia.folio_guia_proveedor && guia.folio_guia_proveedor !== 0
+                    ? guia.folio_guia_proveedor.toString()
+                    : ''
+                }
+                placeholder={'Folio Proveedor (opcional)'}
+                keyboardType="numeric"
+                onChangeText={folioProveedorChangeHandler}
+              />
+            </View>
           </View>
           <View style={{ ...styles.section, ...styles.section.predio }}>
             <Text style={styles.sectionTitle}> Origen </Text>
@@ -372,40 +411,48 @@ export default function CreateGuia(props: any) {
           </View>
           <View style={{ ...styles.section, ...styles.section.receptor }}>
             <Text style={styles.sectionTitle}> Cliente </Text>
-            <Select
-              placeholderText="Razon Social"
-              styles={selectStyles}
-              animation={true}
-              ref={clienteRef}
-              options={options.clientes}
-              disabled={
-                guia.faena.rol === '' || guia.proveedor.razon_social === ''
-              }
-              defaultOption={options.clientes.find(
-                (option) => option.value === guia.cliente.rut
-              )}
-              onSelect={selectClienteHandler}
-              onRemove={() => selectClienteHandler(null)}
-              key={`clientes-${renderKey}`}
-            />
-            <Select
-              placeholderText="Direccion Despacho"
-              styles={selectStyles}
-              animation={true}
-              ref={destinoContratoRef}
-              options={options.destinos_contrato}
-              defaultOption={options.destinos_contrato.find(
-                (option) => option.value === guia.destino_contrato.nombre
-              )}
-              disabled={
-                guia.proveedor.rut === '' ||
-                guia.faena.rol === '' ||
-                guia.cliente.razon_social === ''
-              }
-              onSelect={selectDestinoContratoHandler}
-              onRemove={() => selectDestinoContratoHandler(null)}
-              key={`despachos-${renderKey}`}
-            />
+            <View style={styles.row}>
+              <View style={styles.container}>
+                <Select
+                  placeholderText="Razon Social"
+                  styles={selectStyles}
+                  animation={true}
+                  ref={clienteRef}
+                  options={options.clientes}
+                  disabled={
+                    guia.faena.rol === '' || guia.proveedor.razon_social === ''
+                  }
+                  defaultOption={options.clientes.find(
+                    (option) => option.value === guia.cliente.rut
+                  )}
+                  onSelect={selectClienteHandler}
+                  onRemove={() => selectClienteHandler(null)}
+                  key={`clientes-${renderKey}`}
+                />
+              </View>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.container}>
+                <Select
+                  placeholderText="Direccion Despacho"
+                  styles={selectStyles}
+                  animation={true}
+                  ref={destinoContratoRef}
+                  options={options.destinos_contrato}
+                  defaultOption={options.destinos_contrato.find(
+                    (option) => option.value === guia.destino_contrato.nombre
+                  )}
+                  disabled={
+                    guia.proveedor.rut === '' ||
+                    guia.faena.rol === '' ||
+                    guia.cliente.razon_social === ''
+                  }
+                  onSelect={selectDestinoContratoHandler}
+                  onRemove={() => selectDestinoContratoHandler(null)}
+                  key={`despachos-${renderKey}`}
+                />
+              </View>
+            </View>
             <View style={styles.row}>
               <View style={styles.textContainer}>
                 {guia.cliente.rut !== '' && (
@@ -418,6 +465,55 @@ export default function CreateGuia(props: any) {
                     Direccion: {guia.cliente.direccion}
                   </Text>
                 )}
+              </View>
+            </View>
+          </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}> Servicios </Text>
+            <View style={styles.row}>
+              <View style={styles.textContainer}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Empresa Carguio"
+                  animation={true}
+                  ref={carguioRef}
+                  options={options.empresas_carguio}
+                  defaultOption={options.empresas_carguio.find(
+                    (option) =>
+                      option.value === guia.servicios?.carguio?.empresa.rut
+                  )}
+                  disabled={
+                    guia.proveedor.rut === '' ||
+                    guia.faena.rol === '' ||
+                    guia.cliente.rut === ''
+                  }
+                  onSelect={selectCarguioHandler}
+                  onRemove={() => selectCarguioHandler(null)}
+                  key={`carguio-${renderKey}`}
+                />
+              </View>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.textContainer}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Empresa Cosecha"
+                  animation={true}
+                  ref={cosechaRef}
+                  options={options.empresas_cosecha}
+                  defaultOption={options.empresas_cosecha.find(
+                    (option) =>
+                      option.value === guia.servicios?.cosecha?.empresa.rut
+                  )}
+                  disabled={
+                    guia.proveedor.rut === '' ||
+                    guia.faena.rol === '' ||
+                    guia.cliente.rut === ''
+                  }
+                  onSelect={selectCosechaHandler}
+                  onRemove={() => selectCosechaHandler(null)}
+                  key={`carguio-${renderKey}`}
+                />
               </View>
             </View>
           </View>
@@ -548,6 +644,18 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  input: {
+    borderWidth: 2,
+    backgroundColor: colors.white,
+    padding: 7,
+    borderColor: '#cccccc',
+    borderRadius: 13,
+    alignSelf: 'center',
+    width: '50%',
+    textAlign: 'center',
+    marginVertical: 7,
+    fontSize: 13,
   },
   text: {
     fontSize: 14,

@@ -5,23 +5,30 @@
   "build": {
     "android-development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "android-development"
     },
     "ios-development": {
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
         "simulator": true
-      }
+      },
+      "channel": "ios-development"
     },
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "staging"
     },
-    "production": {}
+    "production": {
+      "distribution": "store",
+      "channel": "production"
+    }
   },
   "submit": {
     "production": {

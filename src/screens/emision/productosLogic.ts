@@ -9,7 +9,6 @@ import getTED from '@/functions/pdf/timbre';
 import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
 import { GuiaDespacho as GuiaDespachoCreateScreen } from '@/interfaces/screens/emision/create';
 import { IOption } from '@/interfaces/screens/screens';
-import { ContratoCompra } from '@/interfaces/contratos/contratoCompra';
 import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
 import { initialStatesProducto } from '@/resources/initialStates';
 import { Producto } from '@/interfaces/esenciales';
@@ -17,6 +16,7 @@ import {
   Banco,
   ClaseDiametrica,
   IOptionProducto,
+  IOptionTipoProducto,
 } from '@/interfaces/screens/emision/productos';
 import { Usuario } from '@/interfaces/context/user';
 import { Empresa } from '@/interfaces/context/app';
@@ -25,16 +25,16 @@ import { createGuiaDoc } from '@/functions/firebase/firestore/guias';
 import { createPDFHTMLString } from '@/functions/pdf/html';
 
 export const handleSelectTipoLogic = (
-  option: IOption | null,
+  option: IOptionTipoProducto | null,
   productosData: Producto[]
 ) => {
   // Get tipo from option
-  const selectedTipo = (option?.value as 'Aserrable' | 'Pulpable') || '';
+  const selectedTipo = option ? option.value : '';
 
   // Reset producto to initial state and update its tipo
   const newProducto: Producto = {
     ...initialStatesProducto.producto,
-    tipo: selectedTipo || initialStatesProducto.producto.tipo,
+    tipo: selectedTipo,
   };
 
   const newOptions = {
@@ -63,8 +63,6 @@ export const handleSelectProductoLogic = (
   option: IOptionProducto | null,
   prevProducto: Producto
 ) => {
-  console.log(option?.productoObject);
-  console.log(prevProducto);
   const newProducto = option?.productoObject || initialStatesProducto.producto;
   newProducto.tipo = prevProducto.tipo;
   return newProducto;
@@ -201,7 +199,10 @@ export const handleCreateGuiaLogic = async (
           certificado: guia.faena.certificado,
         },
         transporte: {
-          rut_transportista: guia.transporte.rut,
+          empresa: {
+            rut: guia.transporte.rut,
+            razon_social: guia.transporte.razon_social,
+          },
           direccion_destino: guia.destino_contrato.nombre,
           chofer: {
             nombre: guia.chofer.nombre,
@@ -209,23 +210,30 @@ export const handleCreateGuiaLogic = async (
           },
           camion: guia.camion,
         },
+        servicios: {
+          carguio: guia.servicios?.carguio || {},
+          cosecha: guia.servicios?.cosecha || {},
+        },
         producto: producto,
         proveedor: guia.proveedor,
         contrato_compra_id: guia.contrato_compra_id,
+        folio_guia_proveedor:
+          guia.folio_guia_proveedor === 0 ? '' : guia.folio_guia_proveedor,
         volumen_total: 0,
       } as GuiaDespachoFirestore;
 
       // Filter contratoVenta
-      newGuia.contrato_venta_id =
-        contratosVenta.find(
-          (contrato) =>
-            contrato.cliente.rut === guia.cliente.rut &&
-            contrato.cliente.destinos_contrato.some((destino) =>
-              destino.productos.some(
-                (producto) => producto.codigo === newGuia.producto.codigo
-              )
+      const contratoVenta = contratosVenta.find(
+        (contrato) =>
+          contrato.cliente.rut === guia.cliente.rut &&
+          contrato.cliente.destinos_contrato.some((destino) =>
+            destino.productos.some(
+              (producto) => producto.codigo === newGuia.producto.codigo
             )
-        )?.firestore_id || '';
+          )
+      );
+
+      newGuia.contrato_venta_id = contratoVenta?.firestore_id || '';
 
       if (!newGuia.contrato_venta_id) {
         Alert.alert(
@@ -242,7 +250,6 @@ export const handleCreateGuiaLogic = async (
           (claseDiametrica) => claseDiametrica.cantidad !== 0
         );
         for (const claseDiametrica of clasesDiametricas) {
-          console.log(newGuia.volumen_total);
           newGuia.volumen_total += claseDiametrica.volumen;
         }
       } else if (producto.tipo === 'Pulpable') {
@@ -252,12 +259,21 @@ export const handleCreateGuiaLogic = async (
         );
       }
 
+      // Get precio_unitario_venta from the contratoVenta
+      const precioUnitarioVenta =
+        contratoVenta?.cliente.destinos_contrato
+          .find((destino) => destino.nombre === guia.destino_contrato.nombre)
+          ?.productos.find(
+            (producto) => producto.codigo === newGuia.producto.codigo
+          )?.precio_unitario_venta || 0;
+
+      newGuia.producto.precio_unitario_venta = precioUnitarioVenta;
+
+      newGuia.volumen_total = parseFloat(newGuia.volumen_total.toFixed(4));
       newGuia.precio_unitario_guia = precioUnitarioGuia;
       newGuia.monto_total_guia = Math.trunc(
         precioUnitarioGuia * newGuia.volumen_total
       );
-
-      console.log(newGuia);
 
       const guiaDate = await createGuiaDoc(user.empresa_id, newGuia); // Not sure if this is actually waiting for the function to finish
 
@@ -267,17 +283,18 @@ export const handleCreateGuiaLogic = async (
       await generatePDF(newGuia, guiaDate as string, CAF);
 
       // Remove the folio from the list of folios_reserved
-      // const newFoliosReserved = user.folios_reservados.filter(
-      //   (folio) => folio !== guia.identificacion.folio
-      // );
+      const newFoliosReserved = user.folios_reservados.filter(
+        (folio) => folio !== guia.identificacion.folio
+      );
       // Update the user's folios locally popping the one just used
-      // await updateUserReservedFolios(newFoliosReserved);
+      await updateUserReservedFolios(newFoliosReserved);
     }
     setCreateGuiaLoading(false);
-    // setModalVisible(false);
-    // navigation.push('Home');
+    setModalVisible(false);
+    navigation.push('Home');
   } catch (e) {
     console.log(e);
+    console.log(guia);
     setCreateGuiaLoading(false);
     Alert.alert('Error', 'No se pudo crear la guia de despacho');
   }
@@ -316,8 +333,6 @@ export const generatePDF = async (
       UTI: '.pdf',
       mimeType: 'application/pdf',
     });
-    console.log(permanentUri);
-
     console.log('PDF file generated:', permanentUri);
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -336,12 +351,31 @@ const calculateBancosPulpableVolumen = (
       // If any dimension is 0, skip this banco
       continue;
     }
-    const volumen = parseFloat(
-      (((altura1 * 0.01 + altura2 * 0.01) * ancho * 0.01) / 2).toFixed(4)
-    ); // pasamos de centimetros a metros
+    const volumen = ((altura1 * 0.01 + altura2 * 0.01) * ancho * 0.01) / 2; // pasamos de centimetros a metros
     volumenTotal += volumen;
   }
   // TODO: largo is not considered here?
   // TODO: dividir por 2.44 [estandarizar por largo]
-  return volumenTotal * producto.largo;
+  const metrosRumaTotal = parseFloat(
+    (volumenTotal * producto.largo).toFixed(4)
+  );
+
+  return metrosRumaTotal;
+};
+
+export const resetClasesDiametricas = () => {
+  for (const claseDiametrica of initialStatesProducto.clases_diametricas) {
+    claseDiametrica.cantidad = 0;
+    claseDiametrica.volumen = 0;
+  }
+  return initialStatesProducto.clases_diametricas;
+};
+
+export const resetBancosPulpable = () => {
+  for (const banco of initialStatesProducto.bancos_pulpable) {
+    banco.altura1 = 0;
+    banco.altura2 = 0;
+    banco.ancho = 0;
+  }
+  return initialStatesProducto.bancos_pulpable;
 };

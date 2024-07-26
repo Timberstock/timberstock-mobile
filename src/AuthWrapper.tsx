@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './context/UserContext';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import Login from './screens/Login';

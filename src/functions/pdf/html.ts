@@ -193,7 +193,7 @@ export const createPDFHTMLString = async (
         <p class="s1">RUT Transportista</p>
       </td>
       <td class="cellwithborders">
-        <p class="s2">${guia.transporte.rut_transportista}</p>
+        <p class="s2">${guia.transporte.empresa.rut}</p>
       </td>
     </tr>
     <tr>
@@ -240,8 +240,6 @@ export const createPDFHTMLString = async (
       });
     }
   }
-
-  console.log(productoAsDetalle);
 
   const detallesTable = `
     <table style="border-collapse: collapse; width: 650px" cellspacing="0">

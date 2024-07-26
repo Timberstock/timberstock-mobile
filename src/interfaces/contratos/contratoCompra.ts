@@ -1,6 +1,6 @@
 import Timestamp from '@react-native-firebase/firestore';
-import { Cliente, Proveedor, Producto, Faena } from '../esenciales';
-import { Carguio, Cosecha, Otro, Transporte } from '../servicios';
+import { Cliente, Proveedor, Producto, Faena } from '@/interfaces/esenciales';
+import { Carguio, Cosecha, Otro, Transporte } from '@/interfaces/servicios';
 
 export interface ContratoCompra {
   firestore_id: string;
@@ -29,17 +29,18 @@ export interface ProductoContratoCompra extends Producto {
 }
 
 export interface TransporteContratoCompra extends Transporte {
+  // Might have problems with this Transporte and the one in web app
   precio_unitario_transporte?: number; // Optional in case of Retail, where Transporte is not paid as a Servicio
 }
 
 export interface CosechaContratoCompra {
-  empresa: Cosecha | null;
+  empresa: Cosecha;
   precio_m3?: number;
   precio_mr?: number;
 }
 
 export interface CarguioContratoCompra {
-  empresa: Carguio | null;
+  empresa: Carguio;
   precio_m3?: number;
   precio_mr?: number;
 }
@@ -49,7 +50,7 @@ export interface OtroContratoCompra extends Otro {
 }
 
 export interface Servicios {
-  cosecha: CosechaContratoCompra[];
-  carguio: CarguioContratoCompra[];
-  otros: OtroContratoCompra[];
+  cosecha?: CosechaContratoCompra[];
+  carguio?: CarguioContratoCompra[];
+  otros?: OtroContratoCompra[];
 }

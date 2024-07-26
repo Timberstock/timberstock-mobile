@@ -2,7 +2,6 @@ import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
 import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
-// import { GuiaDespachoFirebase, PreGuia } from '@/interfaces/firestore';
 import { Alert } from 'react-native';
 import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
 
@@ -10,6 +9,26 @@ export const createGuiaDoc = async (
   rutEmpresa: string,
   preGuia: GuiaDespachoFirestore
 ): Promise<string | null> => {
+  function snapshotPromise(
+    ref: FirebaseFirestoreTypes.DocumentReference
+  ): Promise<FirebaseFirestoreTypes.DocumentSnapshot> {
+    // From https://github.com/firebase/firebase-js-sdk/issues/1497
+    // Workaround for the issue of createGuiaDoc not resolving when creating a new guia offline.
+    // The issue is that the set() function returns a promise that resolves only when the data is written to the server.
+    // So with this workaround, we are listening to the snapshot of the document, and resolving the promise when the snapshot is received.
+    return new Promise((resolve, reject) => {
+      var unsubscribe = ref.onSnapshot(
+        (doc) => {
+          resolve(doc);
+          unsubscribe();
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
+  }
+
   if (!rutEmpresa) return null;
   const creationDate = new Date();
   const guia: GuiaDespachoFirestore = {
@@ -20,12 +39,22 @@ export const createGuiaDoc = async (
   try {
     const guiaDocumentId =
       'DTE_GD_' + rutEmpresa + 'f' + guia.identificacion.folio.toString();
-    await firestore()
+
+    const newGuiaDocRef = firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
-      .doc(guiaDocumentId)
-      .set(guia);
+      .doc(guiaDocumentId);
+    newGuiaDocRef.set(guia);
+    const createdGuiaDoc = await snapshotPromise(newGuiaDocRef);
+
     console.log('Guía agregada a firebase: ', guiaDocumentId);
 
+    // if (createdGuiaDoc.metadata.hasPendingWrites) {
+    //   Alert.alert(
+    //     'Guía agregada correctamente',
+    //     `Guía de folio: ${guia.identificacion.folio}`
+    //   );
+    // } else {
+    // }
     Alert.alert(
       'Guía agregada correctamente',
       `Guía de folio: ${guia.identificacion.folio}`
@@ -142,7 +171,7 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
       const guiaData = {
         folio: data.identificacion.folio,
         estado: data.estado,
-        total_guia: data.total_guia || data.monto_total_guia,
+        monto_total_guia: data.total_guia || data.monto_total_guia,
         receptor: data.receptor,
         // We parse the firestore timestamp to a string
         fecha: formatDateToYYYYMMDD(data.identificacion.fecha.toDate()),

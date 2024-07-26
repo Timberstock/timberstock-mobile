@@ -7,23 +7,35 @@ import {
   Transporte,
 } from '@/interfaces/sii/guia';
 import { ClaseDiametrica } from '../screens/emision/productos';
+import { Servicios } from '../contratos/contratoCompra';
 
 // Desglose de precios tiene que ser mas sofisticado, especialmente para cubrir servicios, transporte, etc.
+export interface TransporteGuia extends Transporte {
+  precio_unitario_transporte?: number;
+}
+
+interface ProductoGuia extends Producto {
+  precio_unitario_compra?: number;
+  precio_unitario_venta?: number;
+}
+
 export interface GuiaDespachoFirestore {
   identificacion: Identificacion;
   emisor: Emisor;
   receptor: Receptor;
   predio: Predio;
-  transporte: Transporte;
+  transporte: TransporteGuia;
   proveedor: Proveedor;
-  producto: Producto;
-  clases_diametricas?: ClaseDiametrica[];
+  producto: ProductoGuia;
   volumen_total: number;
   precio_unitario_guia: number;
   monto_total_guia: number;
   contrato_venta_id: string;
   contrato_compra_id: string;
   estado: string;
+  folio_guia_proveedor?: number;
+  clases_diametricas?: ClaseDiametrica[];
+  servicios?: Servicios;
   // We are not including valores de contrato here because they are not necessary for the guia
   // precio_unitario_venta: number;
   // monto_total_venta: number;
