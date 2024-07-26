@@ -2,7 +2,7 @@
   "expo": {
     "name": "TimberStock",
     "slug": "timberstock-mobile-app",
-    "version": "0.0.10",
+    "version": "0.0.14",
     "orientation": "portrait",
     "icon": "./assets/dallelogo.png",
     "userInterfaceStyle": "light",
@@ -17,18 +17,18 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
+      "buildNumber": "0.14",
       "googleServicesFile": "./firebase_services_files/GoogleService-Info.plist",
       "supportsTablet": true,
-      "bundleIdentifier": "com.atc.timberstockapp",
-      "buildNumber": "0.12"
+      "bundleIdentifier": "com.atc.timberstockapp"
     },
     "android": {
+      "versionCode": 1,
       "googleServicesFile": "./firebase_services_files/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/dallelogo.png",
         "backgroundColor": "#FFFFFF"
       },
-      "versionCode": 1,
       "package": "com.atc.timberstockandroid",
       "softwareKeyboardLayoutMode": "pan"
     },
