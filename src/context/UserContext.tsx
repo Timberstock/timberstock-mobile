@@ -1,19 +1,25 @@
 import React, { createContext, useRef, useState } from 'react';
-import { Usuario } from '../interfaces/usuario';
+import { Usuario } from '@/interfaces/context/user';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import {
   retrieveUserFirestoreInformation,
   retrieveUserSafe,
-} from '../functions/firebase/firestore/usuarios';
+} from '@/functions/firebase/firestore/usuarios';
+import { updateUserFirestore } from '@/functions/firebase/firestore/usuarios';
 
 type UserContextType = {
   user: Usuario | null;
   updateUserAuth: (user: FirebaseAuthTypes.User | null) => Promise<void>;
+  updateUserReservedFolios: (
+    newReservedFolios: number[],
+    newCafs?: string[]
+  ) => Promise<void>;
 };
 
 const initialState = {
   user: null,
   updateUserAuth: () => Promise.resolve(),
+  updateUserReservedFolios: () => Promise.resolve(),
 };
 
 // Context
@@ -44,14 +50,63 @@ export const UserContextProvider = ({ children }: any) => {
       rut: newUserFirestoreData?.rut,
       nombre: newUserFirestoreData?.nombre,
       email: newUserFirestoreData?.email,
+      folios_reservados: newUserFirestoreData?.folios_reservados,
+      cafs: newUserFirestoreData?.cafs,
     };
 
     setUser(newUser as Usuario);
   };
 
+  const updateUserReservedFolios = async (
+    newReservedFolios: number[],
+    newCafs?: string[]
+  ) => {
+    if (!user || !user.firebaseAuth) return;
+    try {
+      // This is exactly the same change that the Cloud Function does in production
+      // but this is to ensure that the user's folios are updated in case we can't read from the server.
+      let newUser: Usuario;
+      if (newCafs) {
+        // case we are updating the user's cafs
+        await updateUserFirestore(
+          user.firebaseAuth.uid,
+          newReservedFolios,
+          newCafs
+        );
+
+        // We update the user's folios locally without reading from the database
+        newUser = {
+          ...user,
+          folios_reservados: [
+            ...new Set([...user.folios_reservados, ...newReservedFolios]),
+          ],
+          cafs: { ...user.cafs, ...newCafs },
+        };
+      } else {
+        // case we are not updating the user's cafs
+        await updateUserFirestore(
+          user.firebaseAuth.uid,
+          newReservedFolios,
+          user.cafs
+        );
+        newUser = {
+          ...user,
+          // we are just updating the folios reserved by popping the just used folio
+          folios_reservados: newReservedFolios,
+        };
+      }
+      setUser(newUser);
+      console.log('User reserved folios updated successfully');
+    } catch (error) {
+      alert('Error al cargar folios');
+      console.log(error);
+    }
+  };
+
   const contextValue: UserContextType = {
     user,
     updateUserAuth,
+    updateUserReservedFolios,
   };
 
   return (

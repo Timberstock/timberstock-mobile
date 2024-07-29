@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './context/UserContext';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import Login from './screens/Login';
@@ -39,15 +39,6 @@ function AuthWrapper({ children }: any) {
     };
   }, []);
 
-  //   useEffect(() => {
-  //     if (user) {
-  //       setLoading(false);
-  //     }
-  //     if (user?.empresa_id) {
-  //       setLoading(false);
-  //     }
-  //   }, [user]);
-
   if (loading) {
     console.log(['Entering Loading Screen']);
     return <Loading />;
@@ -58,11 +49,6 @@ function AuthWrapper({ children }: any) {
     console.log('[Entering Login Screen]');
     return <Login />;
   }
-
-  //   if (loading && !user) {
-  //     console.log('[Entering Loading Screen 2]');
-  //     return <Loading />;
-  //   }
 
   // If the user is logged in, we read the data according to the user and show the app
   return <AppProvider>{children}</AppProvider>;

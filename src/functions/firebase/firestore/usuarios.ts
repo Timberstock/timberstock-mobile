@@ -1,7 +1,19 @@
-import firestore from '@react-native-firebase/firestore';
-import { UsuarioFirestoreData } from '../../../interfaces/usuario';
-import customHelpers from '../../helpers';
+import firestore, {
+  FirebaseFirestoreTypes,
+} from '@react-native-firebase/firestore';
+import { UsuarioFirestoreData } from '@/interfaces/context/user';
 import { Alert } from 'react-native';
+
+const daysSinceFirestoreTimestamp = (
+  timestamp: FirebaseFirestoreTypes.Timestamp
+): number => {
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+  const timestampDate = timestamp.toDate();
+  const currentDate = new Date();
+  const timeDiff = currentDate.getTime() - timestampDate.getTime();
+  const daysDiff = Math.round(timeDiff / millisecondsPerDay);
+  return daysDiff;
+};
 
 const fetchUserInfoFromCache = async (
   userUid: string
@@ -41,7 +53,7 @@ export const retrieveUserFirestoreInformation = async (
   try {
     // First try to get the user info from the cache
     const userDataFromCache = await fetchUserInfoFromCache(userUid);
-    const daysSinceLastLogin = customHelpers.daysSinceFirestoreTimestamp(
+    const daysSinceLastLogin = daysSinceFirestoreTimestamp(
       userDataFromCache.last_login
     );
     if (daysSinceLastLogin > 3) {
@@ -77,5 +89,63 @@ export const retrieveUserSafe = async (userUid: string) => {
       );
       return null;
     }
+  }
+};
+
+export const updateUserFirestore = async (
+  userUid: string,
+  newFoliosReservados: number[],
+  newCafs?: string[]
+) => {
+  function snapshotPromise(
+    ref: FirebaseFirestoreTypes.DocumentReference
+  ): Promise<FirebaseFirestoreTypes.DocumentSnapshot> {
+    // From https://github.com/firebase/firebase-js-sdk/issues/1497
+    // Workaround for the issue of createGuiaDoc not resolving when creating a new guia offline.
+    // The issue is that the set() function returns a promise that resolves only when the data is written to the server.
+    // So with this workaround, we are listening to the snapshot of the document, and resolving the promise when the snapshot is received.
+    return new Promise((resolve, reject) => {
+      var unsubscribe = ref.onSnapshot(
+        (doc) => {
+          resolve(doc);
+          unsubscribe();
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
+  }
+
+  try {
+    if (!newCafs) {
+      console.log({
+        folios_reservados: newFoliosReservados,
+      });
+      const userDocRef = firestore().collection('usuarios').doc(userUid);
+      userDocRef.update({
+        folios_reservados: newFoliosReservados,
+      });
+
+      const userDoc = await snapshotPromise(userDocRef);
+
+      // if (userDoc.metadata.hasPendingWrites) {}
+    } else {
+      console.log({
+        folios_reservados: newFoliosReservados,
+        cafs: newCafs,
+      });
+      const userDocRef = firestore().collection('usuarios').doc(userUid);
+      userDocRef.update({
+        folios_reservados: newFoliosReservados,
+        cafs: newCafs,
+      });
+      const userDoc = await snapshotPromise(userDocRef);
+      // if (userDoc.metadata.hasPendingWrites) {}
+    }
+    return 200;
+  } catch (e) {
+    console.error(e);
+    throw new Error('Error al actualizar usuario');
   }
 };

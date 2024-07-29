@@ -1,3 +1,5 @@
+import { TransporteContratoCompra } from '../contratos/contratoCompra';
+
 // 2nd Level Interfaces
 export interface Chofer {
   nombre: string;
@@ -23,10 +25,10 @@ export interface ReferenciaDTE {
 
 // 3rd Level Interfaces
 export interface Identificacion {
-  fecha?: string; // Optional because it's set in the function at the moment of creation
   folio: number;
   tipo_traslado: string;
   tipo_despacho: string;
+  fecha?: Date; // Optional because its set in the function at the moment of creation
 }
 
 export interface Emisor {
@@ -39,8 +41,8 @@ export interface Emisor {
 }
 
 export interface Receptor {
-  rut: string;
   razon_social: string;
+  rut: string;
   giro: string;
   direccion: string;
   comuna: string;
@@ -48,8 +50,11 @@ export interface Receptor {
 
 export interface Transporte {
   chofer: Chofer;
-  patente: string;
-  rut_transportista: string;
+  camion: string;
+  empresa: {
+    rut: string;
+    razon_social: string;
+  };
   direccion_destino: string;
   comuna_destino?: string;
   ciudad_destino?: string;
@@ -60,20 +65,13 @@ export interface Totales {
   monto_neto: number;
 }
 
-export interface GuiaDespachoProps {
+// For reference
+interface GuiaDespachoSII {
   identificacion: Identificacion;
   emisor: Emisor;
   receptor: Receptor;
   transporte: Transporte;
-  detalles: DetalleDTE[];
   totales: Totales;
-}
-
-export interface GuiaDespachoSummaryProps {
-  folio: number;
-  estado: string;
-  total: number;
-  receptor: Receptor;
-  fecha: string;
-  url: string;
+  detalles: DetalleDTE[];
+  referencias: ReferenciaDTE[];
 }

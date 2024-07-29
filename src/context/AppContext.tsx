@@ -1,61 +1,55 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-} from 'react';
-import { GuiaDespachoSummaryProps } from '../interfaces/guias';
-import { EmpresaSubCollectionsData } from '../interfaces/firestore';
-import { Empresa } from '../interfaces/empresa';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { Alert } from 'react-native';
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
 import { UserContext } from './UserContext';
-import customHelpers from '../functions/helpers';
-import { fetchSubCollections } from '../functions/firebase/firestore/subcollections';
-import { fetchEmpresaDoc } from '../functions/firebase/firestore/empresa';
-import { fetchGuiasDocs } from '../functions/firebase/firestore/guias';
-import { Alert } from 'react-native';
+import {
+  fetchContratosCompra,
+  fetchContratosVenta,
+  fetchSubCollections,
+} from '@/functions/firebase/firestore/subcollections';
+import { fetchEmpresaDoc } from '@/functions/firebase/firestore/empresa';
+import { fetchGuiasDocs } from '@/functions/firebase/firestore/guias';
+import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
+import { ContratoCompra } from '@/interfaces/contratos/contratoCompra';
+import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
+import { Empresa, EmpresaSubCollectionsData } from '@/interfaces/context/app';
 
 type AppContextType = {
   guiasSummary: GuiaDespachoSummaryProps[];
   updateGuiasSummary: (guiasSummary: GuiaDespachoSummaryProps[]) => void;
   empresa: Empresa;
   updateEmpresa: (empresa: Empresa) => void;
+  // TODO: Maybe should be one single state for both?
+  contratosCompra: ContratoCompra[];
+  contratosVenta: ContratoVenta[];
   subCollectionsData: EmpresaSubCollectionsData;
   updateSubCollectionsData: (data: EmpresaSubCollectionsData) => void;
-  foliosDisp: number[];
-  updateFoliosDisp: (
-    newGuias: GuiaDespachoSummaryProps[],
-    caf_n: number
-  ) => void;
 };
 
 const initialState = {
   guiasSummary: [],
   updateGuiasSummary: () => {},
   empresa: {
-    emisor: {
-      razon_social: '',
-      rut: '',
-      giro: '',
-      direccion: '',
-      comuna: '',
-      actividad_economica: [],
-    },
+    razon_social: '',
+    rut: '',
+    giro: '',
+    direccion: '',
+    comuna: '',
+    actividad_economica: [],
     caf_n: -1,
   },
   updateEmpresa: () => {},
+  contratosVenta: [],
+  contratosCompra: [],
   subCollectionsData: {
-    foliosDisp: [],
     proveedores: [],
-    predios: [],
+    faenas: [],
     productos: [],
     clientes: [],
   },
   updateSubCollectionsData: () => {},
-  foliosDisp: [],
   updateFoliosDisp: () => {},
 };
 
@@ -63,7 +57,6 @@ export const AppContext = createContext<AppContextType>(initialState);
 
 const AppProvider = ({ children }: any) => {
   const { user } = useContext(UserContext);
-  const [foliosDisp, setFoliosDisp] = useState<number[]>([]);
 
   const [guiasSummary, setGuiasSummary] = useState<GuiaDespachoSummaryProps[]>(
     initialState.guiasSummary
@@ -73,16 +66,15 @@ const AppProvider = ({ children }: any) => {
   );
   const [empresa, setEmpresa] = useState<Empresa>(initialState.empresa);
 
+  const [contratosCompra, setContratosCompra] = useState<ContratoCompra[]>(
+    initialState.contratosCompra
+  );
+  const [contratosVenta, setContratosVenta] = useState<ContratoVenta[]>(
+    initialState.contratosVenta
+  );
+
   const updateEmpresa = (empresa: Empresa) => {
     setEmpresa(empresa);
-  };
-
-  const updateFoliosDisp = (
-    newGuias: GuiaDespachoSummaryProps[],
-    caf_n: number
-  ) => {
-    const newFoliosDisp = customHelpers.getFoliosDisp(newGuias, caf_n);
-    setFoliosDisp(newFoliosDisp);
   };
 
   const updateGuiasSummary = (newState: GuiaDespachoSummaryProps[]) => {
@@ -93,6 +85,13 @@ const AppProvider = ({ children }: any) => {
     newEmpresaData: EmpresaSubCollectionsData
   ) => {
     setSubCollectionsData(newEmpresaData);
+  };
+
+  const formatDateToYYYYMMDD = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // TODO: useMemo could be interesting here
@@ -110,37 +109,43 @@ const AppProvider = ({ children }: any) => {
               const guiaData = {
                 folio: data?.identificacion.folio,
                 estado: data?.estado,
-                total: data?.total,
+                monto_total_guia: data?.monto_total_guia,
                 receptor: data?.receptor,
-                fecha: data?.identificacion.fecha,
+                // parse firestore timestamp to string
+                fecha: formatDateToYYYYMMDD(
+                  data?.identificacion.fecha.toDate()
+                ),
                 url: data?.url,
               };
               return newGuias.push(guiaData);
             }
           }
         );
-        // CUANDO SE QUIERE ELIMINAR ALGO DE LA LISTA
-        // DE FIREBASE, Y QUE SE VEA REFLEJADO EN LA APP
-        // SI SE BORRA, Y LUEGO TE MUEVES MUY RAPIDO A
-        // LA PANTALLA DE 'CREAR GUIA', NO SE ALCANZAN A ACTUALIZAR
-        // LOS FOLIOS DISPONIBLES, PERO BASTA CON IR ATRAS Y REFRESCAR.
-        updateFoliosDisp(newGuias, empresa.caf_n);
         updateGuiasSummary(newGuias);
       });
     if (user?.empresa_id) {
       const poblateData = async () => {
+        // Should be onSnap instead as well? Test again this approach while disconnected...
         try {
+          const contratosCompraFetched = await fetchContratosCompra(
+            user.empresa_id
+          );
+          const contratosVentaFetched = await fetchContratosVenta(
+            user.empresa_id
+          );
+
           const subCollectionsFetched = await fetchSubCollections(
             user.empresa_id
           );
           const empresaFetched = await fetchEmpresaDoc(user.empresa_id);
           const guiasSummaryFetched = await fetchGuiasDocs(user.empresa_id);
           updateEmpresa(empresaFetched);
+          setContratosCompra(contratosCompraFetched);
+          setContratosVenta(contratosVentaFetched);
           updateSubCollectionsData(
             subCollectionsFetched as EmpresaSubCollectionsData
           );
           updateGuiasSummary(guiasSummaryFetched);
-          updateFoliosDisp(guiasSummaryFetched, empresaFetched.caf_n);
         } catch (err: any) {
           console.log(err);
           Alert.alert(err);
@@ -154,12 +159,12 @@ const AppProvider = ({ children }: any) => {
   const contextValue: AppContextType = {
     guiasSummary,
     updateGuiasSummary,
+    contratosCompra,
+    contratosVenta,
     empresa,
     updateEmpresa,
     subCollectionsData,
     updateSubCollectionsData,
-    foliosDisp,
-    updateFoliosDisp,
   };
   return (
     <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>

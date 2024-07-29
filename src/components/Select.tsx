@@ -1,7 +1,7 @@
 import { Select } from '@mobile-reality/react-native-select-pro';
 import React from 'react';
-import colors from '../resources/Colors';
 import { StyleSheet } from 'react-native';
+import colors from '@/resources/Colors';
 
 export default function StyledSelect(props: any) {
   return (

@@ -1,26 +1,26 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import 'expo-dev-client';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Home from './src/screens/Home';
-import CreateGuia from './src/screens/CreateGuia';
 import { SelectProvider } from '@mobile-reality/react-native-select-pro';
-import 'expo-dev-client';
+import firestore from '@react-native-firebase/firestore';
 import { StyleSheet, TouchableOpacity, View, Text, Alert } from 'react-native';
 
-import AddProductos from './src/screens/AddProductos';
-
-import UserContextProvider from './src/context/UserContext';
-import AuthWrapper from './src/AuthWrapper';
-import firestore from '@react-native-firebase/firestore';
-import { logoutUser } from './src/functions/firebase/auth';
+import UserContextProvider from '@/context/UserContext';
+import AuthWrapper from '@/AuthWrapper';
+import Home from '@/screens/Home';
+import { logoutUser } from '@/functions/firebase/auth';
+import CreateGuia from '@/screens/emision/Create';
+import CreateGuiaProductos from '@/screens/emision/Productos';
 
 const Stack = createNativeStackNavigator();
 
 // This works really weird, try playing with emulator and with index.js if doesn't work
 // import firestore from '@react-native-firebase/firestore';
-firestore().useEmulator('localhost', 8080);
+// firestore().useEmulator('localhost', 8080);
 
 export default function App() {
+  console.log('APP STARTED');
   const deleteCache = async (): Promise<number> => {
     try {
       await logoutUser();
@@ -40,7 +40,7 @@ export default function App() {
   const handleLoadApp = () => {
     console.log('Loading the app...');
     setLoadApp(true);
-    // Implement your app loading logic here
+    // TODO: arreglar los re renders y cosas entre medio que hacen que se vea feo
   };
 
   const handleClearCache = async () => {
@@ -60,10 +60,10 @@ export default function App() {
     return (
       <View style={styles.container}>
         <TouchableOpacity style={styles.button} onPress={handleLoadApp}>
-          <Text style={styles.buttonText}>Load App</Text>
+          <Text style={styles.buttonText}>Iniciar App</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleClearCache}>
-          <Text style={styles.buttonText}>Clear Cache</Text>
+          <Text style={styles.buttonText}>Limpiar Cache</Text>
         </TouchableOpacity>
       </View>
     );
@@ -74,9 +74,9 @@ export default function App() {
   }
 
   return (
-    <UserContextProvider>
-      <AuthWrapper>
-        <SelectProvider>
+    <SelectProvider>
+      <UserContextProvider>
+        <AuthWrapper>
           <NavigationContainer>
             <Stack.Navigator>
               <Stack.Screen
@@ -90,15 +90,15 @@ export default function App() {
                 component={CreateGuia}
               />
               <Stack.Screen
-                name="AddProductos"
+                name="CreateGuiaProductos"
                 options={{ headerShown: false }}
-                component={AddProductos}
+                component={CreateGuiaProductos}
               />
             </Stack.Navigator>
           </NavigationContainer>
-        </SelectProvider>
-      </AuthWrapper>
-    </UserContextProvider>
+        </AuthWrapper>
+      </UserContextProvider>
+    </SelectProvider>
   );
 }
 

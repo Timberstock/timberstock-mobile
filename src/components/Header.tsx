@@ -1,9 +1,10 @@
 import React from 'react';
 import Constants from 'expo-constants';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { logoutUser } from '../functions/firebase/auth';
-import colors from '../resources/Colors';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { logoutUser } from '@/functions/firebase/auth';
+import colors from '@/resources/Colors';
+import { Platform } from 'react-native';
 
 interface HeaderProps {
   screenName?: string;
@@ -31,7 +32,7 @@ export default function Header(props: HeaderProps) {
           </TouchableOpacity>
         )}
       </View>
-      <Text style={styles.text}> {empresa ? empresa : 'TimberStock'}</Text>
+      <Text style={styles.text}> {empresa ? empresa : 'TimberBiz'}</Text>
       <View style={styles.box}>
         <TouchableOpacity onPress={() => handleLogout()}>
           <Icon name="close-outline" size={30} color={colors.secondary} />
@@ -43,11 +44,12 @@ export default function Header(props: HeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 0.5,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: Constants.statusBarHeight,
+    // paddingTop: Constants.statusBarHeight,
+    paddingTop: Platform.OS === 'ios' ? Constants.statusBarHeight : 40,
     flexDirection: 'row',
     zIndex: 1,
   },
