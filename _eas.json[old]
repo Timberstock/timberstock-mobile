@@ -14,17 +14,15 @@
         "simulator": true
       }
     },
-    "staging-internal": {
-      "distribution": "internal",
-      "channel": "staging-internal"
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
     },
-    "staging": {
-      "distribution": "store",
-      "channel": "staging"
+    "preview": {
+      "distribution": "internal"
     },
     "production": {
-      "distribution": "store",
-      "channel": "production"
+      "distribution": "store"
     }
   },
   "submit": {

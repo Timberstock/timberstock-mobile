@@ -60,10 +60,10 @@ export default function App() {
     return (
       <View style={styles.container}>
         <TouchableOpacity style={styles.button} onPress={handleLoadApp}>
-          <Text style={styles.buttonText}>Load App</Text>
+          <Text style={styles.buttonText}>Iniciar App</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleClearCache}>
-          <Text style={styles.buttonText}>Clear Cache</Text>
+          <Text style={styles.buttonText}>Limpiar Cache</Text>
         </TouchableOpacity>
       </View>
     );
