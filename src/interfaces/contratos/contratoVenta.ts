@@ -1,5 +1,6 @@
 import Timestamp from '@react-native-firebase/firestore';
-import { Cliente, Producto } from '../esenciales';
+import { Cliente, Faena, Producto } from '../esenciales';
+import { ClaseDiametrica } from '../screens/emision/productos';
 
 export interface ContratoVenta {
   firestore_id: string;
@@ -16,10 +17,14 @@ export interface ClienteContratoVenta extends Cliente {
 
 export interface DestinoContratoVenta {
   nombre: string;
-  productos: ProductoContratoVenta[];
+  faenas: FaenaContratoVenta[];
+}
+
+export interface FaenaContratoVenta extends Faena {
+  productos_destino_contrato: ProductoContratoVenta[];
 }
 
 export interface ProductoContratoVenta extends Producto {
-  precio_unitario_venta: number;
-  precio_unitario_venta_ref?: number;
+  precio_unitario_venta_mr?: number;
+  clases_diametricas?: ClaseDiametrica[];
 }

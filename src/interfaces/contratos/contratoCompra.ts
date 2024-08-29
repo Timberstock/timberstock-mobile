@@ -1,6 +1,7 @@
 import Timestamp from '@react-native-firebase/firestore';
 import { Cliente, Proveedor, Producto, Faena } from '@/interfaces/esenciales';
 import { Carguio, Cosecha, Otro, Transporte } from '@/interfaces/servicios';
+import { ClaseDiametrica } from '../screens/emision/productos';
 
 export interface ContratoCompra {
   firestore_id: string;
@@ -24,8 +25,8 @@ export interface DestinoContratoCompra {
 }
 
 export interface ProductoContratoCompra extends Producto {
-  precio_unitario_compra: number;
-  precio_unitario_compra_ref?: number; // Ref price in case of same price for all destinos
+  precio_unitario_compra_mr?: number;
+  clases_diametricas?: ClaseDiametrica[];
 }
 
 export interface TransporteContratoCompra extends Transporte {

@@ -17,8 +17,12 @@ export interface ProductoOptions {
 
 export interface ClaseDiametrica {
   clase: string;
-  cantidad: number;
-  volumen: number; // not calculated until creating the guia
+  cantidad_emitida?: number;
+  volumen_emitido?: number;
+  cantidad_recepcionada?: number;
+  volumen_recepcionado?: number;
+  precio_unitario_compra_clase?: number;
+  precio_unitario_venta_clase?: number;
 }
 
 export interface Banco {

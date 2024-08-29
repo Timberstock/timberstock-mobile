@@ -32,7 +32,7 @@ export default function Home(props: any) {
   const [foliosRequestLoading, setFoliosRequestLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-  console.log(guiasSummary);
+  // console.log(guiasSummary);
 
   useEffect(() => {
     handleRefresh();
@@ -52,6 +52,12 @@ export default function Home(props: any) {
     );
 
     console.log('REQUEST RESERVAR FOLIOS RESPONSE:', response);
+
+    if (response.message.includes('No such object')) {
+      Alert.alert('Error', 'No se pudo encontrar un archivo CAF valido para solicitar folios');
+      setFoliosRequestLoading(false);
+      return;
+    }
 
     // Update the user's folios locally
     await updateUserReservedFolios(response.folios_reservados, response.cafs);

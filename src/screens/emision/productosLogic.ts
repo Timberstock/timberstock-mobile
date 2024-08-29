@@ -9,7 +9,7 @@ import getTED from '@/functions/pdf/timbre';
 import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
 import { GuiaDespacho as GuiaDespachoCreateScreen } from '@/interfaces/screens/emision/create';
 import { IOption } from '@/interfaces/screens/screens';
-import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
+import { ContratoVenta, ProductoContratoVenta } from '@/interfaces/contratos/contratoVenta';
 import { initialStatesProducto } from '@/resources/initialStates';
 import { Producto } from '@/interfaces/esenciales';
 import {
@@ -23,6 +23,7 @@ import { Empresa } from '@/interfaces/context/app';
 import { Alert } from 'react-native';
 import { createGuiaDoc } from '@/functions/firebase/firestore/guias';
 import { createPDFHTMLString } from '@/functions/pdf/html';
+import { ContratoCompra, ProductoContratoCompra } from '@/interfaces/contratos/contratoCompra';
 
 export const handleSelectTipoLogic = (
   option: IOptionTipoProducto | null,
@@ -77,8 +78,8 @@ export const handleUpdateClaseDiametricaValueLogic = (
   const newClasesDiametricas = [...prevClasesDiametricas];
   for (const claseDiametrica of newClasesDiametricas) {
     if (claseDiametrica.clase === clase) {
-      claseDiametrica.cantidad = cantidad;
-      claseDiametrica.volumen = parseFloat(
+      claseDiametrica.cantidad_emitida = cantidad;
+      claseDiametrica.volumen_emitido = parseFloat(
         (
           cantidad *
           producto.largo *
@@ -101,8 +102,8 @@ export const handleIncreaseNumberOfClasesDiametricasLogic = (
     ...prevClasesDiametricas,
     {
       clase: diametroNewClaseDiametrica.toString(),
-      cantidad: 0,
-      volumen: 0,
+      cantidad_emitida: 0,
+      volumen_emitido: 0,
     },
   ];
 };
@@ -127,7 +128,7 @@ export const checkProductosValues = (
   // Check if the user has entered any value in the products actual values
   if (producto.tipo === 'Aserrable') {
     for (const claseDiametrica of clasesDiametricas) {
-      if (claseDiametrica.cantidad !== 0) {
+      if (claseDiametrica.cantidad_emitida !== 0) {
         // If any aserrable product has any valid clase diametrica, allow
         allow = true;
         break;
@@ -158,6 +159,7 @@ export const handleCreateGuiaLogic = async (
   guia: GuiaDespachoCreateScreen,
   empresa: Empresa,
   producto: Producto,
+  contratosCompra: ContratoCompra[],
   contratosVenta: ContratoVenta[],
   clasesDiametricas: ClaseDiametrica[],
   bancosPulpable: Banco[],
@@ -219,60 +221,111 @@ export const handleCreateGuiaLogic = async (
         contrato_compra_id: guia.contrato_compra_id,
         folio_guia_proveedor:
           guia.folio_guia_proveedor === 0 ? '' : guia.folio_guia_proveedor,
-        volumen_total: 0,
+        volumen_total_emitido: 0,
       } as GuiaDespachoFirestore;
 
-      // Filter contratoVenta
-      const contratoVenta = contratosVenta.find(
+      // Filter contratoCompra and get producto
+      const contratoCompra = contratosCompra.find(
         (contrato) =>
-          contrato.cliente.rut === guia.cliente.rut &&
-          contrato.cliente.destinos_contrato.some((destino) =>
-            destino.productos.some(
+          contrato.clientes.some((cliente) => 
+            cliente.rut === guia.cliente.rut &&
+            cliente.destinos_contrato.some((destino) => 
+              destino.nombre === guia.destino_contrato.nombre &&
+              destino.productos.some((producto) => 
+                producto.codigo === newGuia.producto.codigo
+              ))));
+              console.log('contratoCompra', contratoCompra);
+              
+              // Filter contratoVenta
+              const contratoVenta = contratosVenta.find(
+                (contrato) =>
+                  contrato.cliente.rut === guia.cliente.rut &&
+                contrato.cliente.destinos_contrato.some((destino) =>
+                  destino.nombre === guia.destino_contrato.nombre &&
+                destino.faenas.some((faena) => 
+                  faena.rol === guia.faena.rol && 
+                faena.productos_destino_contrato.some(
+                  (producto) => (producto.codigo === newGuia.producto.codigo)
+                ))
+              )
+            );
+
+            console.log('contratoVenta', contratoVenta);
+            
+            newGuia.contrato_venta_id = contratoVenta?.firestore_id || '';
+            
+            if (!newGuia.contrato_venta_id) {
+              Alert.alert(
+                'Error',
+                'No se encontró contrato de venta vigente para esta combinación cliente-destino-origen-producto'
+              );
+              setCreateGuiaLoading(false);
+              return;
+            }
+          // Get corresponding producto from contratoCompra
+          const productoContratoCompra = contratoCompra?.clientes.find(
+              (cliente) => cliente.rut === guia.cliente.rut
+            )?.destinos_contrato.find(
+              (destino) => destino.nombre === guia.destino_contrato.nombre
+            )?.productos.find(
               (producto) => producto.codigo === newGuia.producto.codigo
-            )
-          )
-      );
+            ) as ProductoContratoCompra;
 
-      newGuia.contrato_venta_id = contratoVenta?.firestore_id || '';
+            console.log('productoContratoCompra', productoContratoCompra);
 
-      if (!newGuia.contrato_venta_id) {
-        Alert.alert(
-          'Error',
-          'No se encontró contrato de venta vigente para este producto'
-        );
-        setCreateGuiaLoading(false);
-        return;
-      }
+          // Get corresponding producto from contratoVenta
+          const productoContratoVenta = contratoVenta?.cliente?.destinos_contrato
+            ?.find((d) => d.nombre === guia.destino_contrato.nombre)
+            ?.faenas.find((f) => f.rol === guia.faena.rol)
+            ?.productos_destino_contrato.find(
+              (p) => p.codigo === producto.codigo,
+            ) as ProductoContratoVenta;
+
+          console.log('productoContratoVenta', productoContratoVenta);
 
       if (producto.tipo === 'Aserrable') {
-        // Only save the clases diametricas that have a valid cantidad
-        newGuia.clases_diametricas = clasesDiametricas.filter(
-          (claseDiametrica) => claseDiametrica.cantidad !== 0
-        );
-        for (const claseDiametrica of clasesDiametricas) {
-          newGuia.volumen_total += claseDiametrica.volumen;
-        }
+        // newGuia.producto.clases_diametricas = clasesDiametricas;
+        // for (const claseDiametrica of clasesDiametricas) {
+        //   newGuia.volumen_total_emitido += claseDiametrica.volumen;
+        // }
+        newGuia.producto.clases_diametricas = clasesDiametricas.map(
+          (claseDiametrica) => {
+            newGuia.volumen_total_emitido += claseDiametrica.volumen_emitido || 0;
+
+            // If clase is higher than 50, use the prices of clase 50
+            const claseToUse = parseInt(claseDiametrica.clase) > 50 ? "50" : claseDiametrica.clase;
+
+            const precioUnitarioCompraClase = productoContratoCompra?.clases_diametricas?.find(
+              (clase) => clase.clase === claseToUse
+            )?.precio_unitario_compra_clase || 0;
+            const precioUnitarioVentaClase = productoContratoVenta?.clases_diametricas?.find(
+              (clase) => clase.clase === claseToUse
+            )?.precio_unitario_venta_clase || 0;
+
+            // console.log('claseDiametrica', claseDiametrica);
+            // console.log('precioUnitarioCompraClase', precioUnitarioCompraClase);
+            // console.log('precioUnitarioVentaClase', precioUnitarioVentaClase);
+
+            return {
+              ...claseDiametrica,
+              precio_unitario_compra_clase: precioUnitarioCompraClase,
+              precio_unitario_venta_clase: precioUnitarioVentaClase,
+            }
+          }
+        )
       } else if (producto.tipo === 'Pulpable') {
-        newGuia.volumen_total = calculateBancosPulpableVolumen(
+        newGuia.volumen_total_emitido = calculateBancosPulpableVolumen(
           producto,
           bancosPulpable
         );
+        newGuia.producto.precio_unitario_compra_mr = productoContratoCompra?.precio_unitario_compra_mr || 0;
+        newGuia.producto.precio_unitario_venta_mr = productoContratoVenta?.precio_unitario_venta_mr || 0;
       }
 
-      // Get precio_unitario_venta from the contratoVenta
-      const precioUnitarioVenta =
-        contratoVenta?.cliente.destinos_contrato
-          .find((destino) => destino.nombre === guia.destino_contrato.nombre)
-          ?.productos.find(
-            (producto) => producto.codigo === newGuia.producto.codigo
-          )?.precio_unitario_venta || 0;
-
-      newGuia.producto.precio_unitario_venta = precioUnitarioVenta;
-
-      newGuia.volumen_total = parseFloat(newGuia.volumen_total.toFixed(4));
+      newGuia.volumen_total_emitido = parseFloat(newGuia.volumen_total_emitido.toFixed(4));
       newGuia.precio_unitario_guia = precioUnitarioGuia;
       newGuia.monto_total_guia = Math.trunc(
-        precioUnitarioGuia * newGuia.volumen_total
+        precioUnitarioGuia * newGuia.volumen_total_emitido
       );
 
       const guiaDate = await createGuiaDoc(user.empresa_id, newGuia); // Not sure if this is actually waiting for the function to finish
@@ -365,8 +418,8 @@ const calculateBancosPulpableVolumen = (
 
 export const resetClasesDiametricas = () => {
   for (const claseDiametrica of initialStatesProducto.clases_diametricas) {
-    claseDiametrica.cantidad = 0;
-    claseDiametrica.volumen = 0;
+    claseDiametrica.cantidad_emitida = 0;
+    claseDiametrica.volumen_emitido = 0;
   }
   return initialStatesProducto.clases_diametricas;
 };
@@ -379,3 +432,18 @@ export const resetBancosPulpable = () => {
   }
   return initialStatesProducto.bancos_pulpable;
 };
+
+export const filterProductosWithContratoVenta = (
+  contratosVenta: ContratoVenta[],
+  guia: GuiaDespachoCreateScreen,
+) => {
+  const productosPosibles = guia.destino_contrato.productos;
+  const productosConContratoVenta = contratosVenta
+    .find((contrato) => contrato.cliente.rut === guia.cliente.rut)
+    ?.cliente.destinos_contrato.find(
+      (destino) => destino.nombre === guia.destino_contrato.nombre
+    )?.faenas.find((faena) => faena.rol === guia.faena.rol)
+    ?.productos_destino_contrato.map((producto) => producto.codigo) || [];
+
+  return productosPosibles.filter((producto) => productosConContratoVenta.includes(producto.codigo));
+}

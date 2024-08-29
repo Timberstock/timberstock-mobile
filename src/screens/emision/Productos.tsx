@@ -36,6 +36,7 @@ import {
   handleCreateGuiaLogic,
   resetClasesDiametricas,
   resetBancosPulpable,
+  filterProductosWithContratoVenta,
 } from './productosLogic';
 import { GuiaDespacho } from '@/interfaces/screens/emision/create';
 import { AppContext } from '@/context/AppContext';
@@ -53,8 +54,8 @@ export default function CreateGuiaProductos(props: any) {
   const { navigation } = props;
   const { guia }: { guia: GuiaDespacho } = props.route.params.data;
   const { user, updateUserReservedFolios } = useContext(UserContext);
-  const { empresa, contratosVenta } = useContext(AppContext);
-  const productosData = guia.destino_contrato.productos;
+  const { empresa, contratosVenta, contratosCompra } = useContext(AppContext);
+  const productosData = filterProductosWithContratoVenta(contratosVenta, guia);
 
   const [producto, setProducto] = useState<Producto>(
     initialStatesProducto.producto
@@ -151,6 +152,7 @@ export default function CreateGuiaProductos(props: any) {
       guia,
       empresa,
       producto,
+      contratosCompra,
       contratosVenta,
       clasesDiametricas,
       bancosPulpable,

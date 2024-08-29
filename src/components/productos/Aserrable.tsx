@@ -24,7 +24,7 @@ export default function Aserrable({
         <ClaseDiametricaRow
           key={index}
           clase={claseDiametrica.clase}
-          cantidad={claseDiametrica.cantidad}
+          cantidad={claseDiametrica.cantidad_emitida || 0}
           // TODO: prop drilling bad practice
           updateClaseDiametricaValue={updateClaseDiametricaValue}
         />

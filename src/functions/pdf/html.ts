@@ -210,7 +210,7 @@ export const createPDFHTMLString = async (
 
   const productoAsDetalle: DetallePDF = {
     nombre: `${guia.producto.tipo} ${guia.producto.especie} ${guia.producto.calidad} ${guia.producto.largo}`,
-    cantidad: guia.volumen_total,
+    cantidad: guia.volumen_total_emitido,
     precio: guia.precio_unitario_guia,
     montoItem: guia.monto_total_guia,
   };
@@ -229,131 +229,146 @@ export const createPDFHTMLString = async (
   ];
 
   const clasesDiametricasAsDetalles: DetallePDF[] = [];
-  if (guia.producto.tipo === 'Aserrable' && guia.clases_diametricas) {
-    for (const claseDiametrica of guia.clases_diametricas) {
-      clasesDiametricasAsDetalles.push({
-        nombre: `${claseDiametrica.clase}: ${claseDiametrica.cantidad}`,
-        cantidad: claseDiametrica.volumen,
-        montoItem: Math.floor(
-          claseDiametrica.volumen * guia.precio_unitario_guia
-        ),
+  if (guia.producto.tipo === 'Aserrable' && guia.producto.clases_diametricas) {
+    for (const claseDiametrica of guia.producto.clases_diametricas) {
+      if (claseDiametrica.cantidad_emitida && claseDiametrica.cantidad_emitida > 0) {
+        clasesDiametricasAsDetalles.push({
+          nombre: `${claseDiametrica.clase}: ${claseDiametrica.cantidad_emitida} = ${parseFloat((claseDiametrica.volumen_emitido || 0).toFixed(4) || '0').toLocaleString('es-CL')}`,
+          cantidad: claseDiametrica.volumen_emitido,
+          // precio: guia.precio_unitario_guia,
+          // montoItem: Math.floor(
+          //   claseDiametrica.volumen * guia.precio_unitario_guia
+          // ),
       });
+      };
     }
   }
 
   const detallesTable = `
-    <table style="border-collapse: collapse; width: 650px" cellspacing="0">
-      <tr>
-        <td class="cellwithborders" colspan="6">
-          <p class="s1" style="text-align: center">DETALLES</p>
-        </td>
-      </tr>
-      <tr>
-        <td class="cellwithborders">
-          <p class="s1" style="text-align: center">Descripción</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s1" style="text-align: center">Cantidad</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s1" style="text-align: center">Unid</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s1">Precio Unitario</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s1">Ind</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s1" style="text-align: center">Total</p>
-        </td>
-      </tr>
-      <tr>
-        <td class="cellwithborders">
-          <p class="s2"> ${/* Producto */ productoAsDetalle.nombre}</p>
-          <p class="s2">.</p>
-          <p class="s2">${
-            /* [Predio] 1st part */ predioAsDetalles[0].nombre
-          }</p>
-          <p class="s2">${
-            /* [Predio] 2nd part */ predioAsDetalles[1].nombre
-          }</p>
-          <p class="s2">${
-            /* [Predio] 3rd part */ predioAsDetalles[2].nombre
-          }</p>
-          <p class="s2">${
-            /* [Predio] 4th part */ predioAsDetalles[3].nombre
-          }</p>
-          <p class="s2">${
-            /* [Predio] 5th part */ predioAsDetalles[4].nombre
-          }</p>
-          <p class="s2">${
-            /* [Predio] 6th part */ predioAsDetalles[5].nombre
-          }</p>
-          ${
-            guia.producto.tipo === 'Aserrable'
-              ? `<p class="s2">Detalle trozos por clase diametrica:</p>`
-              : ''
-          }
-          ${
-            guia.producto.tipo === 'Aserrable'
-              ? clasesDiametricasAsDetalles
-                  .map((clase) => `<p class="s2">${clase.nombre}</p>`)
-                  .join('')
-              : ''
-          }
-        </td>
-        <td class="cellwithborders">
-          <p class="s2">${
-            /* representative */ productoAsDetalle.cantidad?.toFixed(4)
-          }</p>
-          ${/* Skip Predio parts + 1*/ `<p class="s2">.</p>`.repeat(8)} 
-          ${
-            /* In case of Aserrable */
-            clasesDiametricasAsDetalles
-              .map((clase) => `<p class="s2">${clase.cantidad}</p>`)
-              .join('')
-          }
-        </td>
-        <td class="cellwithborders">
-          <p class="s2">${/* representative */ guia.producto.unidad}
-          </p>
-          ${/* Skip Predio parts + 1*/ `<p class="s2">.</p>`.repeat(8)}
-          ${
-            /* In case of Aserrable */
-            clasesDiametricasAsDetalles
-              .map(() => `<p class="s2">${guia.producto.unidad}</p>`)
-              .join('')
-          }
+      <table style="border-collapse: collapse; width: 650px" cellspacing="0">
+        <tr>
+          <td class="cellwithborders" colspan="6">
+            <p class="s1" style="text-align: center">DETALLES</p>
+          </td>
+        </tr>
+        <tr>
+          <td class="cellwithborders">
+            <p class="s1" style="text-align: center">Descripción</p>
           </td>
           <td class="cellwithborders">
-          <p class="s2">${/* representative */ productoAsDetalle.precio}</p>
-          ${/* Skip Predio parts + 1*/ `<p class="s2">.</p>`.repeat(8)}
-          ${
-            /* In case of Aserrable */
-            clasesDiametricasAsDetalles
-              .map(() => `<p class="s2">${guia.precio_unitario_guia}</p>`)
-              .join('')
-          }
-        </td>
-        <td class="cellwithborders">
-          <p class="s2">
-            ${guia.producto.tipo === 'Aserrable' ? 'AF' : 'P'}
-          </p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s2">${/* representative */ productoAsDetalle.montoItem}</p>
-          ${/* Skip Predio parts + 1*/ `<p class="s2">.</p>`.repeat(8)}
-          ${
-            /* In case of Aserrable */
-            clasesDiametricasAsDetalles
-              .map((clase) => `<p class="s2">${clase.montoItem}</p>`)
-              .join('')
-          }
-        </td>
-      </tr>
-    </table>
-    `;
+            <p class="s1" style="text-align: center">Cantidad</p>
+          </td>
+          <td class="cellwithborders">
+            <p class="s1" style="text-align: center">Unid</p>
+          </td>
+          <td class="cellwithborders">
+            <p class="s1">Precio Unitario</p>
+          </td>
+          <td class="cellwithborders">
+            <p class="s1">Ind</p>
+          </td>
+          <td class="cellwithborders">
+            <p class="s1" style="text-align: center">Total</p>
+          </td>
+        </tr>
+        <tr>
+          <td class="cellwithborders">
+            <p class="s2"> ${/* Producto */ productoAsDetalle.nombre}</p>
+            <p class="s2"><br></p>
+            <p class="s2">${
+  /* [Predio] 1st part */ predioAsDetalles[0].nombre
+}</p>
+            <p class="s2">${
+  /* [Predio] 2nd part */ predioAsDetalles[1].nombre
+}</p>
+            <p class="s2">${
+  /* [Predio] 3rd part */ predioAsDetalles[2].nombre
+}</p>
+            <p class="s2">${
+  /* [Predio] 4th part */ predioAsDetalles[3].nombre
+}</p>
+            <p class="s2">${
+  /* [Predio] 5th part */ predioAsDetalles[4].nombre
+}</p>
+            <p class="s2">${
+  /* [Predio] 6th part */ predioAsDetalles[5].nombre
+}</p>
+            ${
+              guia.producto.tipo === 'Aserrable' ?
+                '<p class="s2">Detalle trozos por clase diametrica:</p>' :
+                ''
+}
+            ${
+              guia.producto.tipo === 'Aserrable' ?
+                clasesDiametricasAsDetalles
+                    .map((clase) => `<p class="s2">${clase.nombre}</p>`)
+                    .join('') :
+                ''
+}
+          </td>
+          <td class="cellwithborders">
+            <p class="s2">${/* representative */ parseFloat(productoAsDetalle.cantidad?.toFixed(4) || '0').toLocaleString('es-CL')}</p>
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)} 
+            ${
+  /* In case of Aserrable */
+  clasesDiametricasAsDetalles
+      .map(
+          // (clase) => `<p class="s2">${clase.cantidad}</p>`
+          () => `<p class="s2"><br></p>`
+      )
+      .join('')
+}
+          </td>
+          <td class="cellwithborders">
+            <p class="s2">${/* representative */ guia.producto.unidad}
+            </p>
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)}
+            ${
+  /* In case of Aserrable */
+  clasesDiametricasAsDetalles
+      .map(
+          // () => `<p class="s2">${guia.producto.unidad}</p>`
+          () => `<p class="s2"><br></p>`
+      )
+      .join('')
+}
+            </td>
+            <td class="cellwithborders">
+            <p class="s2">${/* representative */ productoAsDetalle.precio?.toLocaleString('es-CL')}</p>
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)}
+            ${
+  /* In case of Aserrable */
+  clasesDiametricasAsDetalles
+      .map(
+          // () => `<p class="s2">${guia.precio_unitario_guia}</p>`
+          () => `<p class="s2"><br></p>`
+      )
+      .join('')
+}
+          </td>
+          <td class="cellwithborders">
+            <p class="s2">
+              ${guia.producto.tipo === 'Aserrable' ? 'AF' : 'P'}
+            </p>
+          </td>
+          <td class="cellwithborders">
+            <p class="s2">${/* representative */ productoAsDetalle.montoItem?.toLocaleString(
+      'es-CL'
+  )}</p>
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)}
+            ${
+  /* In case of Aserrable */
+  clasesDiametricasAsDetalles
+      .map(
+          // (clase) => `<p class="s2">${clase.montoItem}</p>`
+          () => `<p class="s2"><br></p>`
+      )
+      .join('')
+}
+          </td>
+        </tr>
+      </table>
+      `;
 
   const Totales = {
     MontoNeto: guia.monto_total_guia,

@@ -122,26 +122,101 @@ export const initialStatesProducto = {
     unidad: '',
   } as Producto,
   clases_diametricas: [
-    {
-      clase: '14',
-      cantidad: 0,
-      volumen: 0,
-    },
-    {
-      clase: '16',
-      cantidad: 0,
-      volumen: 0,
-    },
-    {
-      clase: '18',
-      cantidad: 0,
-      volumen: 0,
-    },
-    {
-      clase: '20',
-      cantidad: 0,
-      volumen: 0,
-    },
+      {
+        clase: "14",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "16",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "18",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "20",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "22",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "24",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "26",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "28",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "30",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "32",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "34",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "36",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "38",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "40",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "42",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "44",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "46",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "48",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
+      {
+        clase: "50",
+        cantidad_emitida: 0,
+        volumen_emitido: 0
+      },
   ],
   bancos_pulpable: [
     { altura1: 0, altura2: 0, ancho: 0 },

@@ -14,9 +14,10 @@ export interface TransporteGuia extends Transporte {
   precio_unitario_transporte?: number;
 }
 
-interface ProductoGuia extends Producto {
-  precio_unitario_compra?: number;
-  precio_unitario_venta?: number;
+export interface ProductoGuia extends Producto {
+  precio_unitario_compra_mr?: number;
+  precio_unitario_venta_mr?: number;
+  clases_diametricas?: ClaseDiametrica[];
 }
 
 export interface GuiaDespachoFirestore {
@@ -27,14 +28,13 @@ export interface GuiaDespachoFirestore {
   transporte: TransporteGuia;
   proveedor: Proveedor;
   producto: ProductoGuia;
-  volumen_total: number;
+  volumen_total_emitido: number;
   precio_unitario_guia: number;
   monto_total_guia: number;
   contrato_venta_id: string;
   contrato_compra_id: string;
   estado: string;
   folio_guia_proveedor?: number;
-  clases_diametricas?: ClaseDiametrica[];
   servicios?: Servicios;
   // We are not including valores de contrato here because they are not necessary for the guia
   // precio_unitario_venta: number;
