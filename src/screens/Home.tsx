@@ -33,6 +33,7 @@ export default function Home(props: any) {
   const [modalVisible, setModalVisible] = useState(false);
 
   // console.log(guiasSummary);
+  console.log("ENTRAMOS A HOME");
 
   useEffect(() => {
     handleRefresh();

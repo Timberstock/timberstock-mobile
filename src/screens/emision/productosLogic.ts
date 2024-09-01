@@ -284,10 +284,6 @@ export const handleCreateGuiaLogic = async (
           console.log('productoContratoVenta', productoContratoVenta);
 
       if (producto.tipo === 'Aserrable') {
-        // newGuia.producto.clases_diametricas = clasesDiametricas;
-        // for (const claseDiametrica of clasesDiametricas) {
-        //   newGuia.volumen_total_emitido += claseDiametrica.volumen;
-        // }
         newGuia.producto.clases_diametricas = clasesDiametricas.map(
           (claseDiametrica) => {
             newGuia.volumen_total_emitido += claseDiametrica.volumen_emitido || 0;
@@ -301,10 +297,6 @@ export const handleCreateGuiaLogic = async (
             const precioUnitarioVentaClase = productoContratoVenta?.clases_diametricas?.find(
               (clase) => clase.clase === claseToUse
             )?.precio_unitario_venta_clase || 0;
-
-            // console.log('claseDiametrica', claseDiametrica);
-            // console.log('precioUnitarioCompraClase', precioUnitarioCompraClase);
-            // console.log('precioUnitarioVentaClase', precioUnitarioVentaClase);
 
             return {
               ...claseDiametrica,
