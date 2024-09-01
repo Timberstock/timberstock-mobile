@@ -226,29 +226,31 @@ export const handleCreateGuiaLogic = async (
 
       // Filter contratoCompra and get producto
       const contratoCompra = contratosCompra.find(
-        (contrato) =>
-          contrato.clientes.some((cliente) => 
-            cliente.rut === guia.cliente.rut &&
-            cliente.destinos_contrato.some((destino) => 
-              destino.nombre === guia.destino_contrato.nombre &&
-              destino.productos.some((producto) => 
-                producto.codigo === newGuia.producto.codigo
-              ))));
-              console.log('contratoCompra', contratoCompra);
+      (contrato) =>
+        contrato.proveedor.rut === guia.proveedor.rut &&
+        contrato.faena.rol === guia.faena.rol &&
+        contrato.clientes.some((cliente) => 
+          cliente.rut === guia.cliente.rut &&
+          cliente.destinos_contrato.some((destino) => 
+            destino.nombre === guia.destino_contrato.nombre &&
+            destino.productos.some((producto) => 
+              producto.codigo === newGuia.producto.codigo
+            ))));
+            console.log('contratoCompra', contratoCompra);
               
-              // Filter contratoVenta
-              const contratoVenta = contratosVenta.find(
-                (contrato) =>
-                  contrato.cliente.rut === guia.cliente.rut &&
-                contrato.cliente.destinos_contrato.some((destino) =>
-                  destino.nombre === guia.destino_contrato.nombre &&
-                destino.faenas.some((faena) => 
-                  faena.rol === guia.faena.rol && 
-                faena.productos_destino_contrato.some(
-                  (producto) => (producto.codigo === newGuia.producto.codigo)
-                ))
-              )
-            );
+      // Filter contratoVenta
+      const contratoVenta = contratosVenta.find(
+        (contrato) =>
+          contrato.cliente.rut === guia.cliente.rut &&
+        contrato.cliente.destinos_contrato.some((destino) =>
+          destino.nombre === guia.destino_contrato.nombre &&
+        destino.faenas.some((faena) => 
+          faena.rol === guia.faena.rol && 
+        faena.productos_destino_contrato.some(
+          (producto) => (producto.codigo === newGuia.producto.codigo)
+        ))
+      )
+    );
 
             console.log('contratoVenta', contratoVenta);
             
