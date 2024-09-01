@@ -322,7 +322,9 @@ export const handleCreateGuiaLogic = async (
 
       const guiaDate = await createGuiaDoc(user.empresa_id, newGuia); // Not sure if this is actually waiting for the function to finish
 
-      const CAF = user.cafs[Math.floor((guia.identificacion.folio - 1) / 5)];
+      const CAF_step = 50;
+
+      const CAF = user.cafs[Math.floor((guia.identificacion.folio - 1) / CAF_step)];
 
       // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
       await generatePDF(newGuia, guiaDate as string, CAF);
@@ -381,6 +383,7 @@ export const generatePDF = async (
     console.log('PDF file generated:', permanentUri);
   } catch (error) {
     console.error('Error generating PDF:', error);
+    Alert.alert('Error', 'Error al crear PDF');
   }
 };
 
