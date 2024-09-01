@@ -277,7 +277,7 @@ export default function CreateGuia(props: any) {
       <View style={styles.body}>
         <ScrollView style={styles.scrollView}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}> Identificación Guia </Text>
+            <Text style={styles.sectionTitle}> Identificación Guía </Text>
             <View style={styles.row}>
               <View style={styles.container}>
                 <Select
