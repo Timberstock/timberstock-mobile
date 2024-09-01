@@ -10,9 +10,22 @@ import { ClaseDiametrica } from '../screens/emision/productos';
 import { Servicios } from '../contratos/contratoCompra';
 
 // Desglose de precios tiene que ser mas sofisticado, especialmente para cubrir servicios, transporte, etc.
-export interface TransporteGuia extends Transporte {
-  precio_unitario_transporte?: number;
+export interface TransporteGuia extends Omit<Transporte, 'empresa'> {
+  // Fix interfaces matching in both
+  empresa: {
+    rut: string;
+    razon_social: string;
+    precio_unitario_transporte: number;
+  };
 }
+
+// export interface TransporteGuia {
+//   empresa: TransporteContratoCompra;
+//   direccion_destino: string;
+//   chofer: Chofer;
+//   camion: string;
+//   proforma_compra_id?: string;
+// }
 
 export interface ProductoGuia extends Producto {
   precio_unitario_compra_mr?: number;

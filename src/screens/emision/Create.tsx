@@ -327,7 +327,7 @@ export default function CreateGuia(props: any) {
             </View>
           </View>
           <View style={{ ...styles.section }}>
-            <Text style={styles.sectionTitle}> Proveedor (Interno)</Text>
+            <Text style={styles.sectionTitle}> Proveedor</Text>
             <Select
               styles={selectStyles}
               placeholderText="Proveedor"

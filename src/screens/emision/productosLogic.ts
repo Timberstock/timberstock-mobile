@@ -204,6 +204,7 @@ export const handleCreateGuiaLogic = async (
           empresa: {
             rut: guia.transporte.rut,
             razon_social: guia.transporte.razon_social,
+            precio_unitario_transporte: guia.transporte.precio_unitario_transporte || 0,
           },
           direccion_destino: guia.destino_contrato.nombre,
           chofer: {

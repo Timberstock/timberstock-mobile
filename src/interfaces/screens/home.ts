@@ -5,6 +5,7 @@ export interface GuiaDespachoSummaryProps {
   estado: string;
   monto_total_guia: number;
   receptor: Receptor;
+  volumen_emitido: number;
   fecha: string;
   url: string;
 }

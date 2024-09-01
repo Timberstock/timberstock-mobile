@@ -105,10 +105,11 @@ export default function Home(props: any) {
     };
     return (
       <TouchableOpacity style={styles.guia}>
+        <Text> Folio: {guia.folio}</Text>
         <Text> Fecha: {guia.fecha}</Text>
         <Text> Estado: {guia.estado}</Text>
-        <Text> Folio: {guia.folio}</Text>
         <Text> Receptor: {guia.receptor.razon_social}</Text>
+        {/* Agregar volumen */}
         <Text> Monto: {guia.monto_total_guia}</Text>
         <Icon
           name="external-link"
