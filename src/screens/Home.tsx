@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   guia: {
-    backgroundColor: 'grey',
+    backgroundColor: '#b1ab2f',
     borderRadius: 12,
     padding: '2.5%',
     marginHorizontal: '2.5%',
