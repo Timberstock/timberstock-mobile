@@ -400,6 +400,11 @@ const parseProveedoresFromContratosCompra = (
       label: proveedor.razon_social,
     });
   }
+  // Order proveedores by alphabetical order of razon_social
+  proveedoresOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return proveedoresOptions;
 };
 
@@ -424,10 +429,14 @@ const parseFaenasFromContratosCompra = (
       seenValues.add(value);
       faenasOptions.push({
         value: faena.rol,
-        label: `${faena.comuna} | ${faena.nombre}`,
+        label: `${faena.nombre} | ${faena.comuna}`,
       });
     }
   }
+  // Order faenasOptions by alphabetical order of label
+  faenasOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
   return faenasOptions;
 };
 
@@ -460,6 +469,12 @@ const parseClientesFromContratosCompra = (
       clienteObject: cliente,
     });
   }
+
+  // Order clienteOptions by alphabetical order of label
+  clienteOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return clienteOptions;
 };
 
@@ -474,6 +489,12 @@ const parseCarguiosFromContratoCompra = (
       carguioObject: carguio,
     });
   }
+
+  // Order carguioOptions by alphabetical order of label
+  carguioOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return carguioOptions;
 };
 const parseCosechasFromContratoCompra = (
@@ -487,6 +508,12 @@ const parseCosechasFromContratoCompra = (
       cosechaObject: cosecha,
     });
   }
+
+  // Order cosechaOptions by alphabetical order of label
+  cosechaOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return cosechaOptions;
 };
 
@@ -503,6 +530,12 @@ const parseDestinosContratoFromCliente = (
       destinoContratoObject: destino,
     });
   }
+
+  // Order destinosOptions by alphabetical order of label
+  destinosOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return destinosOptions;
 };
 
@@ -517,6 +550,12 @@ const parseTransportesFromDestinoContrato = (
       transporteObject: transporte,
     });
   }
+
+  // Order transportesOptions by alphabetical order of label
+  transportesOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return transportesOptions;
 };
 
@@ -531,6 +570,12 @@ const parseChoferesFromTransporte = (
       choferObject: chofer,
     });
   }
+
+  // Order choferesOptions by alphabetical order of label
+  choferesOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return choferesOptions;
 };
 
@@ -544,6 +589,12 @@ const parseCamionesFromTransporte = (
       label: camion.patente,
     });
   }
+
+  // Order camionesOptions by alphabetical order of label
+  camionesOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+  );
+
   return camionesOptions;
 };
 

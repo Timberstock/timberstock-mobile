@@ -323,6 +323,9 @@ export const handleCreateGuiaLogic = async (
         precioUnitarioGuia * newGuia.volumen_total_emitido
       );
 
+      // HARDCODED HOTFIX TO TRY TO GET GIRO FROM CLIENTE IN CONTRATO VENTA
+      newGuia.receptor.giro = contratoVenta?.cliente.giro || '';
+
       const guiaDate = await createGuiaDoc(user.empresa_id, newGuia); // Not sure if this is actually waiting for the function to finish
 
       const CAF_step = 50;
@@ -442,6 +445,26 @@ export const filterProductosWithContratoVenta = (
       (destino) => destino.nombre === guia.destino_contrato.nombre
     )?.faenas.find((faena) => faena.rol === guia.faena.rol)
     ?.productos_destino_contrato.map((producto) => producto.codigo) || [];
+
+  // const faenaContratoVenta  = contratosVenta
+  //   .find((contrato) => contrato.cliente.rut === guia.cliente.rut)
+  //   ?.cliente.destinos_contrato.find(
+  //     (destino) => destino.nombre === guia.destino_contrato.nombre
+  //   )?.faenas.find((faena) => faena.rol === guia.faena.rol)
+
+  // const destinoContratoVenta = contratosVenta
+  //   .find((contrato) => contrato.cliente.rut === guia.cliente.rut)
+  //   ?.cliente.destinos_contrato.find(
+  //     (destino) => destino.nombre === guia.destino_contrato.nombre
+  //   );
+
+  // const clienteContratoVenta = contratosVenta
+  //   .find((contrato) => contrato.cliente.rut === guia.cliente.rut)
+  //   ?.cliente;
+
+  //   console.log(clienteContratoVenta);
+
+  // return []
 
   return productosPosibles.filter((producto) => productosConContratoVenta.includes(producto.codigo));
 }

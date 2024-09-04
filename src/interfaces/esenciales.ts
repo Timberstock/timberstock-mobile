@@ -30,7 +30,7 @@ export interface Cliente {
   comuna: string;
   direccion: string;
   destinos: string[];
-  giro?: string;
+  giro: string;
 }
 
 export interface Proveedor {

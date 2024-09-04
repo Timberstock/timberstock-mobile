@@ -52,12 +52,13 @@ import {
   folioProveedorChangeLogic,
 } from './createLogic';
 import OverlayLoading from '@/components/OverlayLoading';
+import { filterProductosWithContratoVenta } from './productosLogic';
 
 export default function CreateGuia(props: any) {
   const { navigation } = props;
   const { empresa } = useContext(AppContext);
   const { user } = useContext(UserContext);
-  const { contratosCompra } = useContext(AppContext);
+  const { contratosCompra, contratosVenta } = useContext(AppContext);
 
   const [guia, setGuia] = useState<GuiaDespacho>(initialStatesCreate.guia);
   // Folios options is apart from the rest since it comes from the user, not contratos
@@ -109,6 +110,13 @@ export default function CreateGuia(props: any) {
       alert('Debes llenar todos los campos');
       return;
     }
+    // Get productos from guia and ContratoCompra
+    const productosContratoVenta = filterProductosWithContratoVenta(contratosVenta, guia);
+    if (productosContratoVenta.length === 0) {
+      alert('No hay productos asociados a esta combinación');
+      return;
+    }
+
     if (!certChecked) {
       guia.faena.certificado = 'No Aplica';
     }

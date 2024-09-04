@@ -2,7 +2,7 @@
   "expo": {
     "name": "TimberStock",
     "slug": "timberstock-mobile-app",
-    "version": "0.0.14",
+    "version": "0.0.15",
     "orientation": "portrait",
     "icon": "./assets/dallelogo.png",
     "userInterfaceStyle": "light",
@@ -15,15 +15,17 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/77c3e023-bb35-4869-91e8-aef0a6820e4c"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "buildNumber": "14",
+      "buildNumber": "15",
       "googleServicesFile": "./firebase_services_files/GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.atc.timberstockapp"
     },
     "android": {
-      "versionCode": 14,
+      "versionCode": 15,
       "googleServicesFile": "./firebase_services_files/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/dallelogo.png",
@@ -43,6 +45,9 @@
         {
           "ios": {
             "useFrameworks": "static"
+          },
+          "android": {
+            "targetSdkVersion": 34
           }
         }
       ]
