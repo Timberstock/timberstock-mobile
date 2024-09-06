@@ -1,20 +1,20 @@
-import React from 'react';
+import React from "react";
 import {
   StyleSheet,
   View,
   Text,
   TextInput,
   TouchableOpacity,
-} from 'react-native';
-import colors from '@/resources/Colors';
-import { ClaseDiametrica } from '@/interfaces/screens/emision/productos';
+} from "react-native";
+import colors from "@/resources/Colors";
+import { ClaseDiametricaGuia } from "@/interfaces/firestore/guia";
 
 export default function Aserrable({
   clasesDiametricas,
   updateClaseDiametricaValue,
   increaseNumberOfClasesDiametricas,
 }: {
-  clasesDiametricas: ClaseDiametrica[];
+  clasesDiametricas: ClaseDiametricaGuia[];
   updateClaseDiametricaValue: (clase: string, cantidad: number) => void;
   increaseNumberOfClasesDiametricas: () => void;
 }) {
@@ -82,32 +82,32 @@ const ClaseDiametricaRow = ({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
+    alignItems: "center",
+    justifyContent: "space-evenly",
     paddingBottom: 5,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
   },
   input: {
     borderWidth: 2,
     height: 35,
     backgroundColor: colors.white,
     padding: 7,
-    borderColor: '#cccccc',
+    borderColor: "#cccccc",
     borderRadius: 13,
-    alignSelf: 'center',
-    width: '30%',
-    textAlign: 'center',
+    alignSelf: "center",
+    width: "30%",
+    textAlign: "center",
     marginVertical: 7,
   },
   text: {
     fontSize: 14,
-    fontWeight: 'normal',
-    textAlign: 'left',
+    fontWeight: "normal",
+    textAlign: "left",
     margin: 5,
   },
   button: {
@@ -115,12 +115,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
     marginHorizontal: 10,
-    alignItems: 'center',
+    alignItems: "center",
     width: 30,
     claseDiametrica: {
       marginTop: 15,
-      width: '50%',
-      justifySelf: 'center',
+      width: "50%",
+      justifySelf: "center",
     },
   },
   buttonText: {

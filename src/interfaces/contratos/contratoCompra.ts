@@ -1,10 +1,15 @@
-import Timestamp from '@react-native-firebase/firestore';
-import { Cliente, Proveedor, Producto, Faena } from '@/interfaces/esenciales';
-import { Carguio, Cosecha, Otro, Transporte } from '@/interfaces/servicios';
-import { ClaseDiametrica } from '../screens/emision/productos';
+import Timestamp from "@react-native-firebase/firestore";
+import {
+  Cliente,
+  Proveedor,
+  Producto,
+  Faena,
+  Destino,
+} from "@/interfaces/esenciales";
+import { Carguio, Cosecha, Otro, Transporte } from "@/interfaces/servicios";
+import { ClaseDiametrica } from "../screens/emision/productos";
 
 export interface ContratoCompra {
-  firestore_id: string;
   clientes: ClienteContratoCompra[]; // All of the "potential" clientes
   proveedor: Proveedor;
   faena: Faena;
@@ -12,26 +17,30 @@ export interface ContratoCompra {
   fecha_caducidad: typeof Timestamp | Date;
   servicios: Servicios;
   vigente: boolean;
+  firestoreID: string;
   id_contrato_anterior?: string;
 }
 export interface ClienteContratoCompra extends Cliente {
   destinos_contrato: DestinoContratoCompra[];
 }
 
-export interface DestinoContratoCompra {
-  nombre: string;
+export interface DestinoContratoCompra extends Destino {
   transportes: TransporteContratoCompra[];
   productos: ProductoContratoCompra[];
-}
-
-export interface ProductoContratoCompra extends Producto {
-  precio_unitario_compra_mr?: number;
-  clases_diametricas?: ClaseDiametrica[];
 }
 
 export interface TransporteContratoCompra extends Transporte {
   // Might have problems with this Transporte and the one in web app
   precio_unitario_transporte?: number; // Optional in case of Retail, where Transporte is not paid as a Servicio
+}
+
+export interface ClaseDiametricaContratoCompra extends ClaseDiametrica {
+  precio_unitario_compra_clase: number;
+}
+
+export interface ProductoContratoCompra extends Producto {
+  precio_unitario_compra_mr?: number;
+  clases_diametricas?: ClaseDiametricaContratoCompra[];
 }
 
 export interface CosechaContratoCompra {

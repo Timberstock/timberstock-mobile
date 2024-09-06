@@ -1,4 +1,4 @@
-import { Proveedor, Producto, GeoPoint } from '@/interfaces/esenciales';
+import { Proveedor, Producto, GeoPoint } from "@/interfaces/esenciales";
 
 // 2nd Level
 export interface Predio {
@@ -6,8 +6,8 @@ export interface Predio {
   nombre: string;
   comuna: string;
   georreferencia: GeoPoint;
-  certificado: string;
   plan_de_manejo: string;
+  certificado: string;
 }
 
 // 3rd Level

@@ -1,29 +1,34 @@
-import { IOption } from '@/interfaces/screens/screens';
+import { IOption } from "@/interfaces/screens/screens";
 import {
   GuiaDespachoOptions,
-  GuiaDespacho,
   IOptionDestinoContrato,
   IOptionClienteContratoCompra,
   IOptionTransporte,
   IOptionChofer,
   IOptionCarguio,
   IOptionCosecha,
-} from '@/interfaces/screens/emision/create';
-import { initialStatesCreate } from '@/resources/initialStates';
+  IOptionCamion,
+} from "@/interfaces/screens/emision/create";
+import {
+  initialStateGuia,
+  initialStatesOptionsCreate,
+} from "@/resources/initialStates";
 import {
   ClienteContratoCompra,
   ContratoCompra,
   DestinoContratoCompra,
   TransporteContratoCompra,
-} from '@/interfaces/contratos/contratoCompra';
-import { Faena, Proveedor } from '@/interfaces/esenciales';
+} from "@/interfaces/contratos/contratoCompra";
+import { Faena, Proveedor } from "@/interfaces/esenciales";
+import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
+import { Predio } from "@/interfaces/sii/detalles";
 
 export function getInitialOptions(
-  contratosCompra: ContratoCompra[]
+  contratosCompra: ContratoCompra[],
 ): GuiaDespachoOptions {
   return {
-    tipoDespacho: initialStatesCreate.options.tipoDespacho,
-    tipoTraslado: initialStatesCreate.options.tipoTraslado,
+    tipoDespacho: initialStatesOptionsCreate.tipoDespacho,
+    tipoTraslado: initialStatesOptionsCreate.tipoTraslado,
     proveedores: parseProveedoresFromContratosCompra(contratosCompra),
     faenas: [],
     planesDeManejo: [],
@@ -34,10 +39,11 @@ export function getInitialOptions(
     empresas_transporte: [],
     choferes: [],
     camiones: [],
+    carros: [],
   };
 }
 
-export function isGuiaValid(guia: GuiaDespacho): boolean {
+export function isGuiaValid(guia: GuiaDespachoFirestore): boolean {
   if (
     !(
       guia.identificacion.folio &&
@@ -45,16 +51,17 @@ export function isGuiaValid(guia: GuiaDespacho): boolean {
       guia.identificacion.tipo_traslado
     ) ||
     !(guia.proveedor.rut && guia.proveedor.razon_social) ||
-    !(guia.faena.rol && guia.faena.nombre) ||
+    !(guia.predio_origen.rol && guia.predio_origen.nombre) ||
     !(
-      guia.cliente.rut &&
-      guia.cliente.direccion &&
-      guia.cliente.razon_social
+      guia.receptor.rut &&
+      guia.receptor.direccion &&
+      guia.receptor.razon_social
     ) ||
-    !(guia.destino_contrato.nombre && guia.destino_contrato.productos) ||
-    !(guia.transporte.rut && guia.transporte.razon_social) ||
-    !(guia.chofer.nombre && guia.chofer.rut) ||
-    !guia.camion
+    !guia.destino.nombre ||
+    !(guia.transporte.empresa.rut && guia.transporte.empresa.razon_social) ||
+    !(guia.transporte.chofer.nombre && guia.transporte.chofer.rut) ||
+    !guia.transporte.camion.patente ||
+    !guia.transporte.carro
   ) {
     return false;
   }
@@ -63,33 +70,33 @@ export function isGuiaValid(guia: GuiaDespacho): boolean {
 
 export function selectProveedorLogic(
   option: IOption | null,
-  guia: GuiaDespacho,
-  contratosCompra: ContratoCompra[]
+  guia: GuiaDespachoFirestore,
+  contratosCompra: ContratoCompra[],
 ) {
   // Select the proveedorOption from contratosCompra
   const selectedProveedor = contratosCompra.find(
-    (contrato) => contrato.proveedor.rut === option?.value
+    (contrato) => contrato.proveedor.rut === option?.value,
   )?.proveedor;
 
   // Construct new Guia keeping upper fields
   const newGuia = {
-    ...initialStatesCreate.guia,
+    ...initialStateGuia,
     // previous identificacion
     identificacion: guia.identificacion,
     folio_guia_proveedor: guia.folio_guia_proveedor,
-    proveedor: selectedProveedor || initialStatesCreate.guia.proveedor,
+    proveedor: selectedProveedor || initialStateGuia.proveedor,
   };
 
   // Reconstruct options keeping upper ones
   const newOptions: GuiaDespachoOptions = {
-    ...initialStatesCreate.options,
+    ...initialStatesOptionsCreate,
     proveedores: parseProveedoresFromContratosCompra(contratosCompra),
   };
   if (selectedProveedor) {
     // options for faenas
     newOptions.faenas = parseFaenasFromContratosCompra(
       contratosCompra,
-      selectedProveedor
+      selectedProveedor,
     );
   }
 
@@ -101,31 +108,40 @@ export function selectProveedorLogic(
 
 export function selectFaenaLogic(
   option: IOption | null,
-  guia: GuiaDespacho,
-  contratosCompra: ContratoCompra[]
+  guia: GuiaDespachoFirestore,
+  contratosCompra: ContratoCompra[],
 ): {
-  newGuia: GuiaDespacho;
+  newGuia: GuiaDespachoFirestore;
   newOptions: GuiaDespachoOptions;
 } {
   // Look for predio option in contratosCompra with the selected proveedor
   const selectedFaena = contratosCompra.find(
     (contrato) =>
       contrato.faena.rol === option?.value &&
-      contrato.proveedor.rut === guia.proveedor.rut
+      contrato.proveedor.rut === guia.proveedor.rut,
   )?.faena;
 
   // Construct new Guia with the selected predio, keeping upper ones
   const newGuia = {
-    ...initialStatesCreate.guia,
+    ...initialStateGuia,
     identificacion: guia.identificacion,
     folio_guia_proveedor: guia.folio_guia_proveedor,
     proveedor: guia.proveedor,
-    faena: selectedFaena || initialStatesCreate.guia.faena,
+    predio_origen: selectedFaena
+      ? {
+          rol: selectedFaena.rol,
+          nombre: selectedFaena.nombre,
+          comuna: selectedFaena.comuna,
+          georreferencia: selectedFaena.georreferencia,
+          certificado: selectedFaena.certificado,
+          plan_de_manejo: selectedFaena.plan_de_manejo,
+        }
+      : initialStateGuia.predio_origen,
   };
 
   // Reconstruct options keeping upper ones
   const newOptions: GuiaDespachoOptions = {
-    ...initialStatesCreate.options,
+    ...initialStatesOptionsCreate,
     proveedores: parseProveedoresFromContratosCompra(contratosCompra),
     faenas: parseFaenasFromContratosCompra(contratosCompra, guia.proveedor),
   };
@@ -134,7 +150,7 @@ export function selectFaenaLogic(
     newOptions.clientes = parseClientesFromContratosCompra(
       contratosCompra,
       guia.proveedor,
-      selectedFaena
+      selectedFaena,
     );
   }
 
@@ -146,43 +162,51 @@ export function selectFaenaLogic(
 
 export function selectClienteLogic(
   option: IOptionClienteContratoCompra | null,
-  guia: GuiaDespacho,
-  contratosCompra: ContratoCompra[]
+  guia: GuiaDespachoFirestore,
+  contratosCompra: ContratoCompra[],
 ): {
-  newGuia: GuiaDespacho;
+  newGuia: GuiaDespachoFirestore;
   newOptions: GuiaDespachoOptions;
 } {
   // Look for the cliente in the selected proveedor and faena from the contratoCompra left
   const contratoCompraCliente = contratosCompra.find(
     (contrato) =>
       contrato.clientes.some((cliente) => cliente.rut === option?.value) &&
-      contrato.faena.rol === guia.faena.rol &&
-      contrato.proveedor.rut === guia.proveedor.rut
+      contrato.faena.rol === guia.predio_origen.rol &&
+      contrato.proveedor.rut === guia.proveedor.rut,
   );
   const selectedCliente = contratoCompraCliente?.clientes.find(
-    (cliente) => cliente.rut === option?.value
+    (cliente) => cliente.rut === option?.value,
   );
 
   // Construct new Guia with the selected cliente, keeping previous fields
   const newGuia = {
-    ...initialStatesCreate.guia,
+    ...initialStateGuia,
     identificacion: guia.identificacion,
     proveedor: guia.proveedor,
     folio_guia_proveedor: guia.folio_guia_proveedor,
-    faena: guia.faena,
-    cliente: selectedCliente || initialStatesCreate.guia.cliente,
-    contrato_compra_id: contratoCompraCliente?.firestore_id || '',
+    predio_origen: guia.predio_origen,
+    receptor: selectedCliente
+      ? {
+          rut: selectedCliente.rut,
+          razon_social: selectedCliente.razon_social,
+          comuna: selectedCliente.comuna,
+          direccion: selectedCliente.direccion,
+          giro: selectedCliente.giro,
+        }
+      : initialStateGuia.receptor,
+    contrato_compra_id: contratoCompraCliente?.firestoreID || "",
   };
 
   // Reconstruct options
   const newOptions: GuiaDespachoOptions = {
-    ...initialStatesCreate.options,
+    ...initialStatesOptionsCreate,
     proveedores: parseProveedoresFromContratosCompra(contratosCompra),
     faenas: parseFaenasFromContratosCompra(contratosCompra, guia.proveedor),
     clientes: parseClientesFromContratosCompra(
       contratosCompra,
       guia.proveedor,
-      guia.faena
+      guia.predio_origen,
     ),
   };
   if (selectedCliente) {
@@ -191,10 +215,10 @@ export function selectClienteLogic(
       parseDestinosContratoFromCliente(selectedCliente);
 
     newOptions.empresas_carguio = parseCarguiosFromContratoCompra(
-      contratoCompraCliente as ContratoCompra
+      contratoCompraCliente as ContratoCompra,
     );
     newOptions.empresas_cosecha = parseCosechasFromContratoCompra(
-      contratoCompraCliente as ContratoCompra
+      contratoCompraCliente as ContratoCompra,
     );
   }
 
@@ -207,9 +231,9 @@ export function selectClienteLogic(
 export function selectDestinoContratoLogic(
   option: IOptionDestinoContrato | null,
   options: GuiaDespachoOptions,
-  guia: GuiaDespacho
+  guia: GuiaDespachoFirestore,
 ): {
-  newGuia: GuiaDespacho;
+  newGuia: GuiaDespachoFirestore;
   newOptions: GuiaDespachoOptions;
 } {
   // Look for the destinoContratoObject in option
@@ -217,21 +241,27 @@ export function selectDestinoContratoLogic(
 
   // Construct new Guia with the selected destinoContrato, keeping upper
   const newGuia = {
-    ...initialStatesCreate.guia,
+    ...initialStateGuia,
     identificacion: guia.identificacion,
     proveedor: guia.proveedor,
     folio_guia_proveedor: guia.folio_guia_proveedor,
-    faena: guia.faena,
-    cliente: guia.cliente,
+    predio_origen: guia.predio_origen,
+    receptor: guia.receptor,
     servicios: guia.servicios,
     contrato_compra_id: guia.contrato_compra_id,
-    destino_contrato:
-      selectedDestinoContrato || initialStatesCreate.guia.destino_contrato,
+    destino: selectedDestinoContrato
+      ? {
+          nombre: selectedDestinoContrato.nombre,
+          rol: selectedDestinoContrato.rol,
+          comuna: selectedDestinoContrato.comuna,
+          georreferencia: selectedDestinoContrato.georreferencia,
+        }
+      : initialStateGuia.destino,
   };
 
   // Reconstruct options
   const newOptions: GuiaDespachoOptions = {
-    ...initialStatesCreate.options,
+    ...initialStatesOptionsCreate,
     proveedores: options.proveedores,
     faenas: options.faenas,
     clientes: options.clientes,
@@ -242,7 +272,7 @@ export function selectDestinoContratoLogic(
   if (selectedDestinoContrato) {
     // options for empresas_transporte
     newOptions.empresas_transporte = parseTransportesFromDestinoContrato(
-      selectedDestinoContrato
+      selectedDestinoContrato,
     );
   }
 
@@ -255,9 +285,9 @@ export function selectDestinoContratoLogic(
 export function selectTransporteLogic(
   option: IOptionTransporte | null,
   options: GuiaDespachoOptions,
-  guia: GuiaDespacho
+  guia: GuiaDespachoFirestore,
 ): {
-  newGuia: GuiaDespacho;
+  newGuia: GuiaDespachoFirestore;
   newOptions: GuiaDespachoOptions;
 } {
   // Get transporteObject from the selected option
@@ -265,21 +295,33 @@ export function selectTransporteLogic(
 
   // Construct new Guia with the selected transporte, with previous fields
   const newGuia = {
-    ...initialStatesCreate.guia,
+    ...initialStateGuia,
     identificacion: guia.identificacion,
     proveedor: guia.proveedor,
     folio_guia_proveedor: guia.folio_guia_proveedor,
-    faena: guia.faena,
-    cliente: guia.cliente,
+    predio_origen: guia.predio_origen,
+    receptor: guia.receptor,
     servicios: guia.servicios,
     contrato_compra_id: guia.contrato_compra_id,
-    destino_contrato: guia.destino_contrato,
-    transporte: selectedTransportista || initialStatesCreate.guia.transporte,
+    destino: guia.destino,
+    transporte: selectedTransportista
+      ? {
+          empresa: {
+            rut: selectedTransportista.rut,
+            razon_social: selectedTransportista.razon_social,
+          },
+          precio_unitario_transporte:
+            selectedTransportista.precio_unitario_transporte || 0,
+          chofer: initialStateGuia.transporte.chofer,
+          camion: initialStateGuia.transporte.camion,
+          carro: initialStateGuia.transporte.carro,
+        }
+      : initialStateGuia.transporte,
   };
 
   // Reconstruct options
   const newOptions: GuiaDespachoOptions = {
-    ...initialStatesCreate.options,
+    ...initialStatesOptionsCreate,
     proveedores: options.proveedores,
     faenas: options.faenas,
     clientes: options.clientes,
@@ -292,6 +334,7 @@ export function selectTransporteLogic(
     // options for choferes and camiones
     newOptions.choferes = parseChoferesFromTransporte(selectedTransportista);
     newOptions.camiones = parseCamionesFromTransporte(selectedTransportista);
+    newOptions.carros = parseCarrosFromTransporte(selectedTransportista);
   }
 
   return {
@@ -302,8 +345,8 @@ export function selectTransporteLogic(
 
 export function selectCarguioLogic(
   option: IOptionCarguio | null,
-  guia: GuiaDespacho
-): GuiaDespacho {
+  guia: GuiaDespachoFirestore,
+): GuiaDespachoFirestore {
   // get carguioObject from the selected option
   const selectedCarguio = option?.carguioObject;
 
@@ -311,8 +354,8 @@ export function selectCarguioLogic(
   const newGuia = {
     ...guia,
     servicios: {
+      ...guia.servicios,
       carguio: selectedCarguio,
-      cosecha: guia.servicios?.cosecha,
     },
   };
 
@@ -321,8 +364,8 @@ export function selectCarguioLogic(
 
 export function selectCosechaLogic(
   option: IOptionCosecha | null,
-  guia: GuiaDespacho
-): GuiaDespacho {
+  guia: GuiaDespachoFirestore,
+): GuiaDespachoFirestore {
   // get cosechaObject from the selected option
   const selectedCosecha = option?.cosechaObject;
 
@@ -330,7 +373,7 @@ export function selectCosechaLogic(
   const newGuia = {
     ...guia,
     servicios: {
-      carguio: guia.servicios?.carguio,
+      ...guia.servicios,
       cosecha: selectedCosecha,
     },
   };
@@ -340,15 +383,18 @@ export function selectCosechaLogic(
 
 export function selectChoferLogic(
   option: IOptionChofer | null,
-  guia: GuiaDespacho
-): GuiaDespacho {
+  guia: GuiaDespachoFirestore,
+): GuiaDespachoFirestore {
   // get choferobject
   const selectedChofer = option?.choferObject;
 
   // Construct new Guia with the selected chofer keeping upper
   const newGuia = {
     ...guia,
-    chofer: selectedChofer || initialStatesCreate.guia.chofer,
+    transporte: {
+      ...guia.transporte,
+      chofer: selectedChofer || initialStateGuia.transporte.chofer,
+    },
   };
 
   // 3. Return new guia
@@ -356,16 +402,35 @@ export function selectChoferLogic(
 }
 
 export function selectCamionLogic(
-  option: IOption | null,
-  guia: GuiaDespacho
-): GuiaDespacho {
+  option: IOptionCamion | null,
+  guia: GuiaDespachoFirestore,
+): GuiaDespachoFirestore {
   // get camion object
-  const selectedCamion = option?.value;
+  const selectedCamion = option?.camionObject;
 
   // Construct new Guia with the selected camion
   const newGuia = {
     ...guia,
-    camion: selectedCamion || initialStatesCreate.guia.camion,
+    transporte: {
+      ...guia.transporte,
+      camion: selectedCamion || initialStateGuia.transporte.camion,
+    },
+  };
+
+  return newGuia;
+}
+
+export function selectCarroLogic(
+  option: IOption | null,
+  guia: GuiaDespachoFirestore,
+): GuiaDespachoFirestore {
+  // Construct new Guia with the selected carro keeping upper
+  const newGuia = {
+    ...guia,
+    transporte: {
+      ...guia.transporte,
+      carro: option?.value || initialStateGuia.transporte.carro,
+    },
   };
 
   return newGuia;
@@ -383,7 +448,7 @@ export const parseFoliosOptions = (folios: number[]): IOption[] => {
 };
 
 const parseProveedoresFromContratosCompra = (
-  contratosCompra: ContratoCompra[]
+  contratosCompra: ContratoCompra[],
 ): IOption[] => {
   let proveedores: Proveedor[] = [];
   for (const contratoCompra of contratosCompra) {
@@ -402,7 +467,7 @@ const parseProveedoresFromContratosCompra = (
   }
   // Order proveedores by alphabetical order of razon_social
   proveedoresOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return proveedoresOptions;
@@ -410,10 +475,10 @@ const parseProveedoresFromContratosCompra = (
 
 const parseFaenasFromContratosCompra = (
   contratosCompra: ContratoCompra[],
-  proveedor: Proveedor
+  proveedor: Proveedor,
 ): IOption[] => {
   const contratosCompraFiltered = contratosCompra.filter(
-    (contrato) => contrato.proveedor.rut === proveedor.rut
+    (contrato) => contrato.proveedor.rut === proveedor.rut,
   );
   let faenas: Faena[] = [];
   for (const contratoCompra of contratosCompraFiltered) {
@@ -435,7 +500,7 @@ const parseFaenasFromContratosCompra = (
   }
   // Order faenasOptions by alphabetical order of label
   faenasOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
   return faenasOptions;
 };
@@ -447,12 +512,12 @@ const parseFaenasFromContratosCompra = (
 const parseClientesFromContratosCompra = (
   contratosCompra: ContratoCompra[],
   proveedor: Proveedor,
-  faena: Faena
+  predio_origen: Predio,
 ): IOptionClienteContratoCompra[] => {
   const contratosCompraFiltered = contratosCompra.filter(
     (contrato) =>
-      contrato.faena.rol === faena.rol &&
-      contrato.proveedor.rut === proveedor.rut
+      contrato.faena.rol === predio_origen.rol &&
+      contrato.proveedor.rut === proveedor.rut,
   );
 
   let clientes: ClienteContratoCompra[] = [];
@@ -472,14 +537,14 @@ const parseClientesFromContratosCompra = (
 
   // Order clienteOptions by alphabetical order of label
   clienteOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return clienteOptions;
 };
 
 const parseCarguiosFromContratoCompra = (
-  contratoCompra: ContratoCompra
+  contratoCompra: ContratoCompra,
 ): IOptionCarguio[] => {
   let carguioOptions = [];
   for (const carguio of contratoCompra?.servicios?.carguio || []) {
@@ -492,13 +557,13 @@ const parseCarguiosFromContratoCompra = (
 
   // Order carguioOptions by alphabetical order of label
   carguioOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return carguioOptions;
 };
 const parseCosechasFromContratoCompra = (
-  contratoCompra: ContratoCompra
+  contratoCompra: ContratoCompra,
 ): IOptionCosecha[] => {
   let cosechaOptions = [];
   for (const cosecha of contratoCompra?.servicios?.cosecha || []) {
@@ -511,14 +576,14 @@ const parseCosechasFromContratoCompra = (
 
   // Order cosechaOptions by alphabetical order of label
   cosechaOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return cosechaOptions;
 };
 
 const parseDestinosContratoFromCliente = (
-  cliente: ClienteContratoCompra
+  cliente: ClienteContratoCompra,
 ): IOptionDestinoContrato[] => {
   const destinos = cliente.destinos_contrato;
 
@@ -533,14 +598,14 @@ const parseDestinosContratoFromCliente = (
 
   // Order destinosOptions by alphabetical order of label
   destinosOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return destinosOptions;
 };
 
 const parseTransportesFromDestinoContrato = (
-  destino_contrato: DestinoContratoCompra
+  destino_contrato: DestinoContratoCompra,
 ): IOptionTransporte[] => {
   let transportesOptions = [];
   for (const transporte of destino_contrato.transportes) {
@@ -553,14 +618,14 @@ const parseTransportesFromDestinoContrato = (
 
   // Order transportesOptions by alphabetical order of label
   transportesOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return transportesOptions;
 };
 
 const parseChoferesFromTransporte = (
-  empresa_transporte: TransporteContratoCompra
+  empresa_transporte: TransporteContratoCompra,
 ): IOptionChofer[] => {
   let choferesOptions = [];
   for (const chofer of empresa_transporte.choferes) {
@@ -573,35 +638,55 @@ const parseChoferesFromTransporte = (
 
   // Order choferesOptions by alphabetical order of label
   choferesOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return choferesOptions;
 };
 
 const parseCamionesFromTransporte = (
-  empresa_transporte: TransporteContratoCompra
-): IOption[] => {
+  empresa_transporte: TransporteContratoCompra,
+): IOptionCamion[] => {
   let camionesOptions = [];
   for (const camion of empresa_transporte.camiones) {
     camionesOptions.push({
       value: camion.patente,
       label: camion.patente,
+      camionObject: camion,
     });
   }
 
   // Order camionesOptions by alphabetical order of label
   camionesOptions.sort((a, b) =>
-    a.label > b.label ? 1 : b.label > a.label ? -1 : 0
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
   );
 
   return camionesOptions;
 };
 
+const parseCarrosFromTransporte = (
+  empresa_transporte: TransporteContratoCompra,
+): IOption[] => {
+  let carrosOptions = [];
+  for (const carro of empresa_transporte.carros) {
+    carrosOptions.push({
+      value: carro,
+      label: carro,
+    });
+  }
+
+  // Order carrosOptions by alphabetical order of label
+  carrosOptions.sort((a, b) =>
+    a.label > b.label ? 1 : b.label > a.label ? -1 : 0,
+  );
+
+  return carrosOptions;
+};
+
 export const folioProveedorChangeLogic = (
   folio: string,
-  guia: GuiaDespacho
-): GuiaDespacho => {
+  guia: GuiaDespachoFirestore,
+): GuiaDespachoFirestore => {
   const newGuia = {
     ...guia,
     folio_guia_proveedor: parseInt(folio),

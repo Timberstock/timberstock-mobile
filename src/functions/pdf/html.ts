@@ -1,10 +1,10 @@
-import { DetallePDF } from '@/interfaces/sii/detalles';
-import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
+import { DetallePDF } from "@/interfaces/sii/detalles";
+import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
 
 export const createPDFHTMLString = async (
   guia: GuiaDespachoFirestore,
   guiaDate: string,
-  barcode: { uri: string; width: number; height: number }
+  barcode: { uri: string; width: number; height: number },
 ) => {
   const htmlHead = `
   <head>
@@ -129,7 +129,7 @@ export const createPDFHTMLString = async (
         <p class="s1">Fecha Emisión</p>
       </td>
       <td class="cellwithborders">
-        <p class="s2">${guiaDate.split('T')[0]}</p>
+        <p class="s2">${guiaDate.split("T")[0]}</p>
       </td>
     </tr>
     <tr>
@@ -187,7 +187,7 @@ export const createPDFHTMLString = async (
         <p class="s1">Patente</p>
       </td>
       <td class="cellwithborders">
-        <p class="s2">${guia.transporte.camion}</p>
+        <p class="s2">${guia.transporte.camion.patente}</p>
       </td>
       <td class="cellwithborders">
         <p class="s1">RUT Transportista</p>
@@ -196,14 +196,43 @@ export const createPDFHTMLString = async (
         <p class="s2">${guia.transporte.empresa.rut}</p>
       </td>
     </tr>
+  </table>
+  <p><br /></p>
+  <table style="border-collapse: collapse; width: 650px" cellspacing="0">
     <tr>
-      <td class="cellwithborders">
-        <p class="s1">Dirección</p>
-      </td>
-      <td class="cellwithborders" colspan="3">
-        <p class="s2">${guia.transporte.direccion_destino}</p>
+      <td class="cellwithborders" colspan="4">
+        <p class="s1" style="text-align: center">DATOS DEL DESTINO</p>
       </td>
     </tr>
+    <tr>
+      <td class="cellwithborders">
+        <p class="s1">Nombre Destino</p>
+      </td>
+      <td class="cellwithborders">
+        <p class="s2">${guia.destino.nombre}</p>
+      </td>
+      <td class="cellwithborders">
+        <p class="s1">Rol</p>
+      </td>
+      <td class="cellwithborders">
+        <p class="s2">${guia.destino.rol}</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="cellwithborders">
+        <p class="s1">Comuna</p>
+      </td>
+      <td class="cellwithborders">
+        <p class="s2">${guia.destino.comuna}</p>
+      </td>
+      <td class="cellwithborders">
+        <p class="s1">Georreferencia</p>
+      </td>
+      <td class="cellwithborders">
+        <p class="s2">(${guia.destino.georreferencia.latitude},${guia.destino.georreferencia.longitude})</p>
+      </td>
+    </tr>
+    <tr>
   </table>
   <p><br /></p>
 `;
@@ -215,32 +244,41 @@ export const createPDFHTMLString = async (
     montoItem: guia.monto_total_guia,
   };
 
+  const carroAsDetalle: DetallePDF = {
+    nombre: `${guia.transporte.carro}`,
+  };
+
   const predioAsDetalles: DetallePDF[] = [
     {
-      nombre: `Rol: ${guia.predio.rol}`,
+      nombre: `Rol: ${guia.predio_origen.rol}`,
     },
-    { nombre: `Nombre: ${guia.predio.nombre}` },
-    { nombre: `Comuna: ${guia.predio.comuna}` },
+    { nombre: `Nombre: ${guia.predio_origen.nombre}` },
+    { nombre: `Comuna: ${guia.predio_origen.comuna}` },
     {
-      nombre: `(${guia.predio.georreferencia.latitude},${guia.predio.georreferencia.longitude})`,
+      nombre: `(${guia.predio_origen.georreferencia.latitude},${guia.predio_origen.georreferencia.longitude})`,
     },
-    { nombre: `Plan de Manejo o Uso Suelo: ${guia.predio.plan_de_manejo}` },
-    { nombre: `${guia.predio.certificado}` },
+    {
+      nombre: `Plan de Manejo o Uso Suelo: ${guia.predio_origen.plan_de_manejo}`,
+    },
+    { nombre: `${guia.predio_origen.certificado}` },
   ];
 
   const clasesDiametricasAsDetalles: DetallePDF[] = [];
-  if (guia.producto.tipo === 'Aserrable' && guia.producto.clases_diametricas) {
+  if (guia.producto.tipo === "Aserrable" && guia.producto.clases_diametricas) {
     for (const claseDiametrica of guia.producto.clases_diametricas) {
-      if (claseDiametrica.cantidad_emitida && claseDiametrica.cantidad_emitida > 0) {
+      if (
+        claseDiametrica.cantidad_emitida &&
+        claseDiametrica.cantidad_emitida > 0
+      ) {
         clasesDiametricasAsDetalles.push({
-          nombre: `${claseDiametrica.clase}: ${claseDiametrica.cantidad_emitida} = ${parseFloat((claseDiametrica.volumen_emitido || 0).toFixed(4) || '0').toLocaleString('es-CL')}`,
+          nombre: `${claseDiametrica.clase}: ${claseDiametrica.cantidad_emitida} = ${parseFloat((claseDiametrica.volumen_emitido || 0).toFixed(4) || "0").toLocaleString("es-CL")}`,
           cantidad: claseDiametrica.volumen_emitido,
           // precio: guia.precio_unitario_guia,
           // montoItem: Math.floor(
           //   claseDiametrica.volumen * guia.precio_unitario_guia
           // ),
-      });
-      };
+        });
+      }
     }
   }
 
@@ -275,96 +313,97 @@ export const createPDFHTMLString = async (
           <td class="cellwithborders">
             <p class="s2"> ${/* Producto */ productoAsDetalle.nombre}</p>
             <p class="s2"><br></p>
+            <p class="s2">Patente carro: ${/* Carro */ carroAsDetalle.nombre}</p>
             <p class="s2">${
-  /* [Predio] 1st part */ predioAsDetalles[0].nombre
-}</p>
+              /* [Predio] 1st part */ predioAsDetalles[0].nombre
+            }</p>
             <p class="s2">${
-  /* [Predio] 2nd part */ predioAsDetalles[1].nombre
-}</p>
+              /* [Predio] 2st part */ predioAsDetalles[1].nombre
+            }</p>
             <p class="s2">${
-  /* [Predio] 3rd part */ predioAsDetalles[2].nombre
-}</p>
+              /* [Predio] 3rd part */ predioAsDetalles[2].nombre
+            }</p>
             <p class="s2">${
-  /* [Predio] 4th part */ predioAsDetalles[3].nombre
-}</p>
+              /* [Predio] 4th part */ predioAsDetalles[3].nombre
+            }</p>
             <p class="s2">${
-  /* [Predio] 5th part */ predioAsDetalles[4].nombre
-}</p>
+              /* [Predio] 5th part */ predioAsDetalles[4].nombre
+            }</p>
             <p class="s2">${
-  /* [Predio] 6th part */ predioAsDetalles[5].nombre
-}</p>
+              /* [Predio] 6th part */ predioAsDetalles[5].nombre
+            }</p>
             ${
-              guia.producto.tipo === 'Aserrable' ?
-                '<p class="s2">Detalle trozos por clase diametrica:</p>' :
-                ''
-}
+              guia.producto.tipo === "Aserrable"
+                ? '<p class="s2">Detalle Trozos por Diámetro:</p>'
+                : ""
+            }
             ${
-              guia.producto.tipo === 'Aserrable' ?
-                clasesDiametricasAsDetalles
+              guia.producto.tipo === "Aserrable"
+                ? clasesDiametricasAsDetalles
                     .map((clase) => `<p class="s2">${clase.nombre}</p>`)
-                    .join('') :
-                ''
-}
+                    .join("")
+                : ""
+            }
           </td>
           <td class="cellwithborders">
-            <p class="s2">${/* representative */ parseFloat(productoAsDetalle.cantidad?.toFixed(4) || '0').toLocaleString('es-CL')}</p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)} 
+            <p class="s2">${/* representative */ parseFloat(productoAsDetalle.cantidad?.toFixed(4) || "0").toLocaleString("es-CL")}</p>
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)} 
             ${
-  /* In case of Aserrable */
-  clasesDiametricasAsDetalles
-      .map(
-          // (clase) => `<p class="s2">${clase.cantidad}</p>`
-          () => `<p class="s2"><br></p>`
-      )
-      .join('')
-}
+              /* In case of Aserrable */
+              clasesDiametricasAsDetalles
+                .map(
+                  // (clase) => `<p class="s2">${clase.cantidad}</p>`
+                  () => `<p class="s2"><br></p>`,
+                )
+                .join("")
+            }
           </td>
           <td class="cellwithborders">
             <p class="s2">${/* representative */ guia.producto.unidad}
             </p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)}
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)}
             ${
-  /* In case of Aserrable */
-  clasesDiametricasAsDetalles
-      .map(
-          // () => `<p class="s2">${guia.producto.unidad}</p>`
-          () => `<p class="s2"><br></p>`
-      )
-      .join('')
-}
+              /* In case of Aserrable */
+              clasesDiametricasAsDetalles
+                .map(
+                  // () => `<p class="s2">${guia.producto.unidad}</p>`
+                  () => `<p class="s2"><br></p>`,
+                )
+                .join("")
+            }
             </td>
             <td class="cellwithborders">
-            <p class="s2">${/* representative */ productoAsDetalle.precio?.toLocaleString('es-CL')}</p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)}
+            <p class="s2">${/* representative */ productoAsDetalle.precio?.toLocaleString("es-CL")}</p>
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)}
             ${
-  /* In case of Aserrable */
-  clasesDiametricasAsDetalles
-      .map(
-          // () => `<p class="s2">${guia.precio_unitario_guia}</p>`
-          () => `<p class="s2"><br></p>`
-      )
-      .join('')
-}
+              /* In case of Aserrable */
+              clasesDiametricasAsDetalles
+                .map(
+                  // () => `<p class="s2">${guia.precio_unitario_guia}</p>`
+                  () => `<p class="s2"><br></p>`,
+                )
+                .join("")
+            }
           </td>
           <td class="cellwithborders">
             <p class="s2">
-              ${guia.producto.tipo === 'Aserrable' ? 'AF' : 'P'}
+              ${guia.producto.tipo === "Aserrable" ? "AF" : "P"}
             </p>
           </td>
           <td class="cellwithborders">
             <p class="s2">${/* representative */ productoAsDetalle.montoItem?.toLocaleString(
-      'es-CL'
-  )}</p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(8)}
+              "es-CL",
+            )}</p>
+            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)}
             ${
-  /* In case of Aserrable */
-  clasesDiametricasAsDetalles
-      .map(
-          // (clase) => `<p class="s2">${clase.montoItem}</p>`
-          () => `<p class="s2"><br></p>`
-      )
-      .join('')
-}
+              /* In case of Aserrable */
+              clasesDiametricasAsDetalles
+                .map(
+                  // (clase) => `<p class="s2">${clase.montoItem}</p>`
+                  () => `<p class="s2"><br></p>`,
+                )
+                .join("")
+            }
           </td>
         </tr>
       </table>

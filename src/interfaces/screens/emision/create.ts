@@ -1,14 +1,12 @@
-import { IOption } from '@/interfaces/screens/screens';
+import { IOption } from "@/interfaces/screens/screens";
 import {
   CarguioContratoCompra,
   ClienteContratoCompra,
   CosechaContratoCompra,
   DestinoContratoCompra,
   TransporteContratoCompra,
-} from '@/interfaces/contratos/contratoCompra';
-import { Chofer, Cosecha } from '@/interfaces/servicios';
-import { Identificacion } from '@/interfaces/sii/guia';
-import { Faena, Proveedor } from '@/interfaces/esenciales';
+} from "@/interfaces/contratos/contratoCompra";
+import { Camion, Chofer } from "@/interfaces/servicios";
 
 export interface IOptionCarguio extends IOption {
   carguioObject: CarguioContratoCompra;
@@ -24,6 +22,9 @@ export interface IOptionTransporte extends IOption {
 
 export interface IOptionChofer extends IOption {
   choferObject: Chofer;
+}
+export interface IOptionCamion extends IOption {
+  camionObject: Camion;
 }
 
 export interface IOptionDestinoContrato extends IOption {
@@ -46,25 +47,6 @@ export interface GuiaDespachoOptions {
   empresas_carguio: IOptionCarguio[];
   empresas_cosecha: IOptionCosecha[];
   choferes: IOptionChofer[];
-  camiones: IOption[];
-}
-
-export interface GuiaDespacho {
-  identificacion: Identificacion;
-  proveedor: Proveedor;
-  faena: Faena;
-  cliente: ClienteContratoCompra;
-  destino_contrato: DestinoContratoCompra;
-  transporte: TransporteContratoCompra;
-  chofer: Chofer;
-  camion: string; // patente
-  contrato_compra_id: string;
-  folio_guia_proveedor?: number;
-  servicios?: {
-    cosecha?: CosechaContratoCompra;
-    carguio?: CarguioContratoCompra;
-  };
-  // predio: Predio;
-  // receptor: Receptor;
-  // despacho: Transporte;
+  camiones: IOptionCamion[];
+  carros: IOption[];
 }

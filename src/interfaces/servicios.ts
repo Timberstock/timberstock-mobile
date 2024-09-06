@@ -1,7 +1,6 @@
 export interface Camion {
   marca: string;
   patente: string;
-  patente_carro?: string;
 }
 
 export interface Chofer {
@@ -14,6 +13,7 @@ export interface Transporte {
   rut: string;
   camiones: Camion[];
   choferes: Chofer[];
+  carros: string[];
 }
 
 export interface Cosecha {

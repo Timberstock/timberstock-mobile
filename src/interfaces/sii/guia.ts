@@ -1,4 +1,5 @@
-import { TransporteContratoCompra } from '../contratos/contratoCompra';
+import { TransporteContratoCompra } from "../contratos/contratoCompra";
+import { Camion } from "../servicios";
 
 // 2nd Level Interfaces
 export interface Chofer {
@@ -32,32 +33,30 @@ export interface Identificacion {
 }
 
 export interface Emisor {
-  actividad_economica: number[];
-  comuna: string;
   rut: string;
   razon_social: string;
-  giro: string;
   direccion: string;
+  comuna: string;
+  giro: string;
+  actividad_economica: number[];
 }
 
 export interface Receptor {
-  razon_social: string;
   rut: string;
-  giro: string;
-  direccion: string;
+  razon_social: string;
   comuna: string;
+  direccion: string;
+  giro: string;
 }
 
 export interface Transporte {
-  chofer: Chofer;
-  camion: string;
   empresa: {
     rut: string;
     razon_social: string;
   };
-  direccion_destino: string;
-  comuna_destino?: string;
-  ciudad_destino?: string;
+  chofer: Chofer;
+  camion: Camion;
+  carro: string;
 }
 
 export interface Totales {

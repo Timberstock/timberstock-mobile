@@ -5,7 +5,7 @@ import React, {
   MutableRefObject,
   useContext,
   useState,
-} from 'react';
+} from "react";
 import {
   StyleSheet,
   View,
@@ -13,29 +13,33 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-} from 'react-native';
+  Alert,
+} from "react-native";
 import {
   Select,
   SelectRef,
   SelectStyles,
-} from '@mobile-reality/react-native-select-pro';
-import { CheckBox } from 'react-native-elements';
-import colors from '@/resources/Colors';
-import Header from '@/components/Header';
-import { AppContext } from '@/context/AppContext';
-import { UserContext } from '@/context/UserContext';
-import { IOption } from '@/interfaces/screens/screens';
+} from "@mobile-reality/react-native-select-pro";
+import { CheckBox } from "react-native-elements";
+import colors from "@/resources/Colors";
+import Header from "@/components/Header";
+import { AppContext } from "@/context/AppContext";
+import { UserContext } from "@/context/UserContext";
+import { IOption } from "@/interfaces/screens/screens";
 import {
   GuiaDespachoOptions,
-  GuiaDespacho,
   IOptionClienteContratoCompra,
   IOptionDestinoContrato,
   IOptionTransporte,
   IOptionChofer,
   IOptionCarguio,
   IOptionCosecha,
-} from '@/interfaces/screens/emision/create';
-import { initialStatesCreate } from '@/resources/initialStates';
+  IOptionCamion,
+} from "@/interfaces/screens/emision/create";
+import {
+  initialStateGuia,
+  initialStatesOptionsCreate,
+} from "@/resources/initialStates";
 import {
   isGuiaValid,
   getInitialOptions,
@@ -50,21 +54,22 @@ import {
   selectCarguioLogic,
   selectCosechaLogic,
   folioProveedorChangeLogic,
-} from './createLogic';
-import OverlayLoading from '@/components/OverlayLoading';
-import { filterProductosWithContratoVenta } from './productosLogic';
+  selectCarroLogic,
+} from "./createLogic";
+import OverlayLoading from "@/components/OverlayLoading";
+import { parseProductosFromContratos } from "./productosLogic";
+import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
 
 export default function CreateGuia(props: any) {
   const { navigation } = props;
-  const { empresa } = useContext(AppContext);
+  const { empresa, contratosCompra, contratosVenta } = useContext(AppContext);
   const { user } = useContext(UserContext);
-  const { contratosCompra, contratosVenta } = useContext(AppContext);
 
-  const [guia, setGuia] = useState<GuiaDespacho>(initialStatesCreate.guia);
+  const [guia, setGuia] = useState<GuiaDespachoFirestore>(initialStateGuia);
   // Folios options is apart from the rest since it comes from the user, not contratos
   const [foliosOptions, setFoliosOptions] = useState<IOption[]>([]);
   const [options, setOptions] = useState<GuiaDespachoOptions>(
-    initialStatesCreate.options
+    initialStatesOptionsCreate,
   );
 
   const proveedorRef = useRef() as MutableRefObject<SelectRef>;
@@ -81,7 +86,8 @@ export default function CreateGuia(props: any) {
   const carguioRef = useRef() as MutableRefObject<SelectRef<IOptionCarguio>>;
   const cosechaRef = useRef() as MutableRefObject<SelectRef<IOptionCosecha>>;
   const choferRef = useRef() as MutableRefObject<SelectRef<IOptionChofer>>;
-  const camionRef = useRef() as MutableRefObject<SelectRef>;
+  const camionRef = useRef() as MutableRefObject<SelectRef<IOptionCamion>>;
+  const carroRef = useRef() as MutableRefObject<SelectRef<IOption>>;
 
   const [certChecked, setCertChecked] = useState(false);
 
@@ -107,22 +113,47 @@ export default function CreateGuia(props: any) {
 
   const handleNavigateToCreateGuiaProductos = () => {
     if (!isGuiaValid(guia)) {
-      alert('Debes llenar todos los campos');
+      alert("Debes llenar todos los campos");
       return;
     }
-    // Get productos from guia and ContratoCompra
-    const productosContratoVenta = filterProductosWithContratoVenta(contratosVenta, guia);
-    if (productosContratoVenta.length === 0) {
-      alert('No hay productos asociados a esta combinación');
+
+    const { contratoVenta, productosOptions } = parseProductosFromContratos(
+      contratosCompra,
+      contratosVenta,
+      guia,
+    );
+
+    guia.contrato_venta_id = contratoVenta?.firestoreID || "";
+    guia.receptor.giro = contratoVenta?.cliente.giro || "";
+
+    if (!productosOptions || productosOptions.length === 0) {
+      alert("No hay productos asociados a esta combinación");
+      return;
+    }
+
+    if (!guia.contrato_venta_id) {
+      Alert.alert(
+        "Error",
+        "No se encontró contrato de venta vigente para esta combinación cliente-destino-origen-producto",
+      );
       return;
     }
 
     if (!certChecked) {
-      guia.faena.certificado = 'No Aplica';
+      guia.predio_origen.certificado = "No Aplica";
+      guia.emisor = {
+        razon_social: empresa.razon_social,
+        rut: empresa.rut,
+        giro: empresa.giro,
+        direccion: empresa.direccion,
+        comuna: empresa.comuna,
+        actividad_economica: empresa.actividad_economica,
+      };
     }
-    navigation.push('CreateGuiaProductos', {
+    navigation.push("CreateGuiaProductos", {
       data: {
-        guia: guia,
+        guiaCreate: guia,
+        productosOptions: productosOptions,
       },
     });
     return;
@@ -133,7 +164,7 @@ export default function CreateGuia(props: any) {
       ...guia,
       identificacion: {
         ...guia.identificacion,
-        folio: parseInt(option?.value || '-1'),
+        folio: parseInt(option?.value || "-1"),
       },
     });
 
@@ -145,7 +176,7 @@ export default function CreateGuia(props: any) {
       ...guia,
       identificacion: {
         ...guia.identificacion,
-        tipo_despacho: option?.value || '',
+        tipo_despacho: option?.value || "",
       },
     });
   }
@@ -155,7 +186,7 @@ export default function CreateGuia(props: any) {
       ...guia,
       identificacion: {
         ...guia.identificacion,
-        tipo_traslado: option?.value || '',
+        tipo_traslado: option?.value || "",
       },
     });
   }
@@ -164,7 +195,7 @@ export default function CreateGuia(props: any) {
     const { newGuia, newOptions } = selectProveedorLogic(
       option,
       guia,
-      contratosCompra
+      contratosCompra,
     );
 
     predioRef.current?.clear();
@@ -189,7 +220,7 @@ export default function CreateGuia(props: any) {
     const { newGuia, newOptions } = selectFaenaLogic(
       option,
       guia,
-      contratosCompra
+      contratosCompra,
     );
 
     clienteRef.current?.clear();
@@ -207,7 +238,7 @@ export default function CreateGuia(props: any) {
     const { newGuia, newOptions } = selectClienteLogic(
       option,
       guia,
-      contratosCompra
+      contratosCompra,
     );
 
     destinoContratoRef.current?.clear();
@@ -224,7 +255,7 @@ export default function CreateGuia(props: any) {
     const { newGuia, newOptions } = selectDestinoContratoLogic(
       option,
       options,
-      guia
+      guia,
     );
 
     empresaTransporteRef.current?.clear();
@@ -240,7 +271,7 @@ export default function CreateGuia(props: any) {
     const { newGuia, newOptions } = selectTransporteLogic(
       option,
       options,
-      guia
+      guia,
     );
 
     choferRef.current?.clear();
@@ -271,8 +302,15 @@ export default function CreateGuia(props: any) {
     setRenderKey((prevKey) => prevKey + 1);
   }
 
-  function selectCamionHandler(option: IOption | null) {
+  function selectCamionHandler(option: IOptionCamion | null) {
     const newGuia = selectCamionLogic(option, guia);
+
+    setGuia(newGuia);
+    setRenderKey((prevKey) => prevKey + 1);
+  }
+
+  function selectCarroHandler(option: IOption | null) {
+    const newGuia = selectCarroLogic(option, guia);
 
     setGuia(newGuia);
     setRenderKey((prevKey) => prevKey + 1);
@@ -280,7 +318,7 @@ export default function CreateGuia(props: any) {
 
   return (
     <View style={styles.screen}>
-      <Header screenName="CreateGuia" empresa={'TimberBiz'} {...props} />
+      <Header screenName="CreateGuia" empresa={"TimberBiz"} {...props} />
       <OverlayLoading loading={!optionsInitialized} />
       <View style={styles.body}>
         <ScrollView style={styles.scrollView}>
@@ -295,7 +333,7 @@ export default function CreateGuia(props: any) {
                   options={foliosOptions}
                   defaultOption={foliosOptions.find(
                     (option) =>
-                      option.value === guia.identificacion.folio.toString()
+                      option.value === guia.identificacion.folio.toString(),
                   )}
                   onSelect={selectFolioHandler}
                   onRemove={() => selectFolioHandler(null)}
@@ -312,7 +350,7 @@ export default function CreateGuia(props: any) {
                   options={options.tipoDespacho}
                   defaultOption={options.tipoDespacho.find(
                     (option) =>
-                      option.value === guia.identificacion.tipo_despacho
+                      option.value === guia.identificacion.tipo_despacho,
                   )}
                   onSelect={selectTipoDespachoHandler}
                   onRemove={() => selectTipoDespachoHandler(null)}
@@ -326,7 +364,7 @@ export default function CreateGuia(props: any) {
                   options={options.tipoTraslado}
                   defaultOption={options.tipoTraslado.find(
                     (option) =>
-                      option.value === guia.identificacion.tipo_traslado
+                      option.value === guia.identificacion.tipo_traslado,
                   )}
                   onSelect={selectTipoTrasladoHandler}
                   onRemove={() => selectTipoTrasladoHandler(null)}
@@ -345,7 +383,7 @@ export default function CreateGuia(props: any) {
               options={options.proveedores}
               ref={proveedorRef}
               defaultOption={options.proveedores.find(
-                (option) => option.value === guia.proveedor.rut
+                (option) => option.value === guia.proveedor.rut,
               )}
               onSelect={selectProveedorHandler}
               onRemove={() => selectProveedorHandler(null)}
@@ -357,9 +395,9 @@ export default function CreateGuia(props: any) {
                 value={
                   guia.folio_guia_proveedor && guia.folio_guia_proveedor !== 0
                     ? guia.folio_guia_proveedor.toString()
-                    : ''
+                    : ""
                 }
-                placeholder={'Folio Proveedor (opcional)'}
+                placeholder={"Folio Proveedor (opcional)"}
                 keyboardType="numeric"
                 onChangeText={folioProveedorChangeHandler}
               />
@@ -367,52 +405,57 @@ export default function CreateGuia(props: any) {
           </View>
           <View style={{ ...styles.section, ...styles.section.predio }}>
             <Text style={styles.sectionTitle}> Origen </Text>
-            <Select
-              styles={selectStyles}
-              placeholderText="Comuna - Predio (Origen)"
-              // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
-              // searchable={true}
-              animation={true}
-              ref={predioRef}
-              options={options.faenas}
-              defaultOption={options.faenas.find(
-                (option) => option.value === guia.faena.rol
-              )}
-              disabled={guia.proveedor.razon_social === ''}
-              onSelect={selectFaenaHandler}
-              onRemove={() => selectFaenaHandler(null)}
-              key={`predios-${renderKey}`}
-            />
+            <View style={styles.row}>
+              <View style={styles.container}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Predio - Comuna"
+                  // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
+                  // searchable={true}
+                  animation={true}
+                  ref={predioRef}
+                  options={options.faenas}
+                  defaultOption={options.faenas.find(
+                    (option) => option.value === guia.predio_origen.rol,
+                  )}
+                  disabled={guia.proveedor.razon_social === ""}
+                  onSelect={selectFaenaHandler}
+                  onRemove={() => selectFaenaHandler(null)}
+                  key={`predios-${renderKey}`}
+                />
+              </View>
+            </View>
             <View style={styles.row}>
               <View style={styles.textContainer}>
-                {guia.faena.rol && (
-                  <Text style={styles.text}>Predio: {guia.faena.rol}</Text>
+                {guia.predio_origen.rol && (
+                  <Text style={styles.text}>Rol: {guia.predio_origen.rol}</Text>
                 )}
-                {guia.faena.rol && (
+                {guia.predio_origen.rol && (
                   <Text style={styles.text}>
-                    GEO: {guia.faena?.georreferencia.latitude},
-                    {guia.faena?.georreferencia.longitude}
+                    GEO: {guia.predio_origen?.georreferencia.latitude},
+                    {guia.predio_origen?.georreferencia.longitude}
                   </Text>
                 )}
-                {guia.faena.rol && (
+                {guia.predio_origen.rol && (
                   <Text style={styles.text}>
-                    Plan de Manejo o Uso Suelo: {guia.faena.plan_de_manejo}
+                    Plan de Manejo o Uso Suelo:{" "}
+                    {guia.predio_origen.plan_de_manejo}
                   </Text>
                 )}
               </View>
             </View>
-            {guia.faena.rol && (
+            {guia.predio_origen.rol && (
               <View style={styles.row}>
                 <CheckBox
                   checked={certChecked}
                   onPress={handleCertToggle}
                   containerStyle={styles.checkboxContainer}
                   textStyle={{
-                    color: certChecked ? '#2ecc71' : colors.crudo,
+                    color: certChecked ? "#2ecc71" : colors.crudo,
                   }}
                 />
                 <Text style={styles.textCertificate}>
-                  CERT: {guia.faena.certificado}
+                  CERT: {guia.predio_origen.certificado}
                 </Text>
               </View>
             )}
@@ -428,15 +471,29 @@ export default function CreateGuia(props: any) {
                   ref={clienteRef}
                   options={options.clientes}
                   disabled={
-                    guia.faena.rol === '' || guia.proveedor.razon_social === ''
+                    guia.predio_origen.rol === "" ||
+                    guia.proveedor.razon_social === ""
                   }
                   defaultOption={options.clientes.find(
-                    (option) => option.value === guia.cliente.rut
+                    (option) => option.value === guia.receptor.rut,
                   )}
                   onSelect={selectClienteHandler}
                   onRemove={() => selectClienteHandler(null)}
                   key={`clientes-${renderKey}`}
                 />
+              </View>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.textContainer}>
+                {guia.receptor.rut !== "" && (
+                  <Text style={styles.text}>RUT: {guia.receptor.rut}</Text>
+                )}
+                {guia.receptor.rut !== "" && (
+                  <Text style={styles.text}>
+                    Direccion: {guia.receptor.direccion} || Comuna:{" "}
+                    {guia.receptor.comuna}
+                  </Text>
+                )}
               </View>
             </View>
             <View style={styles.row}>
@@ -448,12 +505,12 @@ export default function CreateGuia(props: any) {
                   ref={destinoContratoRef}
                   options={options.destinos_contrato}
                   defaultOption={options.destinos_contrato.find(
-                    (option) => option.value === guia.destino_contrato.nombre
+                    (option) => option.value === guia.destino.nombre,
                   )}
                   disabled={
-                    guia.proveedor.rut === '' ||
-                    guia.faena.rol === '' ||
-                    guia.cliente.razon_social === ''
+                    guia.proveedor.rut === "" ||
+                    guia.predio_origen.rol === "" ||
+                    guia.receptor.razon_social === ""
                   }
                   onSelect={selectDestinoContratoHandler}
                   onRemove={() => selectDestinoContratoHandler(null)}
@@ -461,16 +518,12 @@ export default function CreateGuia(props: any) {
                 />
               </View>
             </View>
+            <View />
             <View style={styles.row}>
               <View style={styles.textContainer}>
-                {guia.cliente.rut !== '' && (
+                {guia.destino.rol && (
                   <Text style={styles.text}>
-                    RUT: {guia.cliente.rut} || Comuna: {guia.cliente.comuna}
-                  </Text>
-                )}
-                {guia.cliente.rut !== '' && (
-                  <Text style={styles.text}>
-                    Direccion: {guia.cliente.direccion}
+                    Rol: {guia.destino.rol} || {guia.destino.comuna}
                   </Text>
                 )}
               </View>
@@ -488,12 +541,12 @@ export default function CreateGuia(props: any) {
                   options={options.empresas_carguio}
                   defaultOption={options.empresas_carguio.find(
                     (option) =>
-                      option.value === guia.servicios?.carguio?.empresa.rut
+                      option.value === guia.servicios?.carguio?.empresa.rut,
                   )}
                   disabled={
-                    guia.proveedor.rut === '' ||
-                    guia.faena.rol === '' ||
-                    guia.cliente.rut === ''
+                    guia.proveedor.rut === "" ||
+                    guia.predio_origen.rol === "" ||
+                    guia.receptor.rut === ""
                   }
                   onSelect={selectCarguioHandler}
                   onRemove={() => selectCarguioHandler(null)}
@@ -511,12 +564,12 @@ export default function CreateGuia(props: any) {
                   options={options.empresas_cosecha}
                   defaultOption={options.empresas_cosecha.find(
                     (option) =>
-                      option.value === guia.servicios?.cosecha?.empresa.rut
+                      option.value === guia.servicios?.cosecha?.empresa.rut,
                   )}
                   disabled={
-                    guia.proveedor.rut === '' ||
-                    guia.faena.rol === '' ||
-                    guia.cliente.rut === ''
+                    guia.proveedor.rut === "" ||
+                    guia.predio_origen.rol === "" ||
+                    guia.receptor.rut === ""
                   }
                   onSelect={selectCosechaHandler}
                   onRemove={() => selectCosechaHandler(null)}
@@ -525,29 +578,33 @@ export default function CreateGuia(props: any) {
               </View>
             </View>
           </View>
-          <View style={styles.section}>
+          <View style={{ ...styles.section, ...styles.section.despacho }}>
             <Text style={styles.sectionTitle}> Datos Despacho </Text>
-            <Select
-              styles={selectStyles}
-              placeholderText="Empresa Transportista"
-              animation={true}
-              ref={empresaTransporteRef}
-              options={options.empresas_transporte}
-              defaultOption={options.empresas_transporte.find(
-                (option) => option.value === guia.transporte.rut
-              )}
-              disabled={
-                guia.proveedor.rut === '' ||
-                guia.cliente.rut === '' ||
-                guia.faena.rol === '' ||
-                guia.destino_contrato.nombre === ''
-              }
-              onSelect={selectTransportistaHandler}
-              onRemove={() => selectTransportistaHandler(null)}
-              key={`transportistas-${renderKey}`}
-            />
             <View style={styles.row}>
-              <View style={styles.container}>
+              <View style={styles.textContainer}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Empresa Transportista"
+                  animation={true}
+                  ref={empresaTransporteRef}
+                  options={options.empresas_transporte}
+                  defaultOption={options.empresas_transporte.find(
+                    (option) => option.value === guia.transporte.empresa.rut,
+                  )}
+                  disabled={
+                    guia.proveedor.rut === "" ||
+                    guia.receptor.rut === "" ||
+                    guia.predio_origen.rol === "" ||
+                    guia.destino.nombre === ""
+                  }
+                  onSelect={selectTransportistaHandler}
+                  onRemove={() => selectTransportistaHandler(null)}
+                  key={`transportistas-${renderKey}`}
+                />
+              </View>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.textContainer}>
                 <Select
                   styles={selectStyles}
                   placeholderText="Chofer"
@@ -555,20 +612,22 @@ export default function CreateGuia(props: any) {
                   ref={choferRef}
                   options={options.choferes}
                   defaultOption={options.choferes.find(
-                    (option) => option.value === guia.chofer.rut
+                    (option) => option.value === guia.transporte.chofer.rut,
                   )}
                   disabled={
-                    guia.proveedor.rut === '' ||
-                    guia.cliente.rut === '' ||
-                    guia.faena.rol === '' ||
-                    guia.destino_contrato.nombre === '' ||
-                    guia.transporte.rut === ''
+                    guia.proveedor.rut === "" ||
+                    guia.receptor.rut === "" ||
+                    guia.predio_origen.rol === "" ||
+                    guia.destino.nombre === "" ||
+                    guia.transporte.empresa.rut === ""
                   }
                   onSelect={selectChoferHandler}
                   onRemove={() => selectChoferHandler(null)}
                   key={`choferes-${renderKey}`}
                 />
               </View>
+            </View>
+            <View style={styles.row}>
               <View style={styles.container}>
                 <Select
                   styles={selectStyles}
@@ -577,18 +636,40 @@ export default function CreateGuia(props: any) {
                   ref={camionRef}
                   options={options.camiones}
                   defaultOption={options.camiones.find(
-                    (option) => option.value === guia.camion
+                    (option) => option.value === guia.transporte.camion.patente,
                   )}
                   disabled={
-                    guia.proveedor.rut === '' ||
-                    guia.cliente.rut === '' ||
-                    guia.faena.rol === '' ||
-                    guia.destino_contrato.nombre === '' ||
-                    guia.transporte.rut === ''
+                    guia.proveedor.rut === "" ||
+                    guia.receptor.rut === "" ||
+                    guia.predio_origen.rol === "" ||
+                    guia.destino.nombre === "" ||
+                    guia.transporte.empresa.rut === ""
                   }
                   onSelect={selectCamionHandler}
                   onRemove={() => selectCamionHandler(null)}
                   key={`camiones-${renderKey}`}
+                />
+              </View>
+              <View style={styles.container}>
+                <Select
+                  styles={selectStyles}
+                  placeholderText="Carro"
+                  animation={true}
+                  ref={carroRef}
+                  options={options.carros}
+                  defaultOption={options.carros.find(
+                    (option) => option.value === guia.transporte.carro,
+                  )}
+                  disabled={
+                    guia.proveedor.rut === "" ||
+                    guia.receptor.rut === "" ||
+                    guia.predio_origen.rol === "" ||
+                    guia.destino.nombre === "" ||
+                    guia.transporte.empresa.rut === ""
+                  }
+                  onSelect={selectCarroHandler}
+                  onRemove={() => selectCarroHandler(null)}
+                  key={`carros-${renderKey}`}
                 />
               </View>
             </View>
@@ -609,46 +690,49 @@ export default function CreateGuia(props: any) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    marginTop: '1%',
+    marginTop: "1%",
     fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: '2.5%',
+    fontWeight: "bold",
+    marginLeft: "2.5%",
   },
   scrollView: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   screen: {
     flex: 1,
     backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   section: {
-    marginTop: '4%',
+    marginTop: "4%",
     height: 150,
     backgroundColor: colors.crudo,
     borderRadius: 15,
     receptor: {
-      height: 200,
+      height: 250,
     },
     predio: {
       height: 230,
     },
+    despacho: {
+      height: 250,
+    },
   },
   body: {
     flex: 9,
-    width: '100%',
+    width: "100%",
     backgroundColor: colors.white,
-    display: 'flex',
+    display: "flex",
   },
   row: {
     flex: 1,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    borderStyle: 'solid',
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderStyle: "solid",
   },
   container: {
     flex: 1,
@@ -657,38 +741,38 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     backgroundColor: colors.white,
     padding: 7,
-    borderColor: '#cccccc',
+    borderColor: "#cccccc",
     borderRadius: 13,
-    alignSelf: 'center',
-    width: '50%',
-    textAlign: 'center',
+    alignSelf: "center",
+    width: "50%",
+    textAlign: "center",
     marginVertical: 7,
     fontSize: 13,
   },
   text: {
     fontSize: 14,
-    fontWeight: 'normal',
-    textAlign: 'left',
+    fontWeight: "normal",
+    textAlign: "left",
     margin: 5,
   },
   textCertificate: {
     fontSize: 14,
-    fontWeight: 'normal',
-    textAlign: 'left',
+    fontWeight: "normal",
+    textAlign: "left",
   },
   textContainer: {
     flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '90%',
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "90%",
   },
   button: {
     backgroundColor: colors.secondary,
     borderRadius: 12,
     padding: 15,
     margin: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
     color: colors.white,
@@ -706,10 +790,10 @@ const selectStyles: SelectStyles = {
   select: {
     container: {
       borderWidth: 2,
-      borderColor: '#cccccc',
+      borderColor: "#cccccc",
       borderRadius: 13,
-      alignSelf: 'center',
-      width: '90%',
+      alignSelf: "center",
+      width: "90%",
     },
   },
 };

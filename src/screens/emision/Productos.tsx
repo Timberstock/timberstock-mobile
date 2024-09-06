@@ -4,7 +4,7 @@ import {
   useState,
   useContext,
   useEffect,
-} from 'react';
+} from "react";
 import {
   View,
   Text,
@@ -13,19 +13,19 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
+} from "react-native";
 import {
   Select,
   SelectRef,
   SelectStyles,
-} from '@mobile-reality/react-native-select-pro';
-import colors from '@/resources/Colors';
-import Header from '@/components/Header';
-import { UserContext } from '@/context/UserContext';
-import Aserrable from '@/components/productos/Aserrable';
-import Pulpable from '@/components/productos/Pulpable';
-import { IOption } from '@/interfaces/screens/screens';
-import PrecioModal from '@/components/productos/PrecioModal';
+} from "@mobile-reality/react-native-select-pro";
+import colors from "@/resources/Colors";
+import Header from "@/components/Header";
+import { UserContext } from "@/context/UserContext";
+import Aserrable from "@/components/productos/Aserrable";
+import Pulpable from "@/components/productos/Pulpable";
+import { IOption } from "@/interfaces/screens/screens";
+import PrecioModal from "@/components/productos/PrecioModal";
 import {
   handleSelectProductoLogic,
   handleSelectTipoLogic,
@@ -36,38 +36,42 @@ import {
   handleCreateGuiaLogic,
   resetClasesDiametricas,
   resetBancosPulpable,
-  filterProductosWithContratoVenta,
-} from './productosLogic';
-import { GuiaDespacho } from '@/interfaces/screens/emision/create';
-import { AppContext } from '@/context/AppContext';
-import { initialStatesProducto } from '@/resources/initialStates';
+} from "./productosLogic";
+import { AppContext } from "@/context/AppContext";
+import { initialStatesProducto } from "@/resources/initialStates";
 import {
   Banco,
   ClaseDiametrica,
   IOptionProducto,
   IOptionTipoProducto,
-  ProductoOptions,
-} from '@/interfaces/screens/emision/productos';
-import { Producto } from '@/interfaces/esenciales';
+  ProductoOptionObject,
+  ProductoScreenOptions,
+} from "@/interfaces/screens/emision/productos";
+import { Producto } from "@/interfaces/esenciales";
+import {
+  ClaseDiametricaGuia,
+  GuiaDespachoFirestore,
+} from "@/interfaces/firestore/guia";
 
 export default function CreateGuiaProductos(props: any) {
   const { navigation } = props;
-  const { guia }: { guia: GuiaDespacho } = props.route.params.data;
+  const {
+    guiaCreate,
+    productosOptions,
+  }: {
+    guiaCreate: GuiaDespachoFirestore;
+    productosOptions: ProductoOptionObject[];
+  } = props.route.params.data;
   const { user, updateUserReservedFolios } = useContext(UserContext);
-  const { empresa, contratosVenta, contratosCompra } = useContext(AppContext);
-  const productosData = filterProductosWithContratoVenta(contratosVenta, guia);
 
-  const [producto, setProducto] = useState<Producto>(
-    initialStatesProducto.producto
-  );
-  const [clasesDiametricas, setClasesDiametricas] = useState<ClaseDiametrica[]>(
-    () => resetClasesDiametricas()
-  );
+  const [guia, setGuia] = useState<GuiaDespachoFirestore>(guiaCreate);
+
   const [bancosPulpable, setBancosPulpable] = useState<Banco[]>(() =>
-    resetBancosPulpable()
+    resetBancosPulpable(),
   );
-  const [options, setOptions] = useState<ProductoOptions>(
-    initialStatesProducto.options
+
+  const [options, setOptions] = useState<ProductoScreenOptions>(
+    initialStatesProducto.options,
   );
 
   const productoRef = useRef() as MutableRefObject<SelectRef<IOptionProducto>>;
@@ -77,34 +81,47 @@ export default function CreateGuiaProductos(props: any) {
 
   const handleUpdateClaseDiametricaValue = (
     clase: string,
-    cantidad: number
+    cantidad: number,
   ) => {
     const newClasesDiametricas = handleUpdateClaseDiametricaValueLogic(
-      producto,
-      clasesDiametricas,
+      guia.producto,
       clase,
-      cantidad
+      cantidad,
     );
-    setClasesDiametricas(newClasesDiametricas);
+
+    setGuia((prevGuia) => ({
+      ...prevGuia,
+      producto: {
+        ...prevGuia.producto,
+        clases_diametricas: newClasesDiametricas,
+      },
+    }));
   };
 
   const handleIncreaseNumberOfClasesDiametricas = () => {
-    const newClasesDiametricas =
-      handleIncreaseNumberOfClasesDiametricasLogic(clasesDiametricas);
+    const newClasesDiametricas = handleIncreaseNumberOfClasesDiametricasLogic(
+      guia.producto.clases_diametricas as ClaseDiametricaGuia[],
+    );
 
-    setClasesDiametricas(newClasesDiametricas);
+    setGuia((prevGuia) => ({
+      ...prevGuia,
+      producto: {
+        ...prevGuia.producto,
+        clases_diametricas: newClasesDiametricas,
+      },
+    }));
   };
 
   const handleUpdateBancoPulpableValue = (
     bancoIndex: number,
     dimension: keyof Banco,
-    value: number
+    value: number,
   ) => {
     const newBancosPulpable = handleUpdateBancoPulpableValueLogic(
       bancosPulpable,
       bancoIndex,
       dimension,
-      value
+      value,
     );
 
     setBancosPulpable(newBancosPulpable);
@@ -113,33 +130,34 @@ export default function CreateGuiaProductos(props: any) {
   const handleSelectTipo = (option: IOptionTipoProducto | null) => {
     const { newProducto, newOptions } = handleSelectTipoLogic(
       option,
-      productosData
+      productosOptions,
     );
 
     productoRef.current?.clear();
-    setClasesDiametricas(resetClasesDiametricas());
+
+    setGuia((prevGuia) => ({
+      ...prevGuia,
+      producto: newProducto,
+    }));
     setBancosPulpable(resetBancosPulpable());
-    setProducto(newProducto);
     setOptions(newOptions);
     setRenderKey((prevKey) => prevKey + 1);
   };
 
   const handleSelectProducto = (option: IOptionProducto | null) => {
-    const newProducto = handleSelectProductoLogic(option, producto);
+    const newProducto = handleSelectProductoLogic(option, guia.producto);
 
-    setClasesDiametricas(resetClasesDiametricas());
+    setGuia((prevGuia) => ({
+      ...prevGuia,
+      producto: newProducto,
+    }));
+
     setBancosPulpable(resetBancosPulpable());
-    setProducto(newProducto);
     setRenderKey((prevKey) => prevKey + 1);
   };
 
   const onOpenModalButtonPress = () => {
-    const allowOpen = checkProductosValues(
-      producto,
-      clasesDiametricas,
-      bancosPulpable
-    );
-
+    const allowOpen = checkProductosValues(guia.producto, bancosPulpable);
     setModalVisible(allowOpen);
   };
 
@@ -150,25 +168,20 @@ export default function CreateGuiaProductos(props: any) {
       precioUnitarioGuia,
       user,
       guia,
-      empresa,
-      producto,
-      contratosCompra,
-      contratosVenta,
-      clasesDiametricas,
       bancosPulpable,
       setCreateGuiaLoading,
       setModalVisible,
-      updateUserReservedFolios
+      updateUserReservedFolios,
     );
   };
 
   return (
     <View style={styles.screen}>
-      <Header screenName="Products" empresa={'TimberBiz'} {...props} />
+      <Header screenName="Products" empresa={"TimberBiz"} {...props} />
       <View style={styles.body}>
         {/* TODO: Fix the verticalOffset is showing a white rectangle */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
           keyboardVerticalOffset={200}
         >
@@ -182,7 +195,7 @@ export default function CreateGuiaProductos(props: any) {
                 options={options.tipo}
                 onSelect={handleSelectTipo}
                 defaultOption={options.tipo.find(
-                  (option) => option.value === producto.tipo
+                  (option) => option.value === guia.producto?.tipo,
                 )}
                 key={`tipo-${renderKey}`}
                 onRemove={() => handleSelectTipo(null)}
@@ -193,9 +206,9 @@ export default function CreateGuiaProductos(props: any) {
                 placeholderText="Seleccione el Producto"
                 options={options.productos}
                 defaultOption={options.productos.find(
-                  (option) => option.value === producto.codigo
+                  (option) => option.value === guia.producto.codigo,
                 )}
-                disabled={producto.tipo === ''}
+                disabled={guia.producto.tipo === ""}
                 ref={productoRef}
                 onSelect={handleSelectProducto}
                 key={`producto-${renderKey}`}
@@ -203,10 +216,10 @@ export default function CreateGuiaProductos(props: any) {
               />
             </View>
             <Text style={styles.sectionTitle}> Detalle </Text>
-            {producto.tipo === 'Aserrable' && producto.codigo && (
+            {guia.producto.tipo === "Aserrable" && guia.producto.codigo && (
               <View style={{ ...styles.section, ...styles.section.detalle }}>
                 <Aserrable
-                  clasesDiametricas={clasesDiametricas}
+                  clasesDiametricas={guia.producto.clases_diametricas || []}
                   // TODO: prop drilling bad practice
                   updateClaseDiametricaValue={handleUpdateClaseDiametricaValue}
                   increaseNumberOfClasesDiametricas={
@@ -215,7 +228,7 @@ export default function CreateGuiaProductos(props: any) {
                 />
               </View>
             )}
-            {producto.tipo === 'Pulpable' && producto.codigo && (
+            {guia.producto.tipo === "Pulpable" && guia.producto.codigo && (
               <View style={{ ...styles.section, ...styles.section.detalle }}>
                 <Pulpable
                   bancosPulpable={bancosPulpable}
@@ -230,9 +243,9 @@ export default function CreateGuiaProductos(props: any) {
           style={{
             ...styles.button,
             backgroundColor:
-              producto.calidad === '' ? 'grey' : colors.secondary,
+              guia.producto.calidad === "" ? "grey" : colors.secondary,
           }}
-          disabled={producto.codigo === ''}
+          disabled={guia.producto.codigo === ""}
           onPress={onOpenModalButtonPress}
         >
           <Text style={styles.buttonText}> Crear Guía Despacho </Text>
@@ -250,42 +263,42 @@ export default function CreateGuiaProductos(props: any) {
 
 const styles = StyleSheet.create({
   listContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    backgroundColor: 'grey',
+    display: "flex",
+    flexDirection: "row",
+    backgroundColor: "grey",
     borderRadius: 12,
-    padding: '2.5%',
-    marginHorizontal: '2.5%',
-    marginVertical: '1.5%',
-    justifyContent: 'center',
+    padding: "2.5%",
+    marginHorizontal: "2.5%",
+    marginVertical: "1.5%",
+    justifyContent: "center",
   },
   listItem: {
     flex: 6,
   },
   listIcon: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   sectionTitle: {
-    marginTop: '1%',
+    marginTop: "1%",
     fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: '2.5%',
+    fontWeight: "bold",
+    marginLeft: "2.5%",
   },
   scrollView: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   screen: {
     flex: 1,
     backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   section: {
-    marginTop: '2%',
-    paddingTop: '2%',
+    marginTop: "2%",
+    paddingTop: "2%",
     backgroundColor: colors.crudo,
     borderRadius: 15,
     producto: {
@@ -297,57 +310,57 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 9,
-    width: '100%',
+    width: "100%",
     backgroundColor: colors.white,
-    display: 'flex',
+    display: "flex",
   },
   row: {
     flex: 1,
-    dispaly: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
+    dispaly: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
   },
   input: {
     borderWidth: 2,
     height: 35,
     backgroundColor: colors.white,
     padding: 7,
-    borderColor: '#cccccc',
+    borderColor: "#cccccc",
     borderRadius: 13,
-    alignSelf: 'center',
-    width: '40%',
+    alignSelf: "center",
+    width: "40%",
   },
   container: {
     flex: 1,
   },
   text: {
     fontSize: 14,
-    fontWeight: 'normal',
-    textAlign: 'left',
+    fontWeight: "normal",
+    textAlign: "left",
     margin: 5,
-    marginLeft: '6%',
+    marginLeft: "6%",
   },
   textContainer: {
     flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '90%',
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "90%",
   },
   button: {
     backgroundColor: colors.secondary,
     borderRadius: 12,
     padding: 15,
     margin: 10,
-    alignItems: 'center',
-    alignSelf: 'center',
-    width: '90%',
+    alignItems: "center",
+    alignSelf: "center",
+    width: "90%",
   },
   buttonLittle: {
     paddingVertical: 7,
-    width: '40%',
+    width: "40%",
   },
   buttonText: {
     color: colors.white,
@@ -362,11 +375,11 @@ const selectStyles: SelectStyles = {
     container: {
       // flex: 1,
       borderWidth: 2,
-      marginTop: '4%',
-      borderColor: '#cccccc',
+      marginTop: "4%",
+      borderColor: "#cccccc",
       borderRadius: 13,
-      alignSelf: 'center',
-      width: '90%',
+      alignSelf: "center",
+      width: "90%",
       // claseDiametrica: {
       //   flex: 0.5,
       //   marginRight: '4.5%',

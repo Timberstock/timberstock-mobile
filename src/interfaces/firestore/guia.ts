@@ -1,65 +1,58 @@
-import { Predio } from '@/interfaces/sii/detalles';
-import { Proveedor, Producto } from '@/interfaces/esenciales';
+import { Predio } from "@/interfaces/sii/detalles";
+import { Proveedor, Producto, Destino } from "@/interfaces/esenciales";
 import {
   Emisor,
   Identificacion,
   Receptor,
   Transporte,
-} from '@/interfaces/sii/guia';
-import { ClaseDiametrica } from '../screens/emision/productos';
-import { Servicios } from '../contratos/contratoCompra';
+} from "@/interfaces/sii/guia";
+import { ClaseDiametricaContratos } from "../screens/emision/productos";
+import {
+  CarguioContratoCompra,
+  CosechaContratoCompra,
+  OtroContratoCompra,
+} from "../contratos/contratoCompra";
+export interface DestinoGuia
+  extends Omit<Destino, "productos" | "transportes"> {}
 
-// Desglose de precios tiene que ser mas sofisticado, especialmente para cubrir servicios, transporte, etc.
-export interface TransporteGuia extends Omit<Transporte, 'empresa'> {
-  // Fix interfaces matching in both
-  empresa: {
-    rut: string;
-    razon_social: string;
-    precio_unitario_transporte: number;
-  };
+export interface TransporteGuia extends Transporte {
+  precio_unitario_transporte: number;
 }
 
-// export interface TransporteGuia {
-//   empresa: TransporteContratoCompra;
-//   direccion_destino: string;
-//   chofer: Chofer;
-//   camion: string;
-//   proforma_compra_id?: string;
-// }
+export interface ServiciosGuia {
+  cosecha?: CosechaContratoCompra;
+  carguio?: CarguioContratoCompra;
+  otros?: OtroContratoCompra;
+}
+
+export interface ClaseDiametricaGuia extends ClaseDiametricaContratos {
+  cantidad_emitida: number;
+  volumen_emitido: number;
+  // cantidad_recepcionada?: number; // Unknown in the App
+  // volumen_recepcionado?: number; // Unknown in the App
+}
 
 export interface ProductoGuia extends Producto {
   precio_unitario_compra_mr?: number;
   precio_unitario_venta_mr?: number;
-  clases_diametricas?: ClaseDiametrica[];
+  clases_diametricas?: ClaseDiametricaGuia[];
 }
 
 export interface GuiaDespachoFirestore {
-  identificacion: Identificacion;
   emisor: Emisor;
-  receptor: Receptor;
-  predio: Predio;
-  transporte: TransporteGuia;
+  identificacion: Identificacion;
   proveedor: Proveedor;
+  folio_guia_proveedor?: number;
+  receptor: Receptor;
+  predio_origen: Predio;
+  destino: DestinoGuia;
+  transporte: TransporteGuia;
   producto: ProductoGuia;
+  servicios?: ServiciosGuia;
+  contrato_compra_id: string;
+  contrato_venta_id: string;
   volumen_total_emitido: number;
   precio_unitario_guia: number;
   monto_total_guia: number;
-  contrato_venta_id: string;
-  contrato_compra_id: string;
   estado: string;
-  folio_guia_proveedor?: number;
-  servicios?: Servicios;
-  // We are not including valores de contrato here because they are not necessary for the guia
-  // precio_unitario_venta: number;
-  // monto_total_venta: number;
-  // valores_contrato_compra: {
-  //   precio_unitario_compra?: number;
-  //   monto_total_compra?: number;
-  //   precio_unitario_cosecha?: number;
-  //   monto_total_cosecha?: number;
-  //   precio_unitario_transporte?: number;
-  //   monto_total_transporte?: number;
-  //   precio_unitario_carguio?: number;
-  //   monto_total_carguio?: number;
-  // };
 }

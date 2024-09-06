@@ -1,36 +1,37 @@
-import React from 'react';
-import 'expo-dev-client';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SelectProvider } from '@mobile-reality/react-native-select-pro';
-import firestore from '@react-native-firebase/firestore';
-import { StyleSheet, TouchableOpacity, View, Text, Alert } from 'react-native';
+import React from "react";
+import "expo-dev-client";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { SelectProvider } from "@mobile-reality/react-native-select-pro";
+import firestore from "@react-native-firebase/firestore";
+import { StyleSheet, TouchableOpacity, View, Text, Alert } from "react-native";
 
-import UserContextProvider from '@/context/UserContext';
-import AuthWrapper from '@/AuthWrapper';
-import Home from '@/screens/Home';
-import { logoutUser } from '@/functions/firebase/auth';
-import CreateGuia from '@/screens/emision/Create';
-import CreateGuiaProductos from '@/screens/emision/Productos';
+import UserContextProvider from "@/context/UserContext";
+import AuthWrapper from "@/AuthWrapper";
+import Home from "@/screens/Home";
+import { logoutUser } from "@/functions/firebase/auth";
+import CreateGuia from "@/screens/emision/Create";
+import CreateGuiaProductos from "@/screens/emision/Productos";
 
 const Stack = createNativeStackNavigator();
+// For the day when we use more screens https://medium.com/@jacrplante/react-native-screens-multiple-stacks-da112a94ad24
 
 // This works really weird, try playing with emulator and with index.js if doesn't work
 // import firestore from '@react-native-firebase/firestore';
 // firestore().useEmulator('localhost', 8080);
 
 export default function App() {
-  console.log('APP STARTED');
+  console.log("APP STARTED");
   const deleteCache = async (): Promise<number> => {
     try {
       await logoutUser();
       await firestore().terminate();
       await firestore().clearPersistence();
-      Alert.alert('Persistence cleared');
+      Alert.alert("Persistence cleared");
       return 200;
     } catch (error: any) {
-      console.error('Could not enable persistence:', error);
-      Alert.alert('Could not clear cache: ', error.code);
+      console.error("Could not enable persistence:", error);
+      Alert.alert("Could not clear cache: ", error.code);
       return 400;
     }
   };
@@ -38,13 +39,13 @@ export default function App() {
   const [loadApp, setLoadApp] = React.useState(false);
 
   const handleLoadApp = () => {
-    console.log('Loading the app...');
+    console.log("Loading the app...");
     setLoadApp(true);
     // TODO: arreglar los re renders y cosas entre medio que hacen que se vea feo
   };
 
   const handleClearCache = async () => {
-    console.log('Clearing cache...');
+    console.log("Clearing cache...");
     setClearCache(true);
     const result: number = await deleteCache();
     if (result === 200) {
@@ -105,20 +106,20 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
   },
   button: {
-    backgroundColor: '#6200ee',
+    backgroundColor: "#6200ee",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
     marginBottom: 20,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

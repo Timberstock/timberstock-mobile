@@ -27,6 +27,7 @@
     "expo-sharing": "~11.2.2",
     "expo-splash-screen": "~0.18.2",
     "expo-status-bar": "~1.4.4",
+    "expo-updates": "~0.16.4",
     "hybrid-crypto-js": "^0.2.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -36,16 +37,23 @@
     "react-native-screens": "~3.20.0",
     "react-native-vector-icons": "^9.2.0",
     "react-native-xml2js": "^1.0.3",
-    "react-zlib-js": "^1.0.5",
-    "expo-updates": "~0.16.4"
+    "react-zlib-js": "^1.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
+    "@eslint/js": "^9.9.1",
     "@types/bwip-js": "^3.2.0",
     "@types/crypto-js": "^4.1.1",
     "@types/react": "~18.0.14",
     "@types/react-native-vector-icons": "^6.4.12",
-    "typescript": "^4.6.3"
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.35.2",
+    "eslint-plugin-react-native": "^4.1.0",
+    "globals": "^15.9.0",
+    "prettier": "^3.3.3",
+    "typescript": "^4.6.3",
+    "prettier-eslint": "^16.3.0"
   },
   "private": true
 }
