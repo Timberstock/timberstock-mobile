@@ -14,8 +14,6 @@ import CreateGuia from "@/screens/emision/Create";
 import CreateGuiaProductos from "@/screens/emision/Productos";
 
 const Stack = createNativeStackNavigator();
-export const FIREBASE_CLOUD_FUNCTIONS_URL =
-  "https://us-central1-timberstock-firebase.cloudfunctions.net";
 // For the day when we use more screens https://medium.com/@jacrplante/react-native-screens-multiple-stacks-da112a94ad24
 
 // This works really weird, try playing with emulator and with index.js if doesn't work
