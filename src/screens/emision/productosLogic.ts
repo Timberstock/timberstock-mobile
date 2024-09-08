@@ -190,7 +190,8 @@ export const handleCreateGuiaLogic = async (
         guia.producto.clases_diametricas
       ) {
         guia.volumen_total_emitido = guia.producto.clases_diametricas?.reduce(
-          (acc, claseDiametrica) => acc + claseDiametrica.volumen_emitido || 0,
+          (acc, claseDiametrica) =>
+            acc + (claseDiametrica.volumen_emitido || 0),
           0,
         );
       } else {

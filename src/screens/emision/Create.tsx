@@ -141,15 +141,17 @@ export default function CreateGuia(props: any) {
 
     if (!certChecked) {
       guia.predio_origen.certificado = "No Aplica";
-      guia.emisor = {
-        razon_social: empresa.razon_social,
-        rut: empresa.rut,
-        giro: empresa.giro,
-        direccion: empresa.direccion,
-        comuna: empresa.comuna,
-        actividad_economica: empresa.actividad_economica,
-      };
     }
+
+    guia.emisor = {
+      razon_social: empresa.razon_social,
+      rut: empresa.rut,
+      giro: empresa.giro,
+      direccion: empresa.direccion,
+      comuna: empresa.comuna,
+      actividad_economica: empresa.actividad_economica,
+    };
+
     navigation.push("CreateGuiaProductos", {
       data: {
         guiaCreate: guia,
