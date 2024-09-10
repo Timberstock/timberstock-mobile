@@ -1,6 +1,6 @@
 import axios from "axios";
 import { requestReservarFoliosResponse } from "@/interfaces/firestore/cloud_functions";
-import { FIREBASE_CLOUD_FUNCTIONS_URL } from "@/../App";
+import { FIREBASE_CLOUD_FUNCTIONS_URL } from "App";
 
 export async function requestReservarFolios(
   uid: string,
@@ -11,9 +11,6 @@ export async function requestReservarFolios(
     console.log(`uid: ${uid}`);
     console.log(`n_folios: ${n_folios}`);
     const response = await axios.post(
-      //dev
-      // `http://127.0.0.1:5001/timberstock-firebase/us-central1/reservarFolios`,
-      //prod
       `${FIREBASE_CLOUD_FUNCTIONS_URL}/reservarFolios`,
       {
         data: {
@@ -26,6 +23,7 @@ export async function requestReservarFolios(
     return response.data;
   } catch (error) {
     console.error(`Error: ${error}`);
+    alert("Error reservando folios");
     throw error;
   }
 }

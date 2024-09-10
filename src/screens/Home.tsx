@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState } from 'react';
+import React, { useEffect, useContext, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -6,22 +6,22 @@ import {
   TouchableOpacity,
   FlatList,
   Linking,
-} from 'react-native';
-import { Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+} from "react-native";
+import { Alert } from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome";
 
-import { AppContext } from '@/context/AppContext';
-import { UserContext } from '@/context/UserContext';
+import { AppContext } from "@/context/AppContext";
+import { UserContext } from "@/context/UserContext";
 
-import colors from '@/resources/Colors';
-import Header from '@/components/Header';
-import FoliosRequestModal from '@/components/FoliosRequestModal';
-import { requestReservarFolios } from '@/functions/firebase/cloud_functions';
+import colors from "@/resources/Colors";
+import Header from "@/components/Header";
+import FoliosRequestModal from "@/components/FoliosRequestModal";
+import { requestReservarFolios } from "@/functions/firebase/cloud_functions";
 import {
   _createGuiaTest,
   fetchGuiasDocs,
-} from '@/functions/firebase/firestore/guias';
-import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
+} from "@/functions/firebase/firestore/guias";
+import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
 
 export default function Home(props: any) {
   const { navigation } = props;
@@ -31,9 +31,6 @@ export default function Home(props: any) {
   const [loading, setLoading] = useState(true);
   const [foliosRequestLoading, setFoliosRequestLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-
-  // console.log(guiasSummary);
-  console.log("ENTRAMOS A HOME");
 
   useEffect(() => {
     handleRefresh();
@@ -49,13 +46,16 @@ export default function Home(props: any) {
 
     const response = await requestReservarFolios(
       user.firebaseAuth.uid,
-      numFolios
+      numFolios,
     );
 
-    console.log('REQUEST RESERVAR FOLIOS RESPONSE:', response);
+    console.log("REQUEST RESERVAR FOLIOS RESPONSE:", response);
 
-    if (response.message.includes('No such object')) {
-      Alert.alert('Error', 'No se pudo encontrar un archivo CAF valido para solicitar folios');
+    if (response.message.includes("No such object")) {
+      Alert.alert(
+        "Error",
+        "No se pudo encontrar un archivo CAF valido para solicitar folios",
+      );
       setFoliosRequestLoading(false);
       return;
     }
@@ -73,21 +73,21 @@ export default function Home(props: any) {
     if (user === null) return;
     if (user.empresa_id) {
       try {
-        console.log('REFRESHING');
+        console.log("REFRESHING");
         const empresaGuias = await fetchGuiasDocs(user.empresa_id);
         // updateFoliosDisp(empresaGuias, empresa.caf_n);
         updateGuiasSummary(empresaGuias);
 
         setLoading(false);
-        console.log('DONE');
+        console.log("DONE");
       } catch (error) {
         Alert.alert(
-          'Error al cargar guías',
-          'No se pudo obtener la información de la empresa'
+          "Error al cargar guías",
+          "No se pudo obtener la información de la empresa",
         );
       }
     } else {
-      Alert.alert('Error', 'Error al cargar empresa_id del usuario');
+      Alert.alert("Error", "Error al cargar empresa_id del usuario");
     }
   };
 
@@ -99,8 +99,8 @@ export default function Home(props: any) {
       item.url
         ? Linking.openURL(item.url)
         : Alert.alert(
-            'No link',
-            'Todavía no se ha generado el link de esta guía o se ha producido un error'
+            "No link",
+            "Todavía no se ha generado el link de esta guía o se ha producido un error",
           );
     };
     return (
@@ -144,7 +144,7 @@ export default function Home(props: any) {
             styles.button,
             user?.folios_reservados.length === 0 && styles.disabledButton,
           ]}
-          onPress={() => navigation.push('CreateGuia')}
+          onPress={() => navigation.push("CreateGuia")}
           disabled={
             // TESTING:
             user?.folios_reservados?.length && user.folios_reservados.length > 0
@@ -184,46 +184,46 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   body: {
     flex: 8,
-    width: '100%',
+    width: "100%",
     backgroundColor: colors.white,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   buttonsContainer: {
     flex: 2,
-    width: '100%',
+    width: "100%",
     backgroundColor: colors.white,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   guia: {
-    backgroundColor: '#e6e3b2',
+    backgroundColor: "#e6e3b2",
     borderRadius: 12,
-    padding: '2.5%',
-    marginHorizontal: '2.5%',
-    marginVertical: '1.5%',
-    justifyContent: 'center',
+    padding: "2.5%",
+    marginHorizontal: "2.5%",
+    marginVertical: "1.5%",
+    justifyContent: "center",
   },
   button: {
     backgroundColor: colors.secondary,
     borderRadius: 15,
     padding: 15,
     margin: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   disabledButton: {
-    backgroundColor: 'gray',
+    backgroundColor: "gray",
   },
   buttonText: {
     color: colors.white,
   },
   linkIcon: {
-    position: 'absolute',
-    top: '50%',
-    right: '5%',
+    position: "absolute",
+    top: "50%",
+    right: "5%",
   },
   box: {
     width: 200,

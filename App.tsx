@@ -16,9 +16,14 @@ import CreateGuiaProductos from "@/screens/emision/Productos";
 const Stack = createNativeStackNavigator();
 // For the day when we use more screens https://medium.com/@jacrplante/react-native-screens-multiple-stacks-da112a94ad24
 
-// This works really weird, try playing with emulator and with index.js if doesn't work
-// import firestore from '@react-native-firebase/firestore';
-// firestore().useEmulator('localhost', 8080);
+// PROD
+export const FIREBASE_CLOUD_FUNCTIONS_URL =
+  "https://us-central1-timberstock-firebase.cloudfunctions.net";
+// DEV
+// firestore().useEmulator("localhost", 8080);
+// DEV
+// export const FIREBASE_CLOUD_FUNCTIONS_URL =
+//   "http://127.0.0.1:5001/timberstock-firebase/us-central1";
 
 export default function App() {
   console.log("APP STARTED");

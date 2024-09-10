@@ -208,6 +208,8 @@ export const handleCreateGuiaLogic = async (
         precioUnitarioGuia * guia.volumen_total_emitido,
       );
 
+      console.log(guia);
+
       const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
 
       const CAF_step = 50;
@@ -218,7 +220,7 @@ export const handleCreateGuiaLogic = async (
       // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
       await generatePDF(guia, guiaDate as string, CAF);
 
-      // // Remove the folio from the list of folios_reserved
+      // // // Remove the folio from the list of folios_reserved
       const newFoliosReserved = user.folios_reservados.filter(
         (folio) => folio !== guia.identificacion.folio,
       );

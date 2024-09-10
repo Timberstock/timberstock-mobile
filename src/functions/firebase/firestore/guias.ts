@@ -37,8 +37,7 @@ export const createGuiaDoc = async (
     estado: "pendiente",
   };
   try {
-    const guiaDocumentId =
-      "DTE_GD_" + rutEmpresa + "f" + guia.identificacion.folio.toString();
+    const guiaDocumentId = "DTE_GD_f" + guia.identificacion.folio.toString();
 
     const newGuiaDocRef = firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
