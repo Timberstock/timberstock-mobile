@@ -1,6 +1,7 @@
 import axios from "axios";
 import { requestReservarFoliosResponse } from "@/interfaces/firestore/cloud_functions";
-import { FIREBASE_CLOUD_FUNCTIONS_URL } from "App";
+// @ts-ignore
+import { FIREBASE_CLOUD_FUNCTIONS_URL } from "@/../";
 
 export async function requestReservarFolios(
   uid: string,
