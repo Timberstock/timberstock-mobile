@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "794586908232",
+    "project_id": "timberstock-firebase",
+    "storage_bucket": "timberstock-firebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:794586908232:android:38c635b5b508d2a982fa7d",
+        "android_client_info": {
+          "package_name": "com.atc.timberstockandroid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "794586908232-p3d25trp9d0kdb90pg7sob01q7m71o6s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCow07sdhoQFzg473ejKwHHict_Te449zo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "794586908232-p3d25trp9d0kdb90pg7sob01q7m71o6s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "794586908232-iv1pkebotp26hephup0rj8f7v795vg8j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.atc.timberstockapp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:794586908232:android:01dff4ff83423ae382fa7d",
+        "android_client_info": {
+          "package_name": "com.atc.timberstockapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "794586908232-p3d25trp9d0kdb90pg7sob01q7m71o6s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCow07sdhoQFzg473ejKwHHict_Te449zo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "794586908232-p3d25trp9d0kdb90pg7sob01q7m71o6s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "794586908232-iv1pkebotp26hephup0rj8f7v795vg8j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.atc.timberstockapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
