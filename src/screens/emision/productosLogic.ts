@@ -94,11 +94,18 @@ export const handleUpdateClaseDiametricaValueLogic = (
       claseDiametrica.volumen_emitido = parseFloat(
         (
           cantidad *
+          parseFloat(clase) ** 2 *
           producto.largo *
-          Math.PI *
-          (parseFloat(clase) / (2 * 100)) ** 2
+          (1 / 10000)
         ).toFixed(4),
-      ); // pasamos diametro de centimetros a metros,
+      );
+      // (
+      //   cantidad *
+      //   producto.largo *
+      //   Math.PI *
+      //   (parseFloat(clase) / (2 * 100)) ** 2
+      // ).toFixed(4),
+      // ); // pasamos diametro de centimetros a metros,
       break;
     }
   }

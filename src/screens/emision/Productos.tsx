@@ -186,6 +186,12 @@ export default function CreateGuiaProductos(props: any) {
           keyboardVerticalOffset={200}
         >
           <ScrollView style={styles.scrollView}>
+            <View style={{ ...styles.section, ...styles.section.codigo_fsc }}>
+              <Text style={styles.sectionTitle}>Codigo FSC Contrato Venta</Text>
+              <Text style={{ marginTop: 10, marginLeft: 10 }}>
+                Codigo: {guia.codigo_fsc || "Sin Codigo"}
+              </Text>
+            </View>
             <View style={{ ...styles.section, ...styles.section.producto }}>
               <Text style={styles.sectionTitle}>Producto</Text>
               <Select
@@ -301,6 +307,9 @@ const styles = StyleSheet.create({
     paddingTop: "2%",
     backgroundColor: colors.crudo,
     borderRadius: 15,
+    codigo_fsc: {
+      height: 80,
+    },
     producto: {
       height: 175,
     },

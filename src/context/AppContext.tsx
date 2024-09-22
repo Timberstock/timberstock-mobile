@@ -1,20 +1,20 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { Alert } from 'react-native';
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { Alert } from "react-native";
 import firestore, {
   FirebaseFirestoreTypes,
-} from '@react-native-firebase/firestore';
-import { UserContext } from './UserContext';
+} from "@react-native-firebase/firestore";
+import { UserContext } from "./UserContext";
 import {
   fetchContratosCompra,
   fetchContratosVenta,
   fetchSubCollections,
-} from '@/functions/firebase/firestore/subcollections';
-import { fetchEmpresaDoc } from '@/functions/firebase/firestore/empresa';
-import { fetchGuiasDocs } from '@/functions/firebase/firestore/guias';
-import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
-import { ContratoCompra } from '@/interfaces/contratos/contratoCompra';
-import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
-import { Empresa, EmpresaSubCollectionsData } from '@/interfaces/context/app';
+} from "@/functions/firebase/firestore/subcollections";
+import { fetchEmpresaDoc } from "@/functions/firebase/firestore/empresa";
+import { fetchGuiasDocs } from "@/functions/firebase/firestore/guias";
+import { ContratoVenta } from "@/interfaces/contratos/contratoVenta";
+import { ContratoCompra } from "@/interfaces/contratos/contratoCompra";
+import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
+import { Empresa, EmpresaSubCollectionsData } from "@/interfaces/context/app";
 
 type AppContextType = {
   guiasSummary: GuiaDespachoSummaryProps[];
@@ -32,11 +32,11 @@ const initialState = {
   guiasSummary: [],
   updateGuiasSummary: () => {},
   empresa: {
-    razon_social: '',
-    rut: '',
-    giro: '',
-    direccion: '',
-    comuna: '',
+    razon_social: "",
+    rut: "",
+    giro: "",
+    direccion: "",
+    comuna: "",
     actividad_economica: [],
     caf_n: -1,
   },
@@ -59,18 +59,18 @@ const AppProvider = ({ children }: any) => {
   const { user } = useContext(UserContext);
 
   const [guiasSummary, setGuiasSummary] = useState<GuiaDespachoSummaryProps[]>(
-    initialState.guiasSummary
+    initialState.guiasSummary,
   );
   const [subCollectionsData, setSubCollectionsData] = useState<any>(
-    initialState.subCollectionsData
+    initialState.subCollectionsData,
   );
   const [empresa, setEmpresa] = useState<Empresa>(initialState.empresa);
 
   const [contratosCompra, setContratosCompra] = useState<ContratoCompra[]>(
-    initialState.contratosCompra
+    initialState.contratosCompra,
   );
   const [contratosVenta, setContratosVenta] = useState<ContratoVenta[]>(
-    initialState.contratosVenta
+    initialState.contratosVenta,
   );
 
   const updateEmpresa = (empresa: Empresa) => {
@@ -82,15 +82,15 @@ const AppProvider = ({ children }: any) => {
   };
 
   const updateSubCollectionsData = (
-    newEmpresaData: EmpresaSubCollectionsData
+    newEmpresaData: EmpresaSubCollectionsData,
   ) => {
     setSubCollectionsData(newEmpresaData);
   };
 
   const formatDateToYYYYMMDD = (date: Date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -99,7 +99,7 @@ const AppProvider = ({ children }: any) => {
   useEffect(() => {
     const listener = firestore()
       .collection(`empresas/${user?.empresa_id}/guias`)
-      .orderBy('identificacion.fecha', 'desc')
+      .orderBy("identificacion.fecha", "desc")
       .onSnapshot((querySnapshot) => {
         const newGuias: GuiaDespachoSummaryProps[] = [];
         querySnapshot.forEach(
@@ -113,13 +113,14 @@ const AppProvider = ({ children }: any) => {
                 receptor: data?.receptor,
                 // parse firestore timestamp to string
                 fecha: formatDateToYYYYMMDD(
-                  data?.identificacion.fecha.toDate()
+                  data?.identificacion.fecha.toDate(),
                 ),
                 url: data?.url,
+                volumen_total_emitido: data?.volumen_total_emitido,
               };
               return newGuias.push(guiaData);
             }
-          }
+          },
         );
         updateGuiasSummary(newGuias);
       });
@@ -128,14 +129,14 @@ const AppProvider = ({ children }: any) => {
         // Should be onSnap instead as well? Test again this approach while disconnected...
         try {
           const contratosCompraFetched = await fetchContratosCompra(
-            user.empresa_id
+            user.empresa_id,
           );
           const contratosVentaFetched = await fetchContratosVenta(
-            user.empresa_id
+            user.empresa_id,
           );
 
           const subCollectionsFetched = await fetchSubCollections(
-            user.empresa_id
+            user.empresa_id,
           );
           const empresaFetched = await fetchEmpresaDoc(user.empresa_id);
           const guiasSummaryFetched = await fetchGuiasDocs(user.empresa_id);
@@ -143,7 +144,7 @@ const AppProvider = ({ children }: any) => {
           setContratosCompra(contratosCompraFetched);
           setContratosVenta(contratosVentaFetched);
           updateSubCollectionsData(
-            subCollectionsFetched as EmpresaSubCollectionsData
+            subCollectionsFetched as EmpresaSubCollectionsData,
           );
           updateGuiasSummary(guiasSummaryFetched);
         } catch (err: any) {

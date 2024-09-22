@@ -20,7 +20,6 @@ import {
   SelectRef,
   SelectStyles,
 } from "@mobile-reality/react-native-select-pro";
-import { CheckBox } from "react-native-elements";
 import colors from "@/resources/Colors";
 import Header from "@/components/Header";
 import { AppContext } from "@/context/AppContext";
@@ -89,8 +88,6 @@ export default function CreateGuia(props: any) {
   const camionRef = useRef() as MutableRefObject<SelectRef<IOptionCamion>>;
   const carroRef = useRef() as MutableRefObject<SelectRef<IOption>>;
 
-  const [certChecked, setCertChecked] = useState(false);
-
   const [optionsInitialized, setOptionsInitialized] = useState(false);
   const [renderKey, setRenderKey] = useState(0);
 
@@ -107,10 +104,6 @@ export default function CreateGuia(props: any) {
     }
   }, [contratosCompra]);
 
-  const handleCertToggle = () => {
-    setCertChecked(!certChecked);
-  };
-
   const handleNavigateToCreateGuiaProductos = () => {
     if (!isGuiaValid(guia)) {
       alert("Debes llenar todos los campos");
@@ -123,6 +116,12 @@ export default function CreateGuia(props: any) {
       guia,
     );
 
+    // Get the corresponding faena from the selected destino_contrato from the cliente selected
+    const faenaContratoVenta = contratoVenta?.cliente.destinos_contrato
+      .find((destino) => destino.nombre === guia.destino.nombre)
+      ?.faenas.find((faena) => faena.rol === guia.predio_origen.rol);
+
+    guia.codigo_fsc = faenaContratoVenta?.codigo_fsc || "";
     guia.contrato_venta_id = contratoVenta?.firestoreID || "";
     guia.receptor.giro = contratoVenta?.cliente.giro || "";
 
@@ -137,10 +136,6 @@ export default function CreateGuia(props: any) {
         "No se encontró contrato de venta vigente para esta combinación cliente-destino-origen-producto",
       );
       return;
-    }
-
-    if (!certChecked) {
-      guia.predio_origen.certificado = "No Aplica";
     }
 
     guia.emisor = {
@@ -448,14 +443,6 @@ export default function CreateGuia(props: any) {
             </View>
             {guia.predio_origen.rol && (
               <View style={styles.row}>
-                <CheckBox
-                  checked={certChecked}
-                  onPress={handleCertToggle}
-                  containerStyle={styles.checkboxContainer}
-                  textStyle={{
-                    color: certChecked ? "#2ecc71" : colors.crudo,
-                  }}
-                />
                 <Text style={styles.textCertificate}>
                   CERT: {guia.predio_origen.certificado}
                 </Text>

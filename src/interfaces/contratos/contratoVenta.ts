@@ -21,6 +21,7 @@ export interface DestinoContratoVenta extends Destino {
 
 export interface FaenaContratoVenta extends Faena {
   productos_destino_contrato: ProductoContratoVenta[];
+  codigo_fsc?: string;
 }
 
 export interface ClaseDiametricaContratoVenta extends ClaseDiametrica {

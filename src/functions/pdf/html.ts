@@ -244,6 +244,10 @@ export const createPDFHTMLString = async (
     montoItem: guia.monto_total_guia,
   };
 
+  const codigoFSCAsDetalle: DetallePDF = {
+    nombre: guia.codigo_fsc ? `Codigo: ${guia.codigo_fsc}` : "",
+  };
+
   const carroAsDetalle: DetallePDF = {
     nombre: `${guia.transporte.carro}`,
   };
@@ -260,7 +264,6 @@ export const createPDFHTMLString = async (
     {
       nombre: `Plan de Manejo o Uso Suelo: ${guia.predio_origen.plan_de_manejo}`,
     },
-    { nombre: `${guia.predio_origen.certificado}` },
   ];
 
   const clasesDiametricasAsDetalles: DetallePDF[] = [];
@@ -313,6 +316,7 @@ export const createPDFHTMLString = async (
           <td class="cellwithborders">
             <p class="s2"> ${/* Producto */ productoAsDetalle.nombre}</p>
             <p class="s2"><br></p>
+            <p class="s2">${codigoFSCAsDetalle.nombre}</p>
             <p class="s2">Patente carro: ${/* Carro */ carroAsDetalle.nombre}</p>
             <p class="s2">${
               /* [Predio] 1st part */ predioAsDetalles[0].nombre
@@ -328,9 +332,6 @@ export const createPDFHTMLString = async (
             }</p>
             <p class="s2">${
               /* [Predio] 5th part */ predioAsDetalles[4].nombre
-            }</p>
-            <p class="s2">${
-              /* [Predio] 6th part */ predioAsDetalles[5].nombre
             }</p>
             ${
               guia.producto.tipo === "Aserrable"
