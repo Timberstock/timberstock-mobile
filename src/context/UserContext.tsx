@@ -1,25 +1,27 @@
-import React, { createContext, useRef, useState } from 'react';
-import { Usuario } from '@/interfaces/context/user';
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import React, { createContext, useRef, useState } from "react";
+import { Cafs, Usuario } from "@/interfaces/context/user";
+import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import {
   retrieveUserFirestoreInformation,
   retrieveUserSafe,
-} from '@/functions/firebase/firestore/usuarios';
-import { updateUserFirestore } from '@/functions/firebase/firestore/usuarios';
+} from "@/functions/firebase/firestore/usuarios";
+import { updateUserFirestore } from "@/functions/firebase/firestore/usuarios";
 
 type UserContextType = {
   user: Usuario | null;
   updateUserAuth: (user: FirebaseAuthTypes.User | null) => Promise<void>;
   updateUserReservedFolios: (
     newReservedFolios: number[],
-    newCafs?: string[]
+    newCafs?: string[],
   ) => Promise<void>;
+  devolverFolios: () => Promise<void>;
 };
 
 const initialState = {
   user: null,
   updateUserAuth: () => Promise.resolve(),
   updateUserReservedFolios: () => Promise.resolve(),
+  devolverFolios: () => Promise.resolve(),
 };
 
 // Context
@@ -30,7 +32,7 @@ export const UserContextProvider = ({ children }: any) => {
   const [user, setUser] = useState<Usuario | null>(null);
 
   const updateUserAuth = async (
-    newAuthUser: FirebaseAuthTypes.User | null
+    newAuthUser: FirebaseAuthTypes.User | null,
   ): Promise<void> => {
     // Logging Out
     if (!newAuthUser) {
@@ -40,7 +42,7 @@ export const UserContextProvider = ({ children }: any) => {
 
     // Logging in
     // For simplicity, we assign a reference to Firebase Authentication's User to our user state
-    console.log('Retrieving user information...\n\n');
+    console.log("Retrieving user information...\n\n");
     // const newUserFirestoreData = await retrieveUserFirestoreInformation(
     // For now we will try to retrieve the user's information as safe as possible
     const newUserFirestoreData = await retrieveUserSafe(newAuthUser.uid);
@@ -59,7 +61,7 @@ export const UserContextProvider = ({ children }: any) => {
 
   const updateUserReservedFolios = async (
     newReservedFolios: number[],
-    newCafs?: string[]
+    newCafs?: Cafs,
   ) => {
     if (!user || !user.firebaseAuth) return;
     try {
@@ -71,7 +73,7 @@ export const UserContextProvider = ({ children }: any) => {
         await updateUserFirestore(
           user.firebaseAuth.uid,
           newReservedFolios,
-          newCafs
+          newCafs,
         );
 
         // We update the user's folios locally without reading from the database
@@ -87,7 +89,7 @@ export const UserContextProvider = ({ children }: any) => {
         await updateUserFirestore(
           user.firebaseAuth.uid,
           newReservedFolios,
-          user.cafs
+          user.cafs,
         );
         newUser = {
           ...user,
@@ -96,9 +98,29 @@ export const UserContextProvider = ({ children }: any) => {
         };
       }
       setUser(newUser);
-      console.log('User reserved folios updated successfully');
+      console.log("User reserved folios updated successfully");
     } catch (error) {
-      alert('Error al cargar folios');
+      alert("Error al cargar folios");
+      console.log(error);
+    }
+  };
+
+  const devolverFolios = async () => {
+    if (!user || !user.firebaseAuth) return;
+    try {
+      // This is exactly the same change that the Cloud Function does in production
+      // but this is to ensure that the user's folios are updated in case we can't read from the server.
+      let newUser: Usuario;
+      await updateUserFirestore(user.firebaseAuth.uid, [], {});
+      newUser = {
+        ...user,
+        folios_reservados: [],
+        cafs: {},
+      };
+      setUser(newUser);
+      console.log("User reserved folios updated successfully");
+    } catch (error) {
+      alert("Error al devolver folios");
       console.log(error);
     }
   };
@@ -107,6 +129,7 @@ export const UserContextProvider = ({ children }: any) => {
     user,
     updateUserAuth,
     updateUserReservedFolios,
+    devolverFolios,
   };
 
   return (

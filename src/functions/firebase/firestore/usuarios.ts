@@ -1,11 +1,11 @@
 import firestore, {
   FirebaseFirestoreTypes,
-} from '@react-native-firebase/firestore';
-import { UsuarioFirestoreData } from '@/interfaces/context/user';
-import { Alert } from 'react-native';
+} from "@react-native-firebase/firestore";
+import { Cafs, UsuarioFirestoreData } from "@/interfaces/context/user";
+import { Alert } from "react-native";
 
 const daysSinceFirestoreTimestamp = (
-  timestamp: FirebaseFirestoreTypes.Timestamp
+  timestamp: FirebaseFirestoreTypes.Timestamp,
 ): number => {
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
   const timestampDate = timestamp.toDate();
@@ -16,45 +16,45 @@ const daysSinceFirestoreTimestamp = (
 };
 
 const fetchUserInfoFromCache = async (
-  userUid: string
+  userUid: string,
 ): Promise<UsuarioFirestoreData> => {
-  const userDocRef = firestore().collection('usuarios').doc(userUid);
-  const userDoc = await userDocRef.get({ source: 'cache' });
+  const userDocRef = firestore().collection("usuarios").doc(userUid);
+  const userDoc = await userDocRef.get({ source: "cache" });
   if (userDoc.exists) {
     const userData = userDoc.data() as UsuarioFirestoreData;
-    console.log('Data read from cache');
+    console.log("Data read from cache");
     return userData;
   } else {
-    throw new Error('Could not find user in cache');
+    throw new Error("Could not find user in cache");
   }
 };
 
 const fetchUserInfoFromServer = async (
-  userUid: string
+  userUid: string,
 ): Promise<UsuarioFirestoreData> => {
-  const userDocRef = firestore().collection('usuarios').doc(userUid);
-  const userDoc = await userDocRef.get({ source: 'server' });
+  const userDocRef = firestore().collection("usuarios").doc(userUid);
+  const userDoc = await userDocRef.get({ source: "server" });
   if (userDoc.exists) {
-    firestore().collection('usuarios').doc(userUid).update({
+    firestore().collection("usuarios").doc(userUid).update({
       last_login: new Date(),
     });
     const userData = userDoc.data() as UsuarioFirestoreData;
-    console.log('Data read from server');
+    console.log("Data read from server");
     return userData;
   } else {
-    throw new Error('Could not find user in server');
+    throw new Error("Could not find user in server");
   }
 };
 
 export const retrieveUserFirestoreInformation = async (
-  userUid: string
+  userUid: string,
 ): Promise<UsuarioFirestoreData | null> => {
   // This will be the final version, but for now we will just return the user data from the server
   try {
     // First try to get the user info from the cache
     const userDataFromCache = await fetchUserInfoFromCache(userUid);
     const daysSinceLastLogin = daysSinceFirestoreTimestamp(
-      userDataFromCache.last_login
+      userDataFromCache.last_login,
     );
     if (daysSinceLastLogin > 3) {
       try {
@@ -84,8 +84,8 @@ export const retrieveUserSafe = async (userUid: string) => {
       return userDataFromCache;
     } catch (e) {
       Alert.alert(
-        'Error usuario (server y cache)',
-        'No se pudo obtener la información del usuario'
+        "Error usuario (server y cache)",
+        "No se pudo obtener la información del usuario",
       );
       return null;
     }
@@ -95,10 +95,10 @@ export const retrieveUserSafe = async (userUid: string) => {
 export const updateUserFirestore = async (
   userUid: string,
   newFoliosReservados: number[],
-  newCafs?: string[]
+  newCafs?: Cafs,
 ) => {
   function snapshotPromise(
-    ref: FirebaseFirestoreTypes.DocumentReference
+    ref: FirebaseFirestoreTypes.DocumentReference,
   ): Promise<FirebaseFirestoreTypes.DocumentSnapshot> {
     // From https://github.com/firebase/firebase-js-sdk/issues/1497
     // Workaround for the issue of createGuiaDoc not resolving when creating a new guia offline.
@@ -112,7 +112,7 @@ export const updateUserFirestore = async (
         },
         (error) => {
           reject(error);
-        }
+        },
       );
     });
   }
@@ -122,7 +122,7 @@ export const updateUserFirestore = async (
       console.log({
         folios_reservados: newFoliosReservados,
       });
-      const userDocRef = firestore().collection('usuarios').doc(userUid);
+      const userDocRef = firestore().collection("usuarios").doc(userUid);
       userDocRef.update({
         folios_reservados: newFoliosReservados,
       });
@@ -135,7 +135,7 @@ export const updateUserFirestore = async (
         folios_reservados: newFoliosReservados,
         cafs: newCafs,
       });
-      const userDocRef = firestore().collection('usuarios').doc(userUid);
+      const userDocRef = firestore().collection("usuarios").doc(userUid);
       userDocRef.update({
         folios_reservados: newFoliosReservados,
         cafs: newCafs,
@@ -146,6 +146,21 @@ export const updateUserFirestore = async (
     return 200;
   } catch (e) {
     console.error(e);
-    throw new Error('Error al actualizar usuario');
+    throw new Error("Error al actualizar usuario");
+  }
+};
+
+// Devolver folios
+export const devolverFolios = async (userUid: string) => {
+  try {
+    const userDocRef = firestore().collection("usuarios").doc(userUid);
+    userDocRef.update({
+      folios_reservados: [],
+      cafs: {},
+    });
+    return 200;
+  } catch (e) {
+    console.error(e);
+    throw new Error("Error al devolver folios");
   }
 };

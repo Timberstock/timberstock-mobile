@@ -2,18 +2,22 @@ import React from "react";
 import "expo-dev-client";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SelectProvider } from "@mobile-reality/react-native-select-pro";
 import firestore from "@react-native-firebase/firestore";
 import { StyleSheet, TouchableOpacity, View, Text, Alert } from "react-native";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 import UserContextProvider from "@/context/UserContext";
 import AuthWrapper from "@/AuthWrapper";
 import Home from "@/screens/Home";
+import User from "@/screens/User";
 import { logoutUser } from "@/functions/firebase/auth";
 import CreateGuia from "@/screens/emision/Create";
 import CreateGuiaProductos from "@/screens/emision/Productos";
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 // For the day when we use more screens https://medium.com/@jacrplante/react-native-screens-multiple-stacks-da112a94ad24
 
 // DEV
@@ -82,7 +86,7 @@ export default function App() {
               <Stack.Screen
                 name="Home"
                 options={{ headerShown: false }}
-                component={Home}
+                component={Guias}
               />
               <Stack.Screen
                 name="CreateGuia"
@@ -99,6 +103,42 @@ export default function App() {
         </AuthWrapper>
       </UserContextProvider>
     </SelectProvider>
+  );
+}
+
+function Guias() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: string = "";
+
+          if (route.name === "Guias") {
+            iconName = focused ? "albums-sharp" : "albums-outline";
+          } else if (route.name === "Usuario") {
+            iconName = focused
+              ? "person-circle-sharp"
+              : "person-circle-outline";
+          }
+
+          // You can return any component that you like here!
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: "tomato",
+        tabBarInactiveTintColor: "gray",
+      })}
+    >
+      <Tab.Screen
+        name="Guias"
+        options={{ headerShown: false }}
+        component={Home}
+      />
+      <Tab.Screen
+        name="Usuario"
+        options={{ headerShown: false }}
+        component={User}
+      />
+    </Tab.Navigator>
   );
 }
 

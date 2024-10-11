@@ -1,4 +1,3 @@
-import { TransporteContratoCompra } from "../contratos/contratoCompra";
 import { Camion } from "../servicios";
 
 // 2nd Level Interfaces

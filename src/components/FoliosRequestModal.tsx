@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -7,9 +7,9 @@ import {
   TextInput,
   Text,
   ActivityIndicator,
-} from 'react-native';
-import colors from '@/resources/Colors';
-import Icon from 'react-native-vector-icons/Ionicons';
+} from "react-native";
+import colors from "@/resources/Colors";
+import Icon from "react-native-vector-icons/Ionicons";
 
 // TODO: fix types
 const FoliosRequestModal = (props: any) => {
@@ -19,7 +19,7 @@ const FoliosRequestModal = (props: any) => {
     setModalVisible,
     handleGetFolios,
   } = props;
-  const [numFolios, setNumFolios] = useState('');
+  const [numFolios, setNumFolios] = useState("");
 
   return (
     <View>
@@ -45,9 +45,13 @@ const FoliosRequestModal = (props: any) => {
             <TouchableOpacity
               style={styles.acceptButton}
               // Error handling for empty input (disable the button)
-              onPress={() => handleGetFolios(numFolios)}
+              onPress={() => {
+                console.log("Solicitando folios...");
+                console.log("Número de folios a solicitar: ", numFolios);
+                handleGetFolios(numFolios);
+              }}
             >
-              <Text style={styles.acceptButtonText}>Accept</Text>
+              <Text style={styles.acceptButtonText}>Solicitar</Text>
             </TouchableOpacity>
             {foliosRequestLoading && (
               <ActivityIndicator size="large" color="#4E4E4E" />
@@ -62,40 +66,40 @@ const FoliosRequestModal = (props: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   openModalButton: {
-    backgroundColor: 'blue',
+    backgroundColor: "blue",
     padding: 10,
     borderRadius: 5,
   },
   openModalButtonText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
   },
   modalContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     paddingTop: 40,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   input: {
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: "gray",
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
@@ -106,14 +110,14 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 15,
     margin: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   acceptButtonText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
   },
   closeIconContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
   },

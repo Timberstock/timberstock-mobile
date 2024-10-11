@@ -49,6 +49,7 @@ export interface GuiaDespachoFirestore {
   transporte: TransporteGuia;
   producto: ProductoGuia;
   codigo_fsc?: string;
+  codigo_contrato_externo?: string;
   servicios?: ServiciosGuia;
   contrato_compra_id: string;
   contrato_venta_id: string;

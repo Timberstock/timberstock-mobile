@@ -1,10 +1,16 @@
-import React from 'react';
-import Constants from 'expo-constants';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { logoutUser } from '@/functions/firebase/auth';
-import colors from '@/resources/Colors';
-import { Platform } from 'react-native';
+import React from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ImageBackground,
+  // Platform,
+} from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
+// import Constants from "expo-constants";
+
+import colors from "@/resources/Colors";
 
 interface HeaderProps {
   screenName?: string;
@@ -19,51 +25,45 @@ export default function Header(props: HeaderProps) {
     navigation.goBack();
   };
 
-  const handleLogout = () => {
-    logoutUser();
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.box}>
-        {screenName !== 'Home' && (
-          <TouchableOpacity style={styles.back} onPress={() => handleBack()}>
-            <Icon name="arrow-back" size={38} color={colors.secondary} />
+    <ImageBackground
+      source={require("../../assets/header_gradient.png")} // Put your gradient image here
+      style={styles.container}
+    >
+      <View style={styles.innerContainer}>
+        {screenName !== "Home" && (
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Icon name="arrow-back" size={28} color={colors.white} />
           </TouchableOpacity>
         )}
+        <Text style={styles.titleText}>{empresa || "TimberStock"}</Text>
       </View>
-      <Text style={styles.text}> {empresa ? empresa : 'TimberBiz'}</Text>
-      <View style={styles.box}>
-        <TouchableOpacity onPress={() => handleLogout()}>
-          <Icon name="close-outline" size={30} color={colors.secondary} />
-        </TouchableOpacity>
-      </View>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 0.5,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // paddingTop: Constants.statusBarHeight,
-    paddingTop: Platform.OS === 'ios' ? Constants.statusBarHeight : 40,
-    flexDirection: 'row',
-    zIndex: 1,
+    // paddingTop: Platform.OS === "ios" ? Constants.statusBarHeight : 40,
+    paddingTop: 40,
+    paddingBottom: 10,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  text: {
-    flex: 8,
-    color: colors.white,
-    fontSize: 24,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  box: {
+  innerContainer: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  back: {
-    paddingLeft: 5,
+  backButton: {
+    marginRight: 15,
+  },
+  titleText: {
+    flex: 1,
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
   },
 });

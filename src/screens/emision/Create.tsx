@@ -58,6 +58,7 @@ import {
 import OverlayLoading from "@/components/OverlayLoading";
 import { parseProductosFromContratos } from "./productosLogic";
 import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
+import Icon from "react-native-vector-icons/Ionicons";
 
 export default function CreateGuia(props: any) {
   const { navigation } = props;
@@ -122,6 +123,8 @@ export default function CreateGuia(props: any) {
       ?.faenas.find((faena) => faena.rol === guia.predio_origen.rol);
 
     guia.codigo_fsc = faenaContratoVenta?.codigo_fsc || "";
+    guia.codigo_contrato_externo =
+      faenaContratoVenta?.codigo_contrato_externo || "";
     guia.contrato_venta_id = contratoVenta?.firestoreID || "";
     guia.receptor.giro = contratoVenta?.cliente.giro || "";
 
@@ -442,9 +445,9 @@ export default function CreateGuia(props: any) {
               </View>
             </View>
             {guia.predio_origen.rol && (
-              <View style={styles.row}>
-                <Text style={styles.textCertificate}>
-                  CERT: {guia.predio_origen.certificado}
+              <View style={styles.textContainer}>
+                <Text style={styles.text}>
+                  Cert. Proveedor: {guia.predio_origen.certificado}
                 </Text>
               </View>
             )}
@@ -479,8 +482,7 @@ export default function CreateGuia(props: any) {
                 )}
                 {guia.receptor.rut !== "" && (
                   <Text style={styles.text}>
-                    Direccion: {guia.receptor.direccion} || Comuna:{" "}
-                    {guia.receptor.comuna}
+                    Direccion: {guia.receptor.direccion}, {guia.receptor.comuna}
                   </Text>
                 )}
               </View>
@@ -512,7 +514,7 @@ export default function CreateGuia(props: any) {
               <View style={styles.textContainer}>
                 {guia.destino.rol && (
                   <Text style={styles.text}>
-                    Rol: {guia.destino.rol} || {guia.destino.comuna}
+                    Rol: {guia.destino.rol} || Comuna: {guia.destino.comuna}
                   </Text>
                 )}
               </View>
@@ -670,6 +672,12 @@ export default function CreateGuia(props: any) {
             onPress={handleNavigateToCreateGuiaProductos}
           >
             <Text style={styles.buttonText}> Agregar Productos </Text>
+            <Icon
+              name="arrow-forward"
+              style={styles.icon}
+              size={20}
+              color={colors.white}
+            />
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -744,11 +752,12 @@ const styles = StyleSheet.create({
     textAlign: "left",
     margin: 5,
   },
-  textCertificate: {
-    fontSize: 14,
-    fontWeight: "normal",
-    textAlign: "left",
-  },
+
+  // textCertificate: {
+  //   fontSize: 14,
+  //   fontWeight: "normal",
+  //   alignSelf: "center",
+  // },
   textContainer: {
     flex: 1,
     flexDirection: "column",
@@ -761,17 +770,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     margin: 10,
-    alignItems: "center",
+    flexDirection: "row",
+    width: "90%",
   },
   buttonText: {
     color: colors.white,
+    fontSize: 16,
+    flex: 3,
   },
-  checkboxContainer: {
-    padding: 0,
-    margin: 0,
-    borderWidth: 0,
-    backgroundColor: colors.white,
-    left: 5,
+  icon: {
+    flex: 1,
+    right: 0,
+    textAlign: "right",
+    fontWeight: "bold",
   },
 });
 

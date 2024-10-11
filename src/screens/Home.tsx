@@ -6,80 +6,35 @@ import {
   TouchableOpacity,
   FlatList,
   Linking,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
-import { Alert } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
-
 import { AppContext } from "@/context/AppContext";
-import { UserContext } from "@/context/UserContext";
-
 import colors from "@/resources/Colors";
 import Header from "@/components/Header";
-import FoliosRequestModal from "@/components/FoliosRequestModal";
-import { requestReservarFolios } from "@/functions/firebase/cloud_functions";
-import {
-  _createGuiaTest,
-  fetchGuiasDocs,
-} from "@/functions/firebase/firestore/guias";
+import { fetchGuiasDocs } from "@/functions/firebase/firestore/guias";
 import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
+import { UserContext } from "@/context/UserContext";
 
 export default function Home(props: any) {
   const { navigation } = props;
-  const { user, updateUserReservedFolios } = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const { guiasSummary, updateGuiasSummary } = useContext(AppContext);
 
   const [loading, setLoading] = useState(true);
-  const [foliosRequestLoading, setFoliosRequestLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     handleRefresh();
   }, []);
 
-  const handleGetFolios = async (numFolios: number) => {
-    // TODO: Fix the Loading icon to not make the size of the Modal change
-
-    // Call the function to reserve the folios
-    if (user === null || user.firebaseAuth === null || numFolios <= 0) return;
-
-    setFoliosRequestLoading(true);
-
-    const response = await requestReservarFolios(
-      user.firebaseAuth.uid,
-      numFolios,
-    );
-
-    console.log("REQUEST RESERVAR FOLIOS RESPONSE:", response);
-
-    if (response.message.includes("No such object")) {
-      Alert.alert(
-        "Error",
-        "No se pudo encontrar un archivo CAF valido para solicitar folios",
-      );
-      setFoliosRequestLoading(false);
-      return;
-    }
-
-    // Update the user's folios locally
-    await updateUserReservedFolios(response.folios_reservados, response.cafs);
-
-    // Close the modal after successful action
-    setFoliosRequestLoading(false);
-    setModalVisible(false);
-  };
-
   const handleRefresh = async () => {
-    // THIS SHOULD ONLY BE RUN IF WE ARE LOGGED IN
-    if (user === null) return;
-    if (user.empresa_id) {
+    if (user?.empresa_id) {
       try {
-        console.log("REFRESHING");
         const empresaGuias = await fetchGuiasDocs(user.empresa_id);
-        // updateFoliosDisp(empresaGuias, empresa.caf_n);
         updateGuiasSummary(empresaGuias);
-
         setLoading(false);
-        console.log("DONE");
       } catch (error) {
         Alert.alert(
           "Error al cargar guías",
@@ -91,11 +46,16 @@ export default function Home(props: any) {
     }
   };
 
-  const renderItem = ({ item }: { item: GuiaDespachoSummaryProps }) => {
-    const guia = item;
+  const handleCreateGuia = () => {
+    if (user?.folios_reservados.length === 0 || !user?.folios_reservados) {
+      Alert.alert("Error", "No tienes folios reservados");
+    } else {
+      navigation.push("CreateGuia");
+    }
+  };
 
+  const renderItem = ({ item }: { item: GuiaDespachoSummaryProps }) => {
     const handleLinkClick = () => {
-      // The idea is this to be the PDF afterwards
       item.url
         ? Linking.openURL(item.url)
         : Alert.alert(
@@ -103,131 +63,132 @@ export default function Home(props: any) {
             "Todavía no se ha generado el link de esta guía o se ha producido un error",
           );
     };
+
     return (
-      <TouchableOpacity style={styles.guia}>
-        <Text> Folio: {guia.folio}</Text>
-        <Text> Fecha: {guia.fecha}</Text>
-        <Text> Estado: {guia.estado}</Text>
-        <Text> Receptor: {guia.receptor.razon_social}</Text>
-        {/* Agregar volumen */}
-        <Text> Monto: {guia.monto_total_guia}</Text>
-        <Icon
-          name="external-link"
-          size={30}
-          color="blue"
-          onPress={handleLinkClick}
-          style={styles.linkIcon}
-        />
-      </TouchableOpacity>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Folio: {item.folio}</Text>
+          <Icon
+            name="external-link"
+            style={styles.icon}
+            size={30}
+            color={colors.accent}
+            onPress={handleLinkClick}
+          />
+        </View>
+        <Text style={styles.cardText}>Fecha: {item.fecha}</Text>
+        <Text style={styles.cardText}>Estado: {item.estado}</Text>
+        <Text style={styles.cardText}>
+          Receptor: {item.receptor.razon_social}
+        </Text>
+        <Text style={styles.cardText}>Monto: {item.monto_total_guia}</Text>
+      </View>
     );
   };
+
   return (
-    <View style={styles.screen}>
+    <View style={styles.container}>
       <Header screenName="Home" {...props} />
       <View style={styles.body}>
-        <FlatList
-          data={guiasSummary}
-          renderItem={renderItem}
-          onRefresh={handleRefresh}
-          refreshing={loading}
-        />
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.secondary} />
+        ) : (
+          <FlatList
+            data={guiasSummary}
+            renderItem={renderItem}
+            onRefresh={handleRefresh}
+            refreshing={loading}
+          />
+        )}
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              user?.folios_reservados.length === 0 && styles.disabledButton,
+            ]}
+            onPress={handleCreateGuia}
+          >
+            <Text
+              style={[
+                styles.buttonText,
+                user?.folios_reservados.length === 0 &&
+                  styles.disabledButtonText,
+              ]}
+            >
+              Crear Nueva Guía de Despacho
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.buttonText}> Solicitar Folios </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            user?.folios_reservados.length === 0 && styles.disabledButton,
-          ]}
-          onPress={() => navigation.push("CreateGuia")}
-          disabled={
-            // TESTING:
-            user?.folios_reservados?.length && user.folios_reservados.length > 0
-              ? false
-              : true
-          }
-          // Just for testing
-          // style={styles.button}
-          // onPress={async () => {
-          //   const testFolio = 4;
-          //   const testCAFNumber = Math.floor((testFolio - 1) / 5);
-          //   const testGuia = await _createGuiaTest(testFolio);
-          //   const date = new Date();
-          //   if (user && user.cafs) {
-          //     await generatePDF(
-          //       testGuia,
-          //       date.toISOString(),
-          //       user.cafs[testCAFNumber]
-          //     );
-          //   }
-          // }}
-        >
-          <Text style={styles.buttonText}> Crear Nueva Guía de Despacho </Text>
-        </TouchableOpacity>
-      </View>
-      <FoliosRequestModal
-        foliosRequestLoading={foliosRequestLoading}
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        handleGetFolios={handleGetFolios}
-      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.lightGray,
   },
   body: {
-    flex: 8,
-    width: "100%",
+    flex: 9,
+    padding: 15,
+  },
+  card: {
     backgroundColor: colors.white,
-    justifyContent: "center",
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    flex: 7,
+  },
+  icon: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  cardText: {
+    fontSize: 14,
+    color: colors.darkGray,
+    marginVertical: 2,
   },
   buttonsContainer: {
-    flex: 2,
-    width: "100%",
-    backgroundColor: colors.white,
-    justifyContent: "center",
-  },
-  guia: {
-    backgroundColor: "#e6e3b2",
-    borderRadius: 12,
-    padding: "2.5%",
-    marginHorizontal: "2.5%",
-    marginVertical: "1.5%",
-    justifyContent: "center",
+    flex: 1,
+    alignItems: "center",
+    alignSelf: "center",
+    marginTop: 15,
+    position: "absolute",
+    bottom: 25,
   },
   button: {
-    backgroundColor: colors.secondary,
-    borderRadius: 15,
+    backgroundColor: colors.primary,
+    borderRadius: 25,
     padding: 15,
-    margin: 5,
+    width: "100%",
     alignItems: "center",
   },
   disabledButton: {
-    backgroundColor: "gray",
+    backgroundColor: colors.lightGrayButton, // Set a lighter color or gray tone for disabled state
+    borderColor: colors.darkGrayButton, // Optional border color for contrast
   },
   buttonText: {
     color: colors.white,
+    fontSize: 16,
+    fontWeight: "bold",
   },
-  linkIcon: {
-    position: "absolute",
-    top: "50%",
-    right: "5%",
-  },
-  box: {
-    width: 200,
-    height: 200,
-    marginVertical: 20,
+  disabledButtonText: {
+    color: colors.gray, // Use a lighter text color to indicate it's disabled
   },
 });

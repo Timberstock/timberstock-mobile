@@ -245,7 +245,7 @@ export const createPDFHTMLString = async (
   };
 
   const codigoFSCAsDetalle: DetallePDF = {
-    nombre: guia.codigo_fsc ? `Codigo: ${guia.codigo_fsc}` : "",
+    nombre: guia.codigo_fsc ? `Codigo FSC: ${guia.codigo_fsc}` : "",
   };
 
   const carroAsDetalle: DetallePDF = {
@@ -265,6 +265,12 @@ export const createPDFHTMLString = async (
       nombre: `Plan de Manejo o Uso Suelo: ${guia.predio_origen.plan_de_manejo}`,
     },
   ];
+
+  const codigoContratoExternoAsDetalle: DetallePDF = {
+    nombre: guia.codigo_contrato_externo
+      ? `Codigo: ${guia.codigo_contrato_externo}`
+      : "",
+  };
 
   const clasesDiametricasAsDetalles: DetallePDF[] = [];
   if (guia.producto.tipo === "Aserrable" && guia.producto.clases_diametricas) {
@@ -333,9 +339,10 @@ export const createPDFHTMLString = async (
             <p class="s2">${
               /* [Predio] 5th part */ predioAsDetalles[4].nombre
             }</p>
+            <p class="s2">${codigoContratoExternoAsDetalle.nombre}</p>
             ${
               guia.producto.tipo === "Aserrable"
-                ? '<p class="s2">Detalle Trozos por Diámetro:</p>'
+                ? '<p class="s2">Detalle trozos por clase:</p>'
                 : ""
             }
             ${
@@ -348,7 +355,7 @@ export const createPDFHTMLString = async (
           </td>
           <td class="cellwithborders">
             <p class="s2">${/* representative */ parseFloat(productoAsDetalle.cantidad?.toFixed(4) || "0").toLocaleString("es-CL")}</p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)} 
+            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)} 
             ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles
@@ -362,7 +369,7 @@ export const createPDFHTMLString = async (
           <td class="cellwithborders">
             <p class="s2">${/* representative */ guia.producto.unidad}
             </p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)}
+            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
             ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles
@@ -375,7 +382,7 @@ export const createPDFHTMLString = async (
             </td>
             <td class="cellwithborders">
             <p class="s2">${/* representative */ productoAsDetalle.precio?.toLocaleString("es-CL")}</p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)}
+            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
             ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles
@@ -395,7 +402,7 @@ export const createPDFHTMLString = async (
             <p class="s2">${/* representative */ productoAsDetalle.montoItem?.toLocaleString(
               "es-CL",
             )}</p>
-            ${/* Skip Predio parts + 1*/ '<p class="s2"><br></p>'.repeat(9)}
+            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
             ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles
