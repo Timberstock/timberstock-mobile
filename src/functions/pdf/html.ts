@@ -272,6 +272,15 @@ export const createPDFHTMLString = async (
       : "",
   };
 
+  const observacionesAsDetalles: DetallePDF[] = [];
+  if (guia.observaciones) {
+    for (const observacion of guia.observaciones) {
+      observacionesAsDetalles.push({
+        nombre: observacion,
+      });
+    }
+  }
+
   const clasesDiametricasAsDetalles: DetallePDF[] = [];
   if (guia.producto.tipo === "Aserrable" && guia.producto.clases_diametricas) {
     for (const claseDiametrica of guia.producto.clases_diametricas) {
@@ -340,6 +349,9 @@ export const createPDFHTMLString = async (
               /* [Predio] 5th part */ predioAsDetalles[4].nombre
             }</p>
             <p class="s2">${codigoContratoExternoAsDetalle.nombre}</p>
+            ${observacionesAsDetalles
+              .map((observacion) => `<p class="s2">${observacion.nombre}</p>`)
+              .join("")}
             ${
               guia.producto.tipo === "Aserrable"
                 ? '<p class="s2">Detalle trozos por clase:</p>'
@@ -355,7 +367,13 @@ export const createPDFHTMLString = async (
           </td>
           <td class="cellwithborders">
             <p class="s2">${/* representative */ parseFloat(productoAsDetalle.cantidad?.toFixed(4) || "0").toLocaleString("es-CL")}</p>
-            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)} 
+            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
+            ${
+              /* Skip observaciones space*/
+              observacionesAsDetalles
+                .map(() => `<p class="s2"><br></p>`)
+                .join("")
+            }
             ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles
@@ -371,6 +389,12 @@ export const createPDFHTMLString = async (
             </p>
             ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
             ${
+              /* Skip observaciones space*/
+              observacionesAsDetalles
+                .map(() => `<p class="s2"><br></p>`)
+                .join("")
+            }
+            ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles
                 .map(
@@ -383,6 +407,12 @@ export const createPDFHTMLString = async (
             <td class="cellwithborders">
             <p class="s2">${/* representative */ productoAsDetalle.precio?.toLocaleString("es-CL")}</p>
             ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
+            ${
+              /* Skip observaciones space*/
+              observacionesAsDetalles
+                .map(() => `<p class="s2"><br></p>`)
+                .join("")
+            }
             ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles
@@ -403,6 +433,12 @@ export const createPDFHTMLString = async (
               "es-CL",
             )}</p>
             ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
+            ${
+              /* Skip observaciones space*/
+              observacionesAsDetalles
+                .map(() => `<p class="s2"><br></p>`)
+                .join("")
+            }
             ${
               /* In case of Aserrable */
               clasesDiametricasAsDetalles

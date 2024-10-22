@@ -65,7 +65,9 @@ export default function CreateGuia(props: any) {
   const { empresa, contratosCompra, contratosVenta } = useContext(AppContext);
   const { user } = useContext(UserContext);
 
-  const [guia, setGuia] = useState<GuiaDespachoFirestore>(initialStateGuia);
+  const [guia, setGuia] = useState<GuiaDespachoFirestore>({
+    ...initialStateGuia,
+  });
   // Folios options is apart from the rest since it comes from the user, not contratos
   const [foliosOptions, setFoliosOptions] = useState<IOption[]>([]);
   const [options, setOptions] = useState<GuiaDespachoOptions>(
@@ -149,6 +151,9 @@ export default function CreateGuia(props: any) {
       comuna: empresa.comuna,
       actividad_economica: empresa.actividad_economica,
     };
+
+    // Clean up the observaciones array from empty strings
+    guia.observaciones = guia.observaciones?.filter((obs) => obs !== "");
 
     navigation.push("CreateGuiaProductos", {
       data: {
@@ -314,6 +319,28 @@ export default function CreateGuia(props: any) {
 
     setGuia(newGuia);
     setRenderKey((prevKey) => prevKey + 1);
+  }
+
+  function addObservacionHandler() {
+    setGuia((prevGuia) => ({
+      ...prevGuia,
+      observaciones: [...(prevGuia.observaciones || []), ""], // Immutably add new observation
+    }));
+    setRenderKey((prevKey) => prevKey + 1);
+  }
+
+  function removeObservacionHandler(index: number) {
+    setGuia((prevGuia) => ({
+      ...prevGuia,
+      observaciones: prevGuia.observaciones?.filter((_, i) => i !== index), // Immutably remove observation
+    }));
+    setRenderKey((prevKey) => prevKey + 1);
+  }
+
+  function observacionChangeHandler(index: number, text: string) {
+    const newObservaciones = [...(guia.observaciones || [])];
+    newObservaciones[index] = text;
+    setGuia({ ...guia, observaciones: newObservaciones });
   }
 
   return (
@@ -665,8 +692,74 @@ export default function CreateGuia(props: any) {
               </View>
             </View>
           </View>
+          <View
+            style={{
+              ...styles.section,
+              height: 150 + (guia.observaciones?.length || 0) * 50,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                width: "100%",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text style={{ ...styles.sectionTitle }}>Observaciones</Text>
+              <TouchableOpacity
+                style={{
+                  marginTop: "1%",
+                  marginRight: "5%",
+                }}
+                onPress={addObservacionHandler}
+              >
+                <Icon
+                  name="add-circle-outline"
+                  size={40}
+                  color={colors.secondary}
+                />
+              </TouchableOpacity>
+            </View>
+            {guia.observaciones?.map((observacion, index) => (
+              <View
+                style={{
+                  ...styles.container,
+                  flexDirection: "row",
+                  justifyContent: "center",
+                }}
+                key={`view-${renderKey}-${index}`}
+              >
+                <TextInput
+                  style={{ ...styles.input, width: "80%" }}
+                  value={observacion}
+                  placeholder={`Observacion ${index + 1}`}
+                  maxLength={100}
+                  key={`textinput-${renderKey}-${index}`}
+                  onChangeText={(text) => {
+                    observacionChangeHandler(index, text);
+                  }}
+                />
+                <TouchableOpacity
+                  style={{
+                    justifyContent: "center",
+                    marginLeft: "2%",
+                  }}
+                  key={`touchable-${renderKey}-${index}`}
+                  onPress={() => {
+                    removeObservacionHandler(index);
+                  }}
+                >
+                  <Icon
+                    name="remove-circle-outline"
+                    size={35}
+                    color={colors.secondary}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
           {/* Add an empty space */}
-          <View style={{ height: 50 }} />
+          <View style={{ height: 30 }} />
           <TouchableOpacity
             style={styles.button}
             onPress={handleNavigateToCreateGuiaProductos}

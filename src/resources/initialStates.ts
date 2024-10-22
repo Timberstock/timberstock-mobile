@@ -113,6 +113,7 @@ export const initialStateGuia = {
     unidad: "" as "M3" | "MR" | "",
   },
   servicios: {},
+  observaciones: [],
   contrato_compra_id: "",
   contrato_venta_id: "",
   volumen_total_emitido: 0,

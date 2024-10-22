@@ -1,10 +1,4 @@
-import {
-  MutableRefObject,
-  useRef,
-  useState,
-  useContext,
-  useEffect,
-} from "react";
+import { MutableRefObject, useRef, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -24,7 +18,6 @@ import Header from "@/components/Header";
 import { UserContext } from "@/context/UserContext";
 import Aserrable from "@/components/productos/Aserrable";
 import Pulpable from "@/components/productos/Pulpable";
-import { IOption } from "@/interfaces/screens/screens";
 import PrecioModal from "@/components/productos/PrecioModal";
 import {
   handleSelectProductoLogic,
@@ -34,20 +27,16 @@ import {
   handleIncreaseNumberOfClasesDiametricasLogic,
   handleUpdateBancoPulpableValueLogic,
   handleCreateGuiaLogic,
-  resetClasesDiametricas,
   resetBancosPulpable,
 } from "./productosLogic";
-import { AppContext } from "@/context/AppContext";
 import { initialStatesProducto } from "@/resources/initialStates";
 import {
   Banco,
-  ClaseDiametrica,
   IOptionProducto,
   IOptionTipoProducto,
   ProductoOptionObject,
   ProductoScreenOptions,
 } from "@/interfaces/screens/emision/productos";
-import { Producto } from "@/interfaces/esenciales";
 import {
   ClaseDiametricaGuia,
   GuiaDespachoFirestore,
@@ -196,7 +185,12 @@ export default function CreateGuiaProductos(props: any) {
                 {guia.codigo_contrato_externo || "Sin Codigo"}
               </Text>
             </View>
-            <View style={{ ...styles.section, ...styles.section.producto }}>
+            <View
+              style={{
+                ...styles.section,
+                ...styles.section.producto,
+              }}
+            >
               <Text style={styles.sectionTitle}>Producto</Text>
               <Select
                 styles={selectStyles}
@@ -315,7 +309,7 @@ const styles = StyleSheet.create({
       height: 120,
     },
     producto: {
-      height: 175,
+      height: 200,
     },
     detalle: {
       flex: 1,
@@ -388,7 +382,7 @@ const selectStyles: SelectStyles = {
     container: {
       // flex: 1,
       borderWidth: 2,
-      marginTop: "4%",
+      marginTop: "2%",
       borderColor: "#cccccc",
       borderRadius: 13,
       alignSelf: "center",
