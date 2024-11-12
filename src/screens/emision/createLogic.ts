@@ -43,7 +43,10 @@ export function getInitialOptions(
   };
 }
 
-export function isGuiaValid(guia: GuiaDespachoFirestore): boolean {
+export function isGuiaValid(
+  guia: GuiaDespachoFirestore,
+  options: GuiaDespachoOptions,
+): boolean {
   if (
     !(
       guia.identificacion.folio &&
@@ -58,6 +61,8 @@ export function isGuiaValid(guia: GuiaDespachoFirestore): boolean {
       guia.receptor.razon_social
     ) ||
     !guia.destino.nombre ||
+    !(guia.servicios?.carguio && options.empresas_carguio) ||
+    !(guia.servicios?.cosecha && options.empresas_cosecha) ||
     !(guia.transporte.empresa.rut && guia.transporte.empresa.razon_social) ||
     !(guia.transporte.chofer.nombre && guia.transporte.chofer.rut) ||
     !guia.transporte.camion.patente ||

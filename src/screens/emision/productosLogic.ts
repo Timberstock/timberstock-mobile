@@ -278,6 +278,7 @@ export const generatePDF = async (
       UTI: ".pdf",
       mimeType: "application/pdf",
     });
+    // Usar https://docs.expo.dev/versions/v49.0.0/sdk/document-picker/ para poder visualizar y compartir el PDF
     console.log("PDF file generated:", permanentUri);
   } catch (error) {
     console.error("Error generating PDF:", error);

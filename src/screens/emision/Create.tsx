@@ -108,7 +108,7 @@ export default function CreateGuia(props: any) {
   }, [contratosCompra]);
 
   const handleNavigateToCreateGuiaProductos = () => {
-    if (!isGuiaValid(guia)) {
+    if (!isGuiaValid(guia, options)) {
       alert("Debes llenar todos los campos");
       return;
     }
@@ -591,7 +591,7 @@ export default function CreateGuia(props: any) {
                   }
                   onSelect={selectCosechaHandler}
                   onRemove={() => selectCosechaHandler(null)}
-                  key={`carguio-${renderKey}`}
+                  key={`cosecha-${renderKey}`}
                 />
               </View>
             </View>
