@@ -61,8 +61,8 @@ export function isGuiaValid(
       guia.receptor.razon_social
     ) ||
     !guia.destino.nombre ||
-    !(guia.servicios?.carguio && options.empresas_carguio) ||
-    !(guia.servicios?.cosecha && options.empresas_cosecha) ||
+    !(!!guia.servicios?.carguio == options.empresas_carguio.length > 0) ||
+    !(!!guia.servicios?.cosecha == options.empresas_cosecha.length > 0) ||
     !(guia.transporte.empresa.rut && guia.transporte.empresa.razon_social) ||
     !(guia.transporte.chofer.nombre && guia.transporte.chofer.rut) ||
     !guia.transporte.camion.patente ||
