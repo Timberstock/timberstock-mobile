@@ -1,18 +1,18 @@
 import firestore, {
   FirebaseFirestoreTypes,
-} from '@react-native-firebase/firestore';
-import { Alert } from 'react-native';
+} from "@react-native-firebase/firestore";
+import { Alert } from "react-native";
 
 // TODO: Optimize all this file along with ChatGPT after wrapping up the app.
 export const fetchEmpresaDoc = async (empresaId: string) => {
-  const empresaDocRequest = async (source: 'cache' | 'server') => {
+  const empresaDocRequest = async (source: "cache" | "server") => {
     return firestore()
-      .collection('empresas')
+      .collection("empresas")
       .doc(empresaId)
       .get({ source: source });
   };
   const uponRequestResolution = (
-    request: FirebaseFirestoreTypes.DocumentSnapshot<FirebaseFirestoreTypes.DocumentData>
+    request: FirebaseFirestoreTypes.DocumentSnapshot<FirebaseFirestoreTypes.DocumentData>,
   ) => {
     const empresaData = request.data();
     const empresa = {
@@ -23,24 +23,25 @@ export const fetchEmpresaDoc = async (empresaId: string) => {
       comuna: empresaData?.comuna,
       actividad_economica: empresaData?.activ_econom,
       caf_n: empresaData?.caf_n,
+      caf_step: empresaData?.caf_step,
     };
     console.log(`Empresa ${empresaData?.razon_social} fetched`);
     return empresa;
   };
   // first we try with server always, to make sure the app is up to date and works well
   try {
-    const empresaFromServer = await empresaDocRequest('server');
+    const empresaFromServer = await empresaDocRequest("server");
     const response = uponRequestResolution(empresaFromServer);
     return response;
   } catch (e: any) {
     console.log(e);
     try {
-      const empresaFromCache = await empresaDocRequest('cache');
+      const empresaFromCache = await empresaDocRequest("cache");
       const response = uponRequestResolution(empresaFromCache);
       return response;
     } catch (e: any) {
-      Alert.alert('Error al leer empresa (server y cache)', e);
-      throw new Error('Error al leer empresa (servidor y cache)');
+      Alert.alert("Error al leer empresa (server y cache)", e);
+      throw new Error("Error al leer empresa (servidor y cache)");
     }
   }
 };

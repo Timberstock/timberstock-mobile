@@ -41,6 +41,7 @@ import {
   ClaseDiametricaGuia,
   GuiaDespachoFirestore,
 } from "@/interfaces/firestore/guia";
+import { AppContext } from "@/context/AppContext";
 
 export default function CreateGuiaProductos(props: any) {
   const { navigation } = props;
@@ -51,6 +52,8 @@ export default function CreateGuiaProductos(props: any) {
     guiaCreate: GuiaDespachoFirestore;
     productosOptions: ProductoOptionObject[];
   } = props.route.params.data;
+
+  const { empresa } = useContext(AppContext);
   const { user, updateUserReservedFolios } = useContext(UserContext);
 
   const [guia, setGuia] = useState<GuiaDespachoFirestore>(guiaCreate);
@@ -161,6 +164,7 @@ export default function CreateGuiaProductos(props: any) {
       setCreateGuiaLoading,
       setModalVisible,
       updateUserReservedFolios,
+      empresa.caf_step,
     );
   };
 

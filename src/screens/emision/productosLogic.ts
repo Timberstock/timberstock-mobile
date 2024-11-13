@@ -188,6 +188,7 @@ export const handleCreateGuiaLogic = async (
     newReservedFolios: number[],
     newCafs?: string[],
   ) => Promise<void>,
+  CAF_step: number,
 ) => {
   try {
     setCreateGuiaLoading(true);
@@ -219,7 +220,9 @@ export const handleCreateGuiaLogic = async (
 
       const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
 
-      const CAF_step = 50;
+      // const CAF_step = 50;
+
+      console.log("CAF_step", CAF_step);
 
       const CAF =
         user.cafs[Math.floor((guia.identificacion.folio - 1) / CAF_step)];

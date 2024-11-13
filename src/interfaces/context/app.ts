@@ -1,5 +1,5 @@
-import { Emisor } from '@/interfaces/sii/guia';
-import { Cliente, Faena, Producto, Proveedor } from '@/interfaces/esenciales';
+import { Emisor } from "@/interfaces/sii/guia";
+import { Cliente, Faena, Producto, Proveedor } from "@/interfaces/esenciales";
 
 export interface Empresa {
   razon_social: string;
@@ -9,6 +9,7 @@ export interface Empresa {
   comuna: string;
   actividad_economica: number[];
   caf_n: number;
+  caf_step: number;
 }
 
 export interface EmpresaSubCollectionsData {
