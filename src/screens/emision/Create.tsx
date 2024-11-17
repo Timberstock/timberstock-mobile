@@ -62,7 +62,8 @@ import Icon from "react-native-vector-icons/Ionicons";
 
 export default function CreateGuia(props: any) {
   const { navigation } = props;
-  const { empresa, contratosCompra, contratosVenta } = useContext(AppContext);
+  const { empresa, guiasSummary, contratosCompra, contratosVenta } =
+    useContext(AppContext);
   const { user } = useContext(UserContext);
 
   const [guia, setGuia] = useState<GuiaDespachoFirestore>({
@@ -98,7 +99,10 @@ export default function CreateGuia(props: any) {
     // Run only once after loading contratosCompra
     if (!optionsInitialized && contratosCompra.length > 0 && user) {
       const newOptions = getInitialOptions(contratosCompra);
-      const newFoliosOptions = parseFoliosOptions(user.folios_reservados);
+      const newFoliosOptions = parseFoliosOptions(
+        user.folios_reservados,
+        guiasSummary,
+      );
 
       setRenderKey((prevKey) => prevKey + 1);
       setOptions(newOptions);

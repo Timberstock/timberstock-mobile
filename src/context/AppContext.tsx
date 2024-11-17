@@ -116,7 +116,7 @@ const AppProvider = ({ children }: any) => {
                 fecha: formatDateToYYYYMMDD(
                   data?.identificacion.fecha.toDate(),
                 ),
-                url: data?.url,
+                pdf_url: data?.pdf_url,
                 volumen_total_emitido: data?.volumen_total_emitido,
               };
               return newGuias.push(guiaData);

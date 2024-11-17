@@ -177,7 +177,7 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
         // We parse the firestore timestamp to a string
         fecha: formatDateToYYYYMMDD(data.identificacion.fecha.toDate()),
         volumen_total_emitido: data.volumen_total_emitido,
-        url: data?.pdf_url ? data.pdf_url : "",
+        pdf_url: data?.pdf_url ? data.pdf_url : "",
       };
       guiasSummary.push(guiaData);
     });

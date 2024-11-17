@@ -22,6 +22,7 @@ import {
 import { Faena, Proveedor } from "@/interfaces/esenciales";
 import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
 import { Predio } from "@/interfaces/sii/detalles";
+import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
 
 export function getInitialOptions(
   contratosCompra: ContratoCompra[],
@@ -441,9 +442,15 @@ export function selectCarroLogic(
   return newGuia;
 }
 
-export const parseFoliosOptions = (folios: number[]): IOption[] => {
+export const parseFoliosOptions = (
+  folios: number[],
+  guiasSummary: GuiaDespachoSummaryProps[],
+): IOption[] => {
   let foliosOpts = [];
   for (const folio of folios) {
+    // Skip folios that already have a guia
+    // if (guiasSummary.some((guia) => guia.folio === folio)) continue;
+
     foliosOpts.push({
       value: folio.toString(),
       label: folio.toString(),

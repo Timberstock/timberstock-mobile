@@ -129,6 +129,8 @@ export const updateUserFirestore = async (
 
       const userDoc = await snapshotPromise(userDocRef);
 
+      console.log(userDoc);
+
       // if (userDoc.metadata.hasPendingWrites) {}
     } else {
       console.log({
@@ -141,6 +143,8 @@ export const updateUserFirestore = async (
         cafs: newCafs,
       });
       const userDoc = await snapshotPromise(userDocRef);
+
+      console.log(userDoc);
       // if (userDoc.metadata.hasPendingWrites) {}
     }
     return 200;

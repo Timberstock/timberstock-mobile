@@ -7,5 +7,5 @@ export interface GuiaDespachoSummaryProps {
   receptor: Receptor;
   volumen_total_emitido: number;
   fecha: string;
-  url: string;
+  pdf_url: string;
 }

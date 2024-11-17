@@ -19,7 +19,7 @@ import { UserContext } from "@/context/UserContext";
 
 export default function Home(props: any) {
   const { navigation } = props;
-  const { user } = useContext(UserContext);
+  const { user, updateUserAuth } = useContext(UserContext);
   const { guiasSummary, updateGuiasSummary } = useContext(AppContext);
 
   const [loading, setLoading] = useState(true);
@@ -34,6 +34,7 @@ export default function Home(props: any) {
       try {
         const empresaGuias = await fetchGuiasDocs(user.empresa_id);
         updateGuiasSummary(empresaGuias);
+        updateUserAuth(user.firebaseAuth);
         setLoading(false);
       } catch (error) {
         Alert.alert(
@@ -56,8 +57,8 @@ export default function Home(props: any) {
 
   const renderItem = ({ item }: { item: GuiaDespachoSummaryProps }) => {
     const handleLinkClick = () => {
-      item.url
-        ? Linking.openURL(item.url)
+      item.pdf_url
+        ? Linking.openURL(item.pdf_url)
         : Alert.alert(
             "No link",
             "Todavía no se ha generado el link de esta guía o se ha producido un error",
