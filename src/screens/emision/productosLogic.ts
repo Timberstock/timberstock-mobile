@@ -28,7 +28,10 @@ import {
 } from "@/interfaces/screens/emision/productos";
 import { Usuario } from "@/interfaces/context/user";
 import { Alert } from "react-native";
-import { createGuiaDoc } from "@/functions/firebase/firestore/guias";
+import {
+  createGuiaDoc,
+  updateGuiaDocWithErrorMsg,
+} from "@/functions/firebase/firestore/guias";
 import { createPDFHTMLString } from "@/functions/pdf/html";
 import {
   ContratoCompra,
@@ -243,6 +246,12 @@ export const handleCreateGuiaLogic = async (
   } catch (e) {
     console.log(e);
     console.log(guia);
+    await updateGuiaDocWithErrorMsg(
+      // Replace the - with "" to avoid the error
+      user?.empresa_id || "",
+      guia.identificacion.folio,
+      (e as Error).message || "error.message no encontrado",
+    );
     setCreateGuiaLoading(false);
     Alert.alert("Error", "No se pudo crear la guia de despacho");
   }
@@ -285,6 +294,13 @@ export const generatePDF = async (
     console.log("PDF file generated:", permanentUri);
   } catch (error) {
     console.error("Error generating PDF:", error);
+    await updateGuiaDocWithErrorMsg(
+      // Replace the - with "" to avoid the error
+      guia.emisor.rut.replace(/-/g, ""),
+      guia.identificacion.folio,
+      (error as Error).message || "error.message no encontrado",
+    );
+
     Alert.alert("Error", "Error al crear PDF");
   }
 };

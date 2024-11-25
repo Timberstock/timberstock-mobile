@@ -15,6 +15,7 @@ import { ContratoVenta } from "@/interfaces/contratos/contratoVenta";
 import { ContratoCompra } from "@/interfaces/contratos/contratoCompra";
 import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
 import { Empresa, EmpresaSubCollectionsData } from "@/interfaces/context/app";
+import * as Updates from "expo-updates";
 
 type AppContextType = {
   guiasSummary: GuiaDespachoSummaryProps[];
@@ -26,6 +27,7 @@ type AppContextType = {
   contratosVenta: ContratoVenta[];
   subCollectionsData: EmpresaSubCollectionsData;
   updateSubCollectionsData: (data: EmpresaSubCollectionsData) => void;
+  handleUpdateAvailable: () => void;
 };
 
 const initialState = {
@@ -52,6 +54,7 @@ const initialState = {
   },
   updateSubCollectionsData: () => {},
   updateFoliosDisp: () => {},
+  handleUpdateAvailable: () => {},
 };
 
 export const AppContext = createContext<AppContextType>(initialState);
@@ -96,6 +99,20 @@ const AppProvider = ({ children }: any) => {
   };
 
   // TODO: useMemo could be interesting here
+
+  const handleUpdateAvailable = async () => {
+    try {
+      await Updates.fetchUpdateAsync();
+      Alert.alert(
+        "Actualización descargada",
+        "La aplicación se reiniciará para instalar la actualización",
+      );
+      await Updates.reloadAsync();
+    } catch (error) {
+      Alert.alert("Error", "No se pudo instalar la última actualización");
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     const listener = firestore()
@@ -167,6 +184,7 @@ const AppProvider = ({ children }: any) => {
     updateEmpresa,
     subCollectionsData,
     updateSubCollectionsData,
+    handleUpdateAvailable,
   };
   return (
     <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>

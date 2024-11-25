@@ -68,6 +68,25 @@ export const createGuiaDoc = async (
   }
 };
 
+export const updateGuiaDocWithErrorMsg = async (
+  rutEmpresa: string,
+  folioGuia: number,
+  errorMsg: string,
+): Promise<void> => {
+  try {
+    const guiaDocumentId = "DTE_GD_f" + folioGuia.toString();
+
+    await firestore()
+      .collection(`empresas/${rutEmpresa}/guias`)
+      .doc(guiaDocumentId)
+      .update({ estado: "error_local", _error_msg_local: errorMsg });
+    console.log("Guía actualizada con error: ", guiaDocumentId);
+  } catch (e) {
+    console.error("Error updating document: ", e);
+    throw new Error(" Error al actualizar guía ");
+  }
+};
+
 export const _createGuiaTest = async (folio: number) => {
   console.log("[TEST GUIA CREATION]");
   const rutEmpresa = "770685532";

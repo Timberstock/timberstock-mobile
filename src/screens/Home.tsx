@@ -16,14 +16,36 @@ import Header from "@/components/Header";
 import { fetchGuiasDocs } from "@/functions/firebase/firestore/guias";
 import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
 import { UserContext } from "@/context/UserContext";
+import * as Updates from "expo-updates";
 
 export default function Home(props: any) {
   const { navigation } = props;
   const { user, updateUserAuth } = useContext(UserContext);
-  const { guiasSummary, updateGuiasSummary } = useContext(AppContext);
+  const { guiasSummary, updateGuiasSummary, handleUpdateAvailable } =
+    useContext(AppContext);
 
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // To check for updates automatically
+  const updatesListener = Updates.addListener((event) => {
+    if (event.type === Updates.UpdateEventType.UPDATE_AVAILABLE) {
+      handleUpdateAvailable();
+    } else if (event.type === Updates.UpdateEventType.ERROR) {
+      Alert.alert(
+        "Error",
+        "No se pudo comprobar si hay actualizaciones disponibles",
+      );
+      console.error(event);
+    } else if (event.type === Updates.UpdateEventType.NO_UPDATE_AVAILABLE) {
+      Alert.alert(
+        "No hay actualizaciones",
+        "La aplicación ya está actualizada",
+      );
+    }
+  });
+
+  Updates.useUpdateEvents(updatesListener);
 
   useEffect(() => {
     handleRefresh();

@@ -14,11 +14,15 @@ import { UserContext } from "@/context/UserContext";
 import FoliosRequestModal from "@/components/FoliosRequestModal";
 import { requestReservarFolios } from "@/functions/firebase/cloud_functions";
 import { logoutUser } from "@/functions/firebase/auth";
+import * as Updates from "expo-updates";
+import { AppContext } from "@/context/AppContext";
 
 export default function User(props: any) {
   const { navigation } = props;
   const { user, updateUserReservedFolios, devolverFolios } =
     useContext(UserContext);
+
+  const { handleUpdateAvailable } = useContext(AppContext);
 
   const [foliosRequestLoading, setFoliosRequestLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -92,6 +96,26 @@ export default function User(props: any) {
     ]);
   };
 
+  const handleCheckForUpdates = async () => {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        handleUpdateAvailable();
+      } else {
+        Alert.alert(
+          "No hay actualizaciones",
+          "La aplicación ya está actualizada",
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        "No se pudo comprobar si hay actualizaciones disponibles",
+      );
+      console.error(error);
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <Header screenName="Home" {...props} />
@@ -134,6 +158,18 @@ export default function User(props: any) {
               />
               <Text style={styles.buttonText}>Devolver Folios</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.updatesButton}
+              onPress={handleCheckForUpdates}
+            >
+              <Icon
+                name="cloud-download-outline"
+                style={styles.icon}
+                size={20}
+                color={colors.white}
+              />
+              <Text style={styles.buttonText}>Buscar Actualizaciones</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.logoutButtonContainer}>
@@ -145,6 +181,12 @@ export default function User(props: any) {
             </TouchableOpacity>
           </View>
         </View>
+        <Text style={styles.version}>
+          Última actualización:{" "}
+          {Updates.createdAt
+            ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
+            : "25/11/2024"}
+        </Text>
       </View>
       <FoliosRequestModal
         foliosRequestLoading={foliosRequestLoading}
@@ -184,6 +226,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.accent,
   },
+  version: {
+    // marginTop: 10,
+    fontSize: 16,
+    color: colors.gray,
+  },
   folios: {
     marginTop: 10,
     fontSize: 16,
@@ -220,6 +267,15 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginTop: 10,
+    flexDirection: "row",
+  },
+  updatesButton: {
+    backgroundColor: colors.brown,
+    borderRadius: 15,
+    padding: 10,
+    width: "100%",
+    alignItems: "center",
+    marginTop: 20,
     flexDirection: "row",
   },
   logoutButton: {

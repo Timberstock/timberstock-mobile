@@ -17,4 +17,5 @@ export default {
   lightGrayButton: "#D3D3D3",
   gray: "#808080",
   crudo: "#C2B28060",
+  brown: "#8B4513",
 };
