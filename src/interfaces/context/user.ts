@@ -1,8 +1,11 @@
 import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 
-export interface Cafs {
-  [caf_number: number]: string;
+export interface CAF {
+  id: string;
+  D: number;
+  H: number;
+  text: string;
 }
 
 export interface UsuarioFirestoreData {
@@ -11,7 +14,7 @@ export interface UsuarioFirestoreData {
   empresa_id: string;
   email: string;
   folios_reservados: number[];
-  cafs: Cafs;
+  cafs: CAF[];
   last_login: FirebaseFirestoreTypes.Timestamp;
   // Just so the same interface can be used to extend the received user
   // in the updateUserFirestore function.

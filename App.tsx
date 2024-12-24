@@ -21,6 +21,7 @@ const Tab = createBottomTabNavigator();
 // For the day when we use more screens https://medium.com/@jacrplante/react-native-screens-multiple-stacks-da112a94ad24
 
 // DEV
+// To use local also go to src/functions/firebase/cloud_functions.ts
 // firestore().useEmulator("localhost", 8080);
 
 export default function App() {

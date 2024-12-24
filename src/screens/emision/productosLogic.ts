@@ -191,7 +191,6 @@ export const handleCreateGuiaLogic = async (
     newReservedFolios: number[],
     newCafs?: string[],
   ) => Promise<void>,
-  CAF_step: number,
 ) => {
   try {
     setCreateGuiaLoading(true);
@@ -220,18 +219,28 @@ export const handleCreateGuiaLogic = async (
       );
 
       console.log(guia);
+      console.log(user.cafs);
 
-      const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finish
+      // Look for the CAF in the user's CAFs
+      const CAF = user.cafs.find(
+        (caf) =>
+          caf.D <= guia.identificacion.folio &&
+          caf.H >= guia.identificacion.folio,
+      );
 
-      // const CAF_step = 50;
+      if (!CAF) {
+        Alert.alert("Error", "No se pudo encontrar el CAF");
+        return;
+      }
 
-      console.log("CAF_step", CAF_step);
+      console.log("CAF encontrado: ", CAF);
 
-      const CAF =
-        user.cafs[Math.floor((guia.identificacion.folio - 1) / CAF_step)];
+      guia._caf_id = CAF.id;
+
+      const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finis
 
       // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
-      await generatePDF(guia, guiaDate as string, CAF);
+      await generatePDF(guia, guiaDate as string, CAF?.text as string);
 
       // // // Remove the folio from the list of folios_reserved
       const newFoliosReserved = user.folios_reservados.filter(
@@ -240,11 +249,11 @@ export const handleCreateGuiaLogic = async (
       // // Update the user's folios locally popping the one just used
       await updateUserReservedFolios(newFoliosReserved);
     }
-    setCreateGuiaLoading(false);
     setModalVisible(false);
+    setCreateGuiaLoading(false);
     navigation.push("Home");
   } catch (e) {
-    console.log(e);
+    console.error(e);
     console.log(guia);
     await updateGuiaDocWithErrorMsg(
       // Replace the - with "" to avoid the error

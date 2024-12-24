@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -7,15 +7,15 @@ import {
   TextInput,
   Text,
   ActivityIndicator,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import colors from '@/resources/Colors';
+} from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
+import colors from "@/resources/Colors";
 
 // TODO: fix types
 const PrecioModal = (props: any) => {
   const { createGuiaLoading, modalVisible, setModalVisible, handleCreateGuia } =
     props;
-  const [valorPrecioUnidadGuia, setValorPrecioUnidadGuia] = useState('');
+  const [valorPrecioUnidadGuia, setValorPrecioUnidadGuia] = useState("");
 
   return (
     <View>
@@ -36,10 +36,18 @@ const PrecioModal = (props: any) => {
               onChangeText={setValorPrecioUnidadGuia}
             />
             <TouchableOpacity
-              style={styles.acceptButton}
+              style={
+                !valorPrecioUnidadGuia || createGuiaLoading
+                  ? {
+                      ...styles.acceptButton,
+                      ...styles.acceptButtonDisabled,
+                    }
+                  : styles.acceptButton
+              }
+              disabled={!valorPrecioUnidadGuia || createGuiaLoading}
               // Error handling for empty input (disable the button)
-              onPress={() => {
-                handleCreateGuia(parseInt(valorPrecioUnidadGuia));
+              onPress={async () => {
+                await handleCreateGuia(parseInt(valorPrecioUnidadGuia));
               }}
             >
               <Text style={styles.acceptButtonText}>Crear</Text>
@@ -57,45 +65,45 @@ const PrecioModal = (props: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   openModalButton: {
-    backgroundColor: 'blue',
+    backgroundColor: "blue",
     padding: 10,
     borderRadius: 5,
   },
   openModalButtonText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
   },
   modalContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     paddingTop: 50,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   closeIconContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
   },
   input: {
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: "gray",
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
@@ -106,11 +114,14 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 15,
     margin: 5,
-    alignItems: 'center',
+    alignItems: "center",
+  },
+  acceptButtonDisabled: {
+    backgroundColor: colors.gray,
   },
   acceptButtonText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
   },
 });
 

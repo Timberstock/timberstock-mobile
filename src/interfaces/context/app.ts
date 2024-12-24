@@ -8,8 +8,6 @@ export interface Empresa {
   direccion: string;
   comuna: string;
   actividad_economica: number[];
-  caf_n: number;
-  caf_step: number;
 }
 
 export interface EmpresaSubCollectionsData {

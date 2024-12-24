@@ -8,7 +8,7 @@ export const FIREBASE_CLOUD_FUNCTIONS_URL =
   "https://us-central1-timberstock-firebase.cloudfunctions.net";
 // DEV
 // export const FIREBASE_CLOUD_FUNCTIONS_URL =
-// "http://127.0.0.1:5001/timberstock-firebase/us-central1";
+//   "http://127.0.0.1:5001/timberstock-firebase/us-central1";
 
 export async function requestReservarFolios(
   uid: string,

@@ -164,7 +164,6 @@ export default function CreateGuiaProductos(props: any) {
       setCreateGuiaLoading,
       setModalVisible,
       updateUserReservedFolios,
-      empresa.caf_step,
     );
   };
 

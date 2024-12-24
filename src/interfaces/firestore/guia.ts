@@ -58,4 +58,5 @@ export interface GuiaDespachoFirestore {
   precio_unitario_guia: number;
   monto_total_guia: number;
   estado: string;
+  _caf_id?: string;
 }

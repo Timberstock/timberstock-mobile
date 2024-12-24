@@ -40,8 +40,6 @@ const initialState = {
     direccion: "",
     comuna: "",
     actividad_economica: [],
-    caf_n: -1,
-    caf_step: -1,
   },
   updateEmpresa: () => {},
   contratosVenta: [],

@@ -1,7 +1,7 @@
 import firestore, {
   FirebaseFirestoreTypes,
 } from "@react-native-firebase/firestore";
-import { Cafs, UsuarioFirestoreData } from "@/interfaces/context/user";
+import { CAF, UsuarioFirestoreData } from "@/interfaces/context/user";
 import { Alert } from "react-native";
 
 const daysSinceFirestoreTimestamp = (
@@ -95,7 +95,7 @@ export const retrieveUserSafe = async (userUid: string) => {
 export const updateUserFirestore = async (
   userUid: string,
   newFoliosReservados: number[],
-  newCafs?: Cafs,
+  newCafs?: CAF[],
 ) => {
   function snapshotPromise(
     ref: FirebaseFirestoreTypes.DocumentReference,

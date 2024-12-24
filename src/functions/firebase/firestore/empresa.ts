@@ -22,8 +22,6 @@ export const fetchEmpresaDoc = async (empresaId: string) => {
       direccion: empresaData?.direccion,
       comuna: empresaData?.comuna,
       actividad_economica: empresaData?.activ_econom,
-      caf_n: empresaData?.caf_n,
-      caf_step: empresaData?.caf_step,
     };
     console.log(`Empresa ${empresaData?.razon_social} fetched`);
     return empresa;
