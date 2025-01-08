@@ -38,6 +38,14 @@ export interface ProductoGuia extends Producto {
   clases_diametricas?: ClaseDiametricaGuia[];
 }
 
+interface MetaDataUsuario {
+  usuario_id: string;
+  usuario_email: string;
+  version_app: string;
+  len_folios_reservados: number;
+  len_cafs: number;
+}
+
 export interface GuiaDespachoFirestore {
   emisor: Emisor;
   identificacion: Identificacion;
@@ -59,4 +67,5 @@ export interface GuiaDespachoFirestore {
   monto_total_guia: number;
   estado: string;
   _caf_id?: string;
+  usuario_metadata: MetaDataUsuario;
 }

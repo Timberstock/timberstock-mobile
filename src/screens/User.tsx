@@ -182,10 +182,10 @@ export default function User(props: any) {
           </View>
         </View>
         <Text style={styles.version}>
-          Última actualización:{" "}
+          Última actualización app:{" "}
           {Updates.createdAt
             ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
-            : "23/12/2024"}
+            : "07/01/2025"}
         </Text>
       </View>
       <FoliosRequestModal

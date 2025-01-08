@@ -120,6 +120,13 @@ export const initialStateGuia = {
   precio_unitario_guia: 0,
   monto_total_guia: 0,
   estado: "",
+  usuario_metadata: {
+    usuario_id: "",
+    usuario_email: "",
+    version_app: "",
+    len_folios_reservados: 0,
+    len_cafs: 0,
+  },
 };
 
 export const initialStatesOptionsCreate = {

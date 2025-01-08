@@ -15,6 +15,7 @@ import User from "@/screens/User";
 import { logoutUser } from "@/functions/firebase/auth";
 import CreateGuia from "@/screens/emision/Create";
 import CreateGuiaProductos from "@/screens/emision/Productos";
+import * as Updates from "expo-updates";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -70,6 +71,12 @@ export default function App() {
         <TouchableOpacity style={styles.button} onPress={handleClearCache}>
           <Text style={styles.buttonText}>Limpiar Cache</Text>
         </TouchableOpacity>
+        <Text>
+          Última actualización app:{" "}
+          {Updates.createdAt
+            ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
+            : "07/01/2025"}
+        </Text>
       </View>
     );
   }

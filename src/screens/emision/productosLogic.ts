@@ -38,6 +38,8 @@ import {
   ProductoContratoCompra,
 } from "@/interfaces/contratos/contratoCompra";
 
+import * as Updates from "expo-updates";
+
 export const handleSelectTipoLogic = (
   option: IOptionTipoProducto | null,
   productosOptions: ProductoOptionObject[],
@@ -237,6 +239,16 @@ export const handleCreateGuiaLogic = async (
 
       guia._caf_id = CAF.id;
 
+      guia.usuario_metadata = {
+        usuario_id: user.firebaseAuth?.uid || "usuario_id_no_encontrado",
+        usuario_email: user.email || "usuario_email_no_encontrado",
+        version_app: Updates.createdAt
+          ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
+          : "07/01/2025",
+        len_folios_reservados: user.folios_reservados.length || 0,
+        len_cafs: user.cafs.length || 0,
+      };
+
       const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finis
 
       // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
@@ -292,9 +304,13 @@ export const generatePDF = async (
     // Generate the PDF using Expo's print module
     const { uri } = await Print.printToFileAsync({ html: html });
 
+    console.log("printToFileAsync output: ", uri);
     // // Move the PDF file to a permanent location using Expo's file system module
     const permanentUri = `${FileSystem.documentDirectory}GuiaFolio${guia.identificacion.folio}.pdf`;
     await FileSystem.moveAsync({ from: uri, to: permanentUri });
+
+    console.log("moveAsync to ", permanentUri);
+
     await shareAsync(permanentUri, {
       UTI: ".pdf",
       mimeType: "application/pdf",
