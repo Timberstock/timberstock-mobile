@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -16,6 +16,10 @@ const PrecioModal = (props: any) => {
   const { createGuiaLoading, modalVisible, setModalVisible, handleCreateGuia } =
     props;
   const [valorPrecioUnidadGuia, setValorPrecioUnidadGuia] = useState("");
+
+  useEffect(() => {
+    setValorPrecioUnidadGuia("");
+  }, [modalVisible, handleCreateGuia]);
 
   return (
     <View>

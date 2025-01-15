@@ -1,4 +1,10 @@
-import { MutableRefObject, useRef, useState, useContext } from "react";
+import {
+  useRef,
+  useState,
+  useContext,
+  useEffect,
+  MutableRefObject,
+} from "react";
 import {
   View,
   Text,
@@ -7,6 +13,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from "react-native";
 import {
   Select,
@@ -70,6 +77,27 @@ export default function CreateGuiaProductos(props: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [createGuiaLoading, setCreateGuiaLoading] = useState(false);
   const [renderKey, setRenderKey] = useState(0);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true);
+      },
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+      },
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   const handleUpdateClaseDiametricaValue = (
     clase: string,
@@ -159,6 +187,7 @@ export default function CreateGuiaProductos(props: any) {
       navigation,
       precioUnitarioGuia,
       user,
+      empresa,
       guia,
       bancosPulpable,
       setCreateGuiaLoading,
@@ -171,13 +200,23 @@ export default function CreateGuiaProductos(props: any) {
     <View style={styles.screen}>
       <Header screenName="Products" empresa={"TimberBiz"} {...props} />
       <View style={styles.body}>
-        {/* TODO: Fix the verticalOffset is showing a white rectangle */}
+        {isKeyboardVisible && (
+          <TouchableOpacity
+            style={styles.closeKeyboardButton}
+            onPress={Keyboard.dismiss}
+          >
+            <Text style={styles.closeKeyboardText}>Cerrar Teclado</Text>
+          </TouchableOpacity>
+        )}
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
-          keyboardVerticalOffset={200}
+          keyboardVerticalOffset={100}
         >
-          <ScrollView style={styles.scrollView}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
             <View style={{ ...styles.section, ...styles.section.codigos }}>
               <Text style={styles.sectionTitle}>Codigos Contrato Venta</Text>
               <Text style={{ marginTop: 10, marginLeft: 10 }}>
@@ -215,7 +254,9 @@ export default function CreateGuiaProductos(props: any) {
                 defaultOption={options.productos.find(
                   (option) => option.value === guia.producto.codigo,
                 )}
-                disabled={guia.producto.tipo === ""}
+                disabled={
+                  guia.producto.tipo === "" || options.productos.length === 0
+                }
                 ref={productoRef}
                 onSelect={handleSelectProducto}
                 key={`producto-${renderKey}`}
@@ -378,6 +419,29 @@ const styles = StyleSheet.create({
   buttonTextLittle: {
     fontSize: 12,
   },
+  closeKeyboardButton: {
+    position: "absolute",
+    top: 10,
+    alignSelf: "center",
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  closeKeyboardText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
 
 const selectStyles: SelectStyles = {
@@ -414,5 +478,9 @@ const selectStyles: SelectStyles = {
     //   alignContent: 'flex-end',
     //   alignItems: 'center',
     // },
+  },
+  optionsList: {
+    borderColor: "#cccccc",
+    marginTop: Platform.OS === "ios" ? 0 : -49,
   },
 };

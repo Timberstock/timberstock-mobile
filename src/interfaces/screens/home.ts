@@ -1,6 +1,7 @@
 import { Receptor } from "@/interfaces/sii/guia";
 
 export interface GuiaDespachoSummaryProps {
+  id: string;
   folio: number;
   estado: string;
   monto_total_guia: number;

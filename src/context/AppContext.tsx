@@ -40,6 +40,8 @@ const initialState = {
     direccion: "",
     comuna: "",
     actividad_economica: [],
+    fecha_resolucion_sii: firestore.Timestamp.now(),
+    numero_resolucion_sii: "",
   },
   updateEmpresa: () => {},
   contratosVenta: [],
@@ -120,9 +122,11 @@ const AppProvider = ({ children }: any) => {
         const newGuias: GuiaDespachoSummaryProps[] = [];
         querySnapshot.forEach(
           (doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
+            // Every attribute here must match the attributes in fetchGuiasDocs function in functions/firebase/firestore/guias.ts
             if (doc.exists) {
               const data = doc.data();
               const guiaData = {
+                id: doc.id,
                 folio: data?.identificacion.folio,
                 estado: data?.estado,
                 monto_total_guia: data?.monto_total_guia,
@@ -134,7 +138,8 @@ const AppProvider = ({ children }: any) => {
                 pdf_url: data?.pdf_url,
                 volumen_total_emitido: data?.volumen_total_emitido,
               };
-              return newGuias.push(guiaData);
+              newGuias.push(guiaData);
+              return;
             }
           },
         );
@@ -155,6 +160,7 @@ const AppProvider = ({ children }: any) => {
             user.empresa_id,
           );
           const empresaFetched = await fetchEmpresaDoc(user.empresa_id);
+          // WHY ARE GUIAS SUMMARY BEING FETCHED FOR A SECOND TIME HERE?
           const guiasSummaryFetched = await fetchGuiasDocs(user.empresa_id);
           updateEmpresa(empresaFetched);
           setContratosCompra(contratosCompraFetched);

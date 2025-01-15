@@ -129,13 +129,12 @@ export const updateUserFirestore = async (
 
       const userDoc = await snapshotPromise(userDocRef);
 
-      console.log(userDoc);
-
+      // console.log(userDoc);
       // if (userDoc.metadata.hasPendingWrites) {}
     } else {
       console.log({
         folios_reservados: newFoliosReservados,
-        cafs: newCafs,
+        // cafs: newCafs,
       });
       const userDocRef = firestore().collection("usuarios").doc(userUid);
       userDocRef.update({
@@ -144,13 +143,13 @@ export const updateUserFirestore = async (
       });
       const userDoc = await snapshotPromise(userDocRef);
 
-      console.log(userDoc);
+      // console.log(userDoc);
       // if (userDoc.metadata.hasPendingWrites) {}
     }
     return 200;
   } catch (e) {
     console.error(e);
-    throw new Error("Error al actualizar usuario");
+    throw new Error("Error al actualizar usuario: " + e);
   }
 };
 
@@ -165,6 +164,6 @@ export const devolverFolios = async (userUid: string) => {
     return 200;
   } catch (e) {
     console.error(e);
-    throw new Error("Error al devolver folios");
+    throw new Error("Error al devolver folios: " + e);
   }
 };

@@ -1,7 +1,6 @@
 import * as Print from "expo-print";
 import * as FileSystem from "expo-file-system";
-import { shareAsync } from "expo-sharing";
-// import { pdf417 } from 'bwip-js';
+// import { shareAsync } from "expo-sharing";
 import "react-zlib-js"; // side effects only
 import BwipJs from "bwip-js";
 
@@ -11,7 +10,6 @@ import {
   GuiaDespachoFirestore,
   ProductoGuia,
 } from "@/interfaces/firestore/guia";
-// import { GuiaDespacho as GuiaDespachoCreateScreen } from "@/interfaces/screens/emision/create";
 import {
   ClaseDiametricaContratoVenta,
   ContratoVenta,
@@ -26,7 +24,7 @@ import {
   IOptionTipoProducto,
   ProductoOptionObject,
 } from "@/interfaces/screens/emision/productos";
-import { Usuario } from "@/interfaces/context/user";
+import { CAF, Usuario } from "@/interfaces/context/user";
 import { Alert } from "react-native";
 import {
   createGuiaDoc,
@@ -39,6 +37,20 @@ import {
 } from "@/interfaces/contratos/contratoCompra";
 
 import * as Updates from "expo-updates";
+import { Empresa } from "@/interfaces/context/app";
+import { utils } from "@react-native-firebase/app";
+
+const LOG_PREFIX = "ProductosLogic";
+const log = {
+  info: (functionName: string, message: string, ...args: any[]) =>
+    console.log(`[${LOG_PREFIX}-${functionName}] ${message}`, ...args),
+  error: (functionName: string, message: string, error?: any) =>
+    console.error(`[${LOG_PREFIX}-${functionName}] ${message}`, error || ""),
+  debug: (functionName: string, message: string, ...args: any[]) =>
+    console.debug(`[${LOG_PREFIX}-${functionName}] ${message}`, ...args),
+};
+
+let currentSharePromise: Promise<void> | null = null;
 
 export const handleSelectTipoLogic = (
   option: IOptionTipoProducto | null,
@@ -104,13 +116,6 @@ export const handleUpdateClaseDiametricaValueLogic = (
           (1 / 10000)
         ).toFixed(4),
       );
-      // (
-      //   cantidad *
-      //   producto.largo *
-      //   Math.PI *
-      //   (parseFloat(clase) / (2 * 100)) ** 2
-      // ).toFixed(4),
-      // ); // pasamos diametro de centimetros a metros,
       break;
     }
   }
@@ -185,93 +190,112 @@ export const handleCreateGuiaLogic = async (
   navigation: any,
   precioUnitarioGuia: number,
   user: Usuario | null,
+  empresa: Empresa,
   guia: GuiaDespachoFirestore,
   bancosPulpable: Banco[],
   setCreateGuiaLoading: (loading: boolean) => void,
   setModalVisible: (visible: boolean) => void,
   updateUserReservedFolios: (
     newReservedFolios: number[],
-    newCafs?: string[],
+    newCafs?: CAF[],
   ) => Promise<void>,
 ) => {
   try {
+    log.info("handleCreateGuiaLogic", "Starting guia creation process");
     setCreateGuiaLoading(true);
-    if (user && user.firebaseAuth && user.empresa_id) {
-      if (
-        guia.producto.tipo === "Aserrable" &&
-        guia.producto.clases_diametricas
-      ) {
-        guia.volumen_total_emitido = guia.producto.clases_diametricas?.reduce(
-          (acc, claseDiametrica) =>
-            acc + (claseDiametrica.volumen_emitido || 0),
-          0,
-        );
-      } else {
-        guia.volumen_total_emitido = calculateBancosPulpableVolumen(
-          guia.producto,
-          bancosPulpable,
-        );
-      }
-      guia.volumen_total_emitido = parseFloat(
-        guia.volumen_total_emitido.toFixed(4),
-      );
-      guia.precio_unitario_guia = precioUnitarioGuia;
-      guia.monto_total_guia = Math.trunc(
-        precioUnitarioGuia * guia.volumen_total_emitido,
-      );
 
-      console.log(guia);
-      console.log(user.cafs);
-
-      // Look for the CAF in the user's CAFs
-      const CAF = user.cafs.find(
-        (caf) =>
-          caf.D <= guia.identificacion.folio &&
-          caf.H >= guia.identificacion.folio,
-      );
-
-      if (!CAF) {
-        Alert.alert("Error", "No se pudo encontrar el CAF");
-        return;
-      }
-
-      console.log("CAF encontrado: ", CAF);
-
-      guia._caf_id = CAF.id;
-
-      guia.usuario_metadata = {
-        usuario_id: user.firebaseAuth?.uid || "usuario_id_no_encontrado",
-        usuario_email: user.email || "usuario_email_no_encontrado",
-        version_app: Updates.createdAt
-          ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
-          : "07/01/2025",
-        len_folios_reservados: user.folios_reservados.length || 0,
-        len_cafs: user.cafs.length || 0,
-      };
-
-      const guiaDate = await createGuiaDoc(user.empresa_id, guia); // Not sure if this is actually waiting for the function to finis
-
-      // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
-      await generatePDF(guia, guiaDate as string, CAF?.text as string);
-
-      // // // Remove the folio from the list of folios_reserved
-      const newFoliosReserved = user.folios_reservados.filter(
-        (folio) => folio !== guia.identificacion.folio,
-      );
-      // // Update the user's folios locally popping the one just used
-      await updateUserReservedFolios(newFoliosReserved);
+    if (!user || !user.firebaseAuth || !user.empresa_id) {
+      throw new Error("Usuario no autenticado");
     }
+
+    if (
+      guia.producto.tipo === "Aserrable" &&
+      guia.producto.clases_diametricas
+    ) {
+      guia.volumen_total_emitido = guia.producto.clases_diametricas?.reduce(
+        (acc, claseDiametrica) => acc + (claseDiametrica.volumen_emitido || 0),
+        0,
+      );
+    } else {
+      guia.volumen_total_emitido = calculateBancosPulpableVolumen(
+        guia.producto,
+        bancosPulpable,
+      );
+    }
+    guia.volumen_total_emitido = parseFloat(
+      guia.volumen_total_emitido.toFixed(4),
+    );
+    guia.precio_unitario_guia = precioUnitarioGuia;
+    guia.monto_total_guia = Math.trunc(
+      precioUnitarioGuia * guia.volumen_total_emitido,
+    );
+
+    // Look for the CAF in the user's CAFs
+    const CAF = user.cafs.find(
+      (caf) =>
+        caf.D <= guia.identificacion.folio &&
+        caf.H >= guia.identificacion.folio,
+    );
+
+    if (!CAF) {
+      log.error(
+        "handleCreateGuiaLogic",
+        "CAF not found for folio:",
+        guia.identificacion.folio,
+      );
+      Alert.alert("Error", "No se pudo encontrar el CAF");
+      return;
+    }
+
+    log.debug(
+      "handleCreateGuiaLogic",
+      "Found matching CAF, proceeding with guia creation",
+    );
+
+    guia._caf_id = CAF.id;
+
+    guia.usuario_metadata = {
+      usuario_id: user.firebaseAuth?.uid || "usuario_id_no_encontrado",
+      usuario_email: user.email || "usuario_email_no_encontrado",
+      version_app: Updates.createdAt
+        ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
+        : "07/01/2025",
+      len_folios_reservados: user.folios_reservados.length || 0,
+      len_cafs: user.cafs.length || 0,
+    };
+
+    // Create the guia doc in firebase
+    const guiaDate = await createGuiaDoc(user.empresa_id, guia);
+    log.debug("handleCreateGuiaLogic", "Guia document created in Firebase");
+
+    // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
+    await generatePDF(guia, guiaDate as string, CAF?.text as string, empresa);
+    log.debug("handleCreateGuiaLogic", "PDF generated and shared");
+
+    // Remove the folio from the list of folios_reserved
+    const newFoliosReserved = user.folios_reservados.filter(
+      (folio) => folio !== guia.identificacion.folio,
+    );
+
+    // Update the user's folios locally popping the one just used
+    await updateUserReservedFolios(newFoliosReserved);
+    log.debug("handleCreateGuiaLogic", "User folios updated");
+
     setModalVisible(false);
     setCreateGuiaLoading(false);
+    log.info(
+      "handleCreateGuiaLogic",
+      `Guia creation completed successfully. Folio: ${guia.identificacion.folio}`,
+    );
     navigation.push("Home");
-  } catch (e) {
-    console.error(e);
-    console.log(guia);
+  } catch (error) {
+    log.error("handleCreateGuiaLogic", "Failed to create guia:", error);
+    log.debug("handleCreateGuiaLogic", "Guia data at failure:", guia);
     await updateGuiaDocWithErrorMsg(
-      // Replace the - with "" to avoid the error
       user?.empresa_id || "",
       guia.identificacion.folio,
-      (e as Error).message || "error.message no encontrado",
+      (error as Error).message || "error.message no encontrado",
+      "_error_createGuia",
     );
     setCreateGuiaLoading(false);
     Alert.alert("Error", "No se pudo crear la guia de despacho");
@@ -282,53 +306,94 @@ export const generatePDF = async (
   guia: GuiaDespachoFirestore,
   guiaDate: string,
   CAF: string,
+  empresa: Empresa,
 ) => {
   try {
-    // get TED
-    const TED = await getTED(CAF, guia);
-    console.log("TED GENERADO");
+    log.info(
+      "generatePDF",
+      `Starting PDF generation for folio ${guia.identificacion.folio}`,
+    );
+    // await waitForPreviousShare();
 
-    // Generate the barcode
+    const TED = await getTED(CAF, guia);
+    log.debug("generatePDF", "TED generated");
+
     const barcode = await BwipJs.toDataURL({
       bcid: "pdf417",
       text: TED,
     });
+    log.debug("generatePDF", "Barcode generated");
 
-    console.log("barcode GENERADO");
+    const html = await createPDFHTMLString(empresa, guia, guiaDate, barcode);
+    log.debug("generatePDF", "HTML string to print on PDF generated");
 
-    // Prepare the HTML content for the PDF with the barcode
-    const html = await createPDFHTMLString(guia, guiaDate, barcode);
+    const tempURI = (await Print.printToFileAsync({ html: html })).uri;
 
-    console.log("html GENERADO");
+    log.debug("generatePDF", "Temporary PDF created at:", tempURI);
 
-    // Generate the PDF using Expo's print module
-    const { uri } = await Print.printToFileAsync({ html: html });
+    const permanentUri = `${FileSystem.documentDirectory}/GD_${guia.identificacion.folio}.pdf`;
+    await FileSystem.moveAsync({ from: tempURI, to: permanentUri });
+    log.debug(
+      "generatePDF",
+      "PDF moved to permanent (app only) location:",
+      permanentUri,
+    );
 
-    console.log("printToFileAsync output: ", uri);
-    // // Move the PDF file to a permanent location using Expo's file system module
-    const permanentUri = `${FileSystem.documentDirectory}GuiaFolio${guia.identificacion.folio}.pdf`;
-    await FileSystem.moveAsync({ from: uri, to: permanentUri });
+    // PDF creado correctamente
+    Alert.alert(
+      `PDF creado correctamente para Guía con folio: ${guia.identificacion.folio}`,
+      `Para compartirla o guardarla en Documentos, presione el botón de PDF de la guía respectiva en la pantalla de guías.`,
+    );
 
-    console.log("moveAsync to ", permanentUri);
+    // log.info("generatePDF", "Initiating PDF share...");
+    // currentSharePromise = shareAsync(permanentUri, {
+    //   UTI: ".pdf",
+    //   mimeType: "application/pdf",
+    // }).finally(() => {
+    //   log.debug("generatePDF", "Share operation completed");
+    //   currentSharePromise = null;
+    // });
 
-    await shareAsync(permanentUri, {
-      UTI: ".pdf",
-      mimeType: "application/pdf",
-    });
+    // await currentSharePromise;
+    // log.info("generatePDF", "PDF shared successfully");
+    // currentSharePromise = null;
     // Usar https://docs.expo.dev/versions/v49.0.0/sdk/document-picker/ para poder visualizar y compartir el PDF
-    console.log("PDF file generated:", permanentUri);
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    log.error("generatePDF", "PDF generation failed:", error);
     await updateGuiaDocWithErrorMsg(
-      // Replace the - with "" to avoid the error
       guia.emisor.rut.replace(/-/g, ""),
       guia.identificacion.folio,
       (error as Error).message || "error.message no encontrado",
+      "_error_generatePDF",
     );
-
     Alert.alert("Error", "Error al crear PDF");
   }
 };
+
+// const waitForPreviousShare = async () => {
+//   if (!currentSharePromise) return;
+
+//   try {
+//     log.debug(
+//       "waitForPreviousShare",
+//       "Previous share operation detected, waiting...",
+//     );
+//     await Promise.race([
+//       currentSharePromise,
+//       new Promise((_, reject) =>
+//         setTimeout(() => reject(new Error("Share timeout")), 5000),
+//       ),
+//     ]);
+//     log.debug("waitForPreviousShare", "Previous share operation completed");
+//   } catch (e) {
+//     log.error(
+//       "waitForPreviousShare",
+//       "Previous share operation failed or timed out:",
+//       e,
+//     );
+//   }
+//   currentSharePromise = null;
+// };
 
 const calculateBancosPulpableVolumen = (
   producto: Producto,
@@ -350,7 +415,6 @@ const calculateBancosPulpableVolumen = (
   const metrosRumaTotal = parseFloat(
     (volumenTotal * producto.largo).toFixed(4),
   );
-
   return metrosRumaTotal;
 };
 
@@ -477,11 +541,12 @@ export const parseProductosFromContratos = (
       (faena) => faena.rol === guia.predio_origen.rol,
     )?.productos_destino_contrato;
 
-  if (!productosContratoCompra || !productosContratoVenta)
+  if (!productosContratoCompra || !productosContratoVenta) {
     return {
       contratoVenta: undefined,
       productosOptions: [],
     };
+  }
 
   // Get the products that are in both contratos and combine their prices
   const productosOptions = _parseProductosOptions(

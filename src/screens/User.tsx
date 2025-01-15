@@ -40,8 +40,6 @@ export default function User(props: any) {
       numFolios,
     );
 
-    console.log("REQUEST RESERVAR FOLIOS RESPONSE:", response);
-
     if (response.message.includes("No such object")) {
       Alert.alert(
         "Error",

@@ -14,11 +14,12 @@ export const createGuiaDoc = async (
   ): Promise<FirebaseFirestoreTypes.DocumentSnapshot> {
     // From https://github.com/firebase/firebase-js-sdk/issues/1497
     // Workaround for the issue of createGuiaDoc not resolving when creating a new guia offline.
-    // The issue is that the set() function returns a promise that resolves only when the data is written to the server.
-    // So with this workaround, we are listening to the snapshot of the document, and resolving the promise when the snapshot is received.
     return new Promise((resolve, reject) => {
       var unsubscribe = ref.onSnapshot(
         (doc) => {
+          // console.log("id: ", doc.id);
+          // console.log("Nueva guia onSnapshot: ", doc);
+          // console.log("data: ", doc.data());
           resolve(doc);
           unsubscribe();
         },
@@ -43,11 +44,12 @@ export const createGuiaDoc = async (
       .collection(`empresas/${rutEmpresa}/guias`)
       .doc(guiaDocumentId);
 
-    console.log(guia);
+    // The issue is that the set() function returns a promise that resolves only when the data is written to the server.
+    // So with this workaround, we are listening to the snapshot of the document, and resolving the promise when the snapshot is received.
     newGuiaDocRef.set(guia);
     const createdGuiaDoc = await snapshotPromise(newGuiaDocRef);
 
-    console.log("Guía agregada a firebase: ", guiaDocumentId);
+    // console.log("Guía agregada a firebase: ", guiaDocumentId);
 
     // if (createdGuiaDoc.metadata.hasPendingWrites) {
     //   Alert.alert(
@@ -64,7 +66,7 @@ export const createGuiaDoc = async (
   } catch (e) {
     console.error("Error adding document: ", e);
     Alert.alert("Error al agregar guía");
-    throw new Error(" Error al agregar guía ");
+    throw new Error(" Error al agregar guía: " + e);
   }
 };
 
@@ -72,6 +74,7 @@ export const updateGuiaDocWithErrorMsg = async (
   rutEmpresa: string,
   folioGuia: number,
   errorMsg: string,
+  errorField: string,
 ): Promise<void> => {
   try {
     const guiaDocumentId = "DTE_GD_f" + folioGuia.toString();
@@ -79,7 +82,16 @@ export const updateGuiaDocWithErrorMsg = async (
     await firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
       .doc(guiaDocumentId)
-      .update({ estado: "error_local", _error_msg_local: errorMsg });
+      // .update({ estado: "error_local", _error_msg_local: errorMsg });
+      .set(
+        {
+          folio: folioGuia,
+          estado: "error_local",
+          // Use errorField to use as name of the function where the error is coming from
+          [errorField]: errorMsg,
+        },
+        { merge: true },
+      );
     console.log("Guía actualizada con error: ", guiaDocumentId);
   } catch (e) {
     console.error("Error updating document: ", e);
@@ -189,6 +201,7 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
     querySnapshot.forEach((doc: FirebaseFirestoreTypes.DocumentData) => {
       const data = doc.data();
       const guiaData = {
+        id: doc.id,
         folio: data.identificacion.folio,
         estado: data.estado,
         monto_total_guia: data.total_guia || data.monto_total_guia,

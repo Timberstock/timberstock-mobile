@@ -5,7 +5,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SelectProvider } from "@mobile-reality/react-native-select-pro";
 import firestore from "@react-native-firebase/firestore";
-import { StyleSheet, TouchableOpacity, View, Text, Alert } from "react-native";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  Text,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 import UserContextProvider from "@/context/UserContext";
@@ -16,6 +23,7 @@ import { logoutUser } from "@/functions/firebase/auth";
 import CreateGuia from "@/screens/emision/Create";
 import CreateGuiaProductos from "@/screens/emision/Productos";
 import * as Updates from "expo-updates";
+import { colors } from "react-native-elements";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -42,6 +50,65 @@ export default function App() {
   };
   const [clearCache, setClearCache] = React.useState(false);
   const [loadApp, setLoadApp] = React.useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = React.useState(true);
+
+  React.useEffect(() => {
+    checkForUpdates();
+  }, []);
+
+  const checkForUpdates = async () => {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        Alert.alert(
+          "Nueva actualización disponible",
+          "¿Deseas actualizar la aplicación ahora?",
+          [
+            {
+              text: "Más tarde",
+              style: "cancel",
+              onPress: () => setIsCheckingUpdate(false),
+            },
+            {
+              text: "Actualizar",
+              onPress: async () => {
+                try {
+                  Alert.alert(
+                    "Descargando actualización",
+                    "Por favor, espera un momento...",
+                  );
+                  await Updates.fetchUpdateAsync();
+                  Alert.alert(
+                    "Actualización completada",
+                    "La aplicación se reiniciará para aplicar los cambios",
+                    [
+                      {
+                        text: "OK",
+                        onPress: async () => {
+                          await Updates.reloadAsync();
+                        },
+                      },
+                    ],
+                  );
+                } catch (error) {
+                  Alert.alert(
+                    "Error",
+                    "No se pudo instalar la actualización. Por favor, inténtalo más tarde.",
+                  );
+                  setIsCheckingUpdate(false);
+                }
+              },
+            },
+          ],
+        );
+      } else {
+        setIsCheckingUpdate(false);
+      }
+    } catch (error) {
+      console.error("Error checking for updates:", error);
+      setIsCheckingUpdate(false);
+    }
+  };
 
   const handleLoadApp = () => {
     console.log("Loading the app...");
@@ -61,6 +128,15 @@ export default function App() {
       return;
     }
   };
+
+  if (isCheckingUpdate) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={colors.secondary} />
+        <Text>Comprobando actualizaciones...</Text>
+      </View>
+    );
+  }
 
   if (!clearCache && !loadApp) {
     return (

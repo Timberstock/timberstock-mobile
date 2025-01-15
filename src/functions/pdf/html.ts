@@ -1,7 +1,9 @@
 import { DetallePDF } from "@/interfaces/sii/detalles";
 import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
+import { Empresa } from "@/interfaces/context/app";
 
 export const createPDFHTMLString = async (
+  empresa: Empresa,
   guia: GuiaDespachoFirestore,
   guiaDate: string,
   barcode: { uri: string; width: number; height: number },
@@ -69,10 +71,11 @@ export const createPDFHTMLString = async (
     }
     .centered {
       display: flex;
-      justify-content: center;
+      justify-content: flex-end;
       align-items: center;
       flex-direction: column;
       margin-top: 20px;
+      padding-right: 20px;
     }
     </style>
   </head>
@@ -499,14 +502,23 @@ export const createPDFHTMLString = async (
   // change pdf417 for its recommended size if it can't be read easily from device '<img src="${barcode.uri}" style="width: ${barcode.width}px; height: ${barcode.height}px" />'
   const htmlBody = `
     <body>
-      <div class="centered">
+      <div style="display: flex; flex-direction: column; align-items: center;">
         ${empresaInfo}
         ${identificacionAndDespacho}
         ${detallesTable}
-        ${totales}
+        <div style="width: 100%; display: flex; justify-content: flex-end;">
+          ${totales}
+        </div>
         <p><br /></p>
-        <div style="text-align: center; style="position: absolute; left: 187.5px">
-          <img src="${barcode.uri}" style="width: 275px; height: 132px" />
+        <div style="width: 100%; display: flex; justify-content: flex-end;">
+          <div style="text-align: center; width: 275px;">
+            <img src="${barcode.uri}" style="width: 275px; height: 132px" />
+            <p style="margin: 0; font-family: Arial, sans-serif; font-size: 12px;">Timbre Electrónico SII</p>
+            <p style="margin: 0; font-family: Arial, sans-serif; font-size: 12px;">
+              Res. ${empresa.numero_resolucion_sii} de ${new Date(empresa.fecha_resolucion_sii.seconds * 1000).getFullYear()} - Verifique documento: www.sii.cl
+            </p>
+            <p style="margin: 0; font-family: Arial, sans-serif; font-weight: bold; font-size: 12px;">CEDIBLE CON SU FACTURA</p>
+          </div>
         </div>
       </div>
     </body>
