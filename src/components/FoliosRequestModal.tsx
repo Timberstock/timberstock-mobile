@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -19,7 +19,12 @@ const FoliosRequestModal = (props: any) => {
     setModalVisible,
     handleGetFolios,
   } = props;
+
   const [numFolios, setNumFolios] = useState("");
+  // UseEffect to clear the input when the modal is closed
+  useEffect(() => {
+    setNumFolios("");
+  }, [modalVisible]);
 
   return (
     <View>

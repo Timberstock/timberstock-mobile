@@ -1,4 +1,4 @@
-import React, { createContext, useRef, useState } from "react";
+import React, { createContext, useState } from "react";
 import { CAF, Usuario } from "@/interfaces/context/user";
 import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { retrieveUserSafe } from "@/functions/firebase/firestore/usuarios";
@@ -40,9 +40,14 @@ export const UserContextProvider = ({ children }: any) => {
     // Logging in
     // For simplicity, we assign a reference to Firebase Authentication's User to our user state
     console.log("Retrieving user information...\n\n");
+    // We see if there is a folder in the document directory with the user's empresa_id name
+
     // const newUserFirestoreData = await retrieveUserFirestoreInformation(
     // For now we will try to retrieve the user's information as safe as possible
-    const newUserFirestoreData = await retrieveUserSafe(newAuthUser.uid);
+    const newUserFirestoreData = (await retrieveUserSafe(
+      newAuthUser.uid,
+    )) as Usuario;
+
     const newUser = {
       firebaseAuth: newAuthUser,
       empresa_id: newUserFirestoreData?.empresa_id,
@@ -52,7 +57,6 @@ export const UserContextProvider = ({ children }: any) => {
       folios_reservados: newUserFirestoreData?.folios_reservados,
       cafs: newUserFirestoreData?.cafs,
     };
-
     setUser(newUser as Usuario);
   };
 

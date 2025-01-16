@@ -3,7 +3,7 @@
     "version": ">= 3.1.1"
   },
   "build": {
-    "android-development": {
+    "android-development-emulator": {
       "developmentClient": true,
       "distribution": "internal"
     },

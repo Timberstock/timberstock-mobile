@@ -1,4 +1,10 @@
-import React, { useEffect, useContext, useState } from "react";
+import React, {
+  useEffect,
+  useContext,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 import {
   StyleSheet,
   View,
@@ -17,6 +23,80 @@ import { fetchGuiasDocs } from "@/functions/firebase/firestore/guias";
 import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
 import { UserContext } from "@/context/UserContext";
 import * as Updates from "expo-updates";
+import * as FileSystem from "expo-file-system";
+import firebase from "@react-native-firebase/app";
+import PDFActionModal from "@/components/PDFActionModal";
+import { shareAsync } from "expo-sharing";
+
+const GuiaDespachoCardItem = React.memo(
+  ({
+    item,
+    user,
+  }: {
+    item: GuiaDespachoSummaryProps;
+    user: any; // Replace 'any' with your user type
+  }) => {
+    const [pdfModalVisible, setPdfModalVisible] = useState(false);
+
+    const handleSharePDF = async () => {
+      try {
+        const pdfPathOpt1 = `${FileSystem.documentDirectory}${user?.empresa_id}/GD_${item.folio}.pdf`;
+        const pdfPathOpt2 = `${FileSystem.documentDirectory}${user?.empresa_id}/GuiaFolio${item.folio}.pdf`;
+        const fileInfoOpt1 = await FileSystem.getInfoAsync(pdfPathOpt1);
+        const fileInfoOpt2 = await FileSystem.getInfoAsync(pdfPathOpt2);
+
+        if (fileInfoOpt1.exists) {
+          await shareAsync(pdfPathOpt1, {
+            UTI: ".pdf",
+            mimeType: "application/pdf",
+          });
+        } else if (fileInfoOpt2.exists) {
+          await shareAsync(pdfPathOpt2, {
+            UTI: ".pdf",
+            mimeType: "application/pdf",
+          });
+        } else {
+          Alert.alert(
+            "PDF no encontrado",
+            "No se encontró el PDF local para esta guía",
+          );
+        }
+      } catch (error) {
+        console.error("Error sharing PDF:", error);
+        Alert.alert("Error", "No se pudo compartir el PDF");
+      }
+      setPdfModalVisible(false);
+    };
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Folio: {item.folio}</Text>
+          <Icon
+            name="file-pdf-o"
+            style={styles.icon}
+            size={30}
+            color={colors.accent}
+            onPress={() => setPdfModalVisible(true)}
+          />
+        </View>
+        <Text style={styles.cardText}>Fecha: {item.fecha}</Text>
+        <Text style={styles.cardText}>Estado: {item.estado}</Text>
+        <Text style={styles.cardText}>
+          Receptor: {item.receptor.razon_social}
+        </Text>
+        <Text style={styles.cardText}>Monto: {item.monto_total_guia}</Text>
+
+        <PDFActionModal
+          visible={pdfModalVisible}
+          onClose={() => setPdfModalVisible(false)}
+          onShare={handleSharePDF}
+          webUrl={item.pdf_url}
+        />
+      </View>
+    );
+  },
+);
 
 export default function Home(props: any) {
   const { navigation } = props;
@@ -27,29 +107,109 @@ export default function Home(props: any) {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // To check for updates automatically
-  const updatesListener = Updates.addListener((event) => {
-    if (event.type === Updates.UpdateEventType.UPDATE_AVAILABLE) {
-      handleUpdateAvailable();
-    } else if (event.type === Updates.UpdateEventType.ERROR) {
-      Alert.alert(
-        "Error",
-        "No se pudo comprobar si hay actualizaciones disponibles",
-      );
-      console.error(event);
-    } else if (event.type === Updates.UpdateEventType.NO_UPDATE_AVAILABLE) {
-      Alert.alert(
-        "No hay actualizaciones",
-        "La aplicación ya está actualizada",
-      );
-    }
-  });
+  const directorySetupDone = useRef(false);
 
-  Updates.useUpdateEvents(updatesListener);
+  // To check for updates automatically
+  useEffect(() => {
+    const subscription = Updates.addListener((event) => {
+      if (event.type === Updates.UpdateEventType.UPDATE_AVAILABLE) {
+        handleUpdateAvailable();
+      } else if (event.type === Updates.UpdateEventType.ERROR) {
+        Alert.alert(
+          "Error",
+          "No se pudo comprobar si hay actualizaciones disponibles",
+        );
+        console.error(event);
+      } else if (event.type === Updates.UpdateEventType.NO_UPDATE_AVAILABLE) {
+        Alert.alert(
+          "No hay actualizaciones",
+          "La aplicación ya está actualizada",
+        );
+      }
+    });
+
+    // Clean up the subscription when component unmounts
+    return () => {
+      subscription.remove();
+    };
+  }, []); // Empty dependency array since we only want this to run once
 
   useEffect(() => {
     handleRefresh();
   }, []);
+
+  useEffect(() => {
+    // If already done or user is not logged in, skip
+    if (
+      directorySetupDone.current ||
+      !user ||
+      !user.empresa_id ||
+      !user.firebaseAuth
+    )
+      return;
+
+    const directoriesAndLogo = async () => {
+      console.log("Reading app folder content...");
+
+      const appFolderContent = await FileSystem.readDirectoryAsync(
+        FileSystem.documentDirectory as string,
+      );
+
+      console.log("App folder found:", appFolderContent);
+
+      if (appFolderContent.includes(user?.empresa_id)) {
+        console.log("Empresa folder found");
+      } else {
+        console.log("Empresa folder not found, creating...");
+        const empresaFolder = FileSystem.documentDirectory + user?.empresa_id;
+        await FileSystem.makeDirectoryAsync(empresaFolder);
+        console.log("Empresa folder created");
+      }
+
+      const empresaFolderContent = await FileSystem.readDirectoryAsync(
+        FileSystem.documentDirectory + user?.empresa_id,
+      );
+
+      console.log("Empresa folder content:", empresaFolderContent);
+
+      if (empresaFolderContent.includes("logo.png")) {
+        console.log("Logo found");
+      } else {
+        try {
+          console.log("Logo not found, continuing without logo");
+
+          // console.log("Firebase storage through firebase app: ");
+          // console.log(firebase.storage);
+          // console.log("Firebase storage through storage: ");
+          // console.log(storage);
+          // const storageInstance = firebase.app().storage();
+
+          // // Get the download URL from Firebase Storage
+          // const logoUrl = await storageInstance
+          //   .ref(`empresas/${user?.empresa_id}/logo.png`)
+          //   .getDownloadURL();
+
+          // // Download the file using Expo FileSystem
+          // const fileUri = `${FileSystem.documentDirectory}${user?.empresa_id}/logo.png`;
+          // const downloadResult = await FileSystem.downloadAsync(
+          //   logoUrl,
+          //   fileUri,
+          // );
+
+          // if (downloadResult.status === 200) {
+          //   console.log("Logo downloaded successfully");
+          // } else {
+          //   console.error("Failed to download logo:", downloadResult);
+          // }
+        } catch (error) {
+          console.error("Error downloading logo:", error);
+        }
+      }
+    };
+
+    directoriesAndLogo();
+    directorySetupDone.current = true;
+  }, [user]); // Will only run once when user is available
 
   const handleRefresh = async () => {
     if (user?.empresa_id) {
@@ -77,37 +237,21 @@ export default function Home(props: any) {
     }
   };
 
-  const renderItem = ({ item }: { item: GuiaDespachoSummaryProps }) => {
-    const handleLinkClick = () => {
-      item.pdf_url
-        ? Linking.openURL(item.pdf_url)
-        : Alert.alert(
-            "No link",
-            "Todavía no se ha generado el link de esta guía o se ha producido un error",
-          );
-    };
+  const renderGuiaItem = useCallback(
+    ({ item }: { item: GuiaDespachoSummaryProps }) => {
+      return <GuiaDespachoCardItem item={item} user={user} />;
+    },
+    [user],
+  );
 
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Folio: {item.folio}</Text>
-          <Icon
-            name="external-link"
-            style={styles.icon}
-            size={30}
-            color={colors.accent}
-            onPress={handleLinkClick}
-          />
-        </View>
-        <Text style={styles.cardText}>Fecha: {item.fecha}</Text>
-        <Text style={styles.cardText}>Estado: {item.estado}</Text>
-        <Text style={styles.cardText}>
-          Receptor: {item.receptor.razon_social}
-        </Text>
-        <Text style={styles.cardText}>Monto: {item.monto_total_guia}</Text>
-      </View>
-    );
-  };
+  const keyExtractor = useCallback((item: GuiaDespachoSummaryProps) => {
+    if (!item.id) {
+      console.warn("Missing id for item:", item);
+      // Fallback to composite key if id is missing
+      return `${item.folio}-${item.fecha}-${item.receptor.rut}`;
+    }
+    return item.id;
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -118,9 +262,10 @@ export default function Home(props: any) {
         ) : (
           <FlatList
             data={guiasSummary}
-            renderItem={renderItem}
+            renderItem={renderGuiaItem}
             onRefresh={handleRefresh}
             refreshing={loading}
+            keyExtractor={keyExtractor}
           />
         )}
         <View style={styles.buttonsContainer}>

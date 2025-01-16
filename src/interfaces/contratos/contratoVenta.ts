@@ -1,12 +1,12 @@
-import Timestamp from "@react-native-firebase/firestore";
 import { Cliente, Destino, Faena, Producto } from "../esenciales";
 import { ClaseDiametrica } from "../screens/emision/productos";
+import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 
 export interface ContratoVenta {
   firestoreID: string;
   cliente: ClienteContratoVenta;
-  fecha_firma: typeof Timestamp | Date;
-  fecha_caducidad: typeof Timestamp | Date;
+  fecha_firma: FirebaseFirestoreTypes.Timestamp | Date;
+  fecha_caducidad: FirebaseFirestoreTypes.Timestamp | Date;
   vigente: boolean;
   id_contrato_anterior?: string;
 }

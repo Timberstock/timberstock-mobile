@@ -14,6 +14,7 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  Platform,
 } from "react-native";
 import {
   Select,
@@ -58,10 +59,12 @@ import {
 import OverlayLoading from "@/components/OverlayLoading";
 import { parseProductosFromContratos } from "./productosLogic";
 import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
+// import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 
 export default function CreateGuia(props: any) {
   const { navigation } = props;
+  // const insets = useSafeAreaInsets();
   const { empresa, guiasSummary, contratosCompra, contratosVenta } =
     useContext(AppContext);
   const { user } = useContext(UserContext);
@@ -568,7 +571,8 @@ export default function CreateGuia(props: any) {
                   disabled={
                     guia.proveedor.rut === "" ||
                     guia.predio_origen.rol === "" ||
-                    guia.receptor.rut === ""
+                    guia.receptor.rut === "" ||
+                    options.empresas_carguio.length === 0
                   }
                   onSelect={selectCarguioHandler}
                   onRemove={() => selectCarguioHandler(null)}
@@ -591,7 +595,8 @@ export default function CreateGuia(props: any) {
                   disabled={
                     guia.proveedor.rut === "" ||
                     guia.predio_origen.rol === "" ||
-                    guia.receptor.rut === ""
+                    guia.receptor.rut === "" ||
+                    options.empresas_cosecha.length === 0
                   }
                   onSelect={selectCosechaHandler}
                   onRemove={() => selectCosechaHandler(null)}
@@ -893,4 +898,8 @@ const selectStyles: SelectStyles = {
       width: "90%",
     },
   },
+  // optionsList: {
+  //   borderColor: "#cccccc",
+  //   marginTop: Platform.OS === "ios" ? 0 : -49,
+  // },
 };
