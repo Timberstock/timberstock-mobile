@@ -479,8 +479,4 @@ const selectStyles: SelectStyles = {
     //   alignItems: 'center',
     // },
   },
-  optionsList: {
-    borderColor: "#cccccc",
-    marginTop: Platform.OS === "ios" ? 0 : -49,
-  },
 };

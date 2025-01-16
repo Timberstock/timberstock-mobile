@@ -898,8 +898,8 @@ const selectStyles: SelectStyles = {
       width: "90%",
     },
   },
-  optionsList: {
-    borderColor: "#cccccc",
-    marginTop: Platform.OS === "ios" ? 0 : -49,
-  },
+  // optionsList: {
+  //   borderColor: "#cccccc",
+  //   marginTop: Platform.OS === "ios" ? 0 : -49,
+  // },
 };

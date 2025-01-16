@@ -1,8 +1,9 @@
 import * as Print from "expo-print";
 import * as FileSystem from "expo-file-system";
 // import { shareAsync } from "expo-sharing";
-import "react-zlib-js"; // side effects only
-import BwipJs from "bwip-js";
+// import "react-zlib-js"; // side effects only
+import { toDataURL } from "@bwip-js/react-native";
+// import bwipjs from "@bwip-js/react-native";
 
 import getTED from "@/functions/pdf/timbre";
 import {
@@ -25,7 +26,7 @@ import {
   ProductoOptionObject,
 } from "@/interfaces/screens/emision/productos";
 import { CAF, Usuario } from "@/interfaces/context/user";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import {
   createGuiaDoc,
   updateGuiaDocWithErrorMsg,
@@ -269,7 +270,13 @@ export const handleCreateGuiaLogic = async (
     log.debug("handleCreateGuiaLogic", "Guia document created in Firebase");
 
     // We have to add the 'as string' because in case of error createGuiaDoc returns nothing
-    await generatePDF(guia, guiaDate as string, CAF?.text as string, empresa);
+    await generatePDF(
+      guia,
+      guiaDate as string,
+      CAF?.text as string,
+      empresa,
+      user,
+    );
     log.debug("handleCreateGuiaLogic", "PDF generated and shared");
 
     // Remove the folio from the list of folios_reserved
@@ -307,6 +314,7 @@ export const generatePDF = async (
   guiaDate: string,
   CAF: string,
   empresa: Empresa,
+  user: Usuario | null,
 ) => {
   try {
     log.info(
@@ -318,7 +326,7 @@ export const generatePDF = async (
     const TED = await getTED(CAF, guia);
     log.debug("generatePDF", "TED generated");
 
-    const barcode = await BwipJs.toDataURL({
+    const barcode = await toDataURL({
       bcid: "pdf417",
       text: TED,
     });
@@ -331,7 +339,12 @@ export const generatePDF = async (
 
     log.debug("generatePDF", "Temporary PDF created at:", tempURI);
 
-    const permanentUri = `${FileSystem.documentDirectory}/GD_${guia.identificacion.folio}.pdf`;
+    // If we are on android, we need don't need to add / to the documentDirectory
+    const documentDirectory =
+      Platform.OS === "android"
+        ? FileSystem.documentDirectory
+        : `${FileSystem.documentDirectory}/`;
+    const permanentUri = `${documentDirectory}${user?.empresa_id}/GD_${guia.identificacion.folio}.pdf`;
     await FileSystem.moveAsync({ from: tempURI, to: permanentUri });
     log.debug(
       "generatePDF",
