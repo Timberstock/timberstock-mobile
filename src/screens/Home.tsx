@@ -22,11 +22,11 @@ import Header from "@/components/Header";
 import { fetchGuiasDocs } from "@/functions/firebase/firestore/guias";
 import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
 import { UserContext } from "@/context/UserContext";
-import * as Updates from "expo-updates";
 import * as FileSystem from "expo-file-system";
 import firebase from "@react-native-firebase/app";
 import PDFActionModal from "@/components/PDFActionModal";
 import { shareAsync } from "expo-sharing";
+// import * as Updates from "expo-updates";
 
 const GuiaDespachoCardItem = React.memo(
   ({
@@ -109,30 +109,30 @@ export default function Home(props: any) {
 
   const directorySetupDone = useRef(false);
 
-  // To check for updates automatically
-  useEffect(() => {
-    const subscription = Updates.addListener((event) => {
-      if (event.type === Updates.UpdateEventType.UPDATE_AVAILABLE) {
-        handleUpdateAvailable();
-      } else if (event.type === Updates.UpdateEventType.ERROR) {
-        Alert.alert(
-          "Error",
-          "No se pudo comprobar si hay actualizaciones disponibles",
-        );
-        console.error(event);
-      } else if (event.type === Updates.UpdateEventType.NO_UPDATE_AVAILABLE) {
-        Alert.alert(
-          "No hay actualizaciones",
-          "La aplicación ya está actualizada",
-        );
-      }
-    });
+  // // To check for updates automatically
+  // useEffect(() => {
+  //   const subscription = Updates.addListener((event) => {
+  //     if (event.type === Updates.UpdateEventType.UPDATE_AVAILABLE) {
+  //       handleUpdateAvailable();
+  //     } else if (event.type === Updates.UpdateEventType.ERROR) {
+  //       Alert.alert(
+  //         "Error",
+  //         "No se pudo comprobar si hay actualizaciones disponibles",
+  //       );
+  //       console.error(event);
+  //     } else if (event.type === Updates.UpdateEventType.NO_UPDATE_AVAILABLE) {
+  //       Alert.alert(
+  //         "No hay actualizaciones",
+  //         "La aplicación ya está actualizada",
+  //       );
+  //     }
+  //   });
 
-    // Clean up the subscription when component unmounts
-    return () => {
-      subscription.remove();
-    };
-  }, []); // Empty dependency array since we only want this to run once
+  //   // Clean up the subscription when component unmounts
+  //   return () => {
+  //     subscription.remove();
+  //   };
+  // }, []); // Empty dependency array since we only want this to run once
 
   useEffect(() => {
     handleRefresh();
