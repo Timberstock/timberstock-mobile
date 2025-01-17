@@ -6,6 +6,7 @@ ios/
 android/
 
 # Older build files for expo
+old_builds/
 ios_49/
 ios_50/
 android_49/
