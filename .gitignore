@@ -1,10 +1,15 @@
 # firebase_services_files/
-firebase_services_files/*
+firebase_services_files/
 
 # expo
 ios/
 android/
 
+# Older build files for expo
+ios_49/
+ios_50/
+android_49/
+android_50/
 
 node_modules/
 .expo/
