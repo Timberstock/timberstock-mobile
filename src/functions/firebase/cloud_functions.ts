@@ -4,14 +4,14 @@ import { requestReservarFoliosResponse } from "@/interfaces/firestore/cloud_func
 // import { FIREBASE_CLOUD_FUNCTIONS_URL } from "@/../";
 
 // PROD
-// export const FIREBASE_CLOUD_FUNCTIONS_URL =
-// "https://us-central1-timberstock-firebase.cloudfunctions.net";
+export const FIREBASE_CLOUD_FUNCTIONS_URL =
+  "https://us-central1-timberstock-firebase.cloudfunctions.net";
 // DEV (ONLY FOR ANDROID)
 // export const FIREBASE_CLOUD_FUNCTIONS_URL =
 //   "http://10.0.2.2:5001/timberstock-firebase/us-central1";
 // DEV
-export const FIREBASE_CLOUD_FUNCTIONS_URL =
-  "http://127.0.0.1:5001/timberstock-firebase/us-central1";
+// export const FIREBASE_CLOUD_FUNCTIONS_URL =
+//   "http://127.0.0.1:5001/timberstock-firebase/us-central1";
 
 export async function requestReservarFolios(
   uid: string,

@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import UserContextProvider from "@/context/UserContext";
 import AuthWrapper from "@/AuthWrapper";
@@ -162,31 +163,33 @@ export default function App() {
   }
 
   return (
-    <SelectProvider>
-      <UserContextProvider>
-        <AuthWrapper>
-          <NavigationContainer>
-            <Stack.Navigator>
-              <Stack.Screen
-                name="Home"
-                options={{ headerShown: false }}
-                component={Guias}
-              />
-              <Stack.Screen
-                name="CreateGuia"
-                options={{ headerShown: false }}
-                component={CreateGuia}
-              />
-              <Stack.Screen
-                name="CreateGuiaProductos"
-                options={{ headerShown: false }}
-                component={CreateGuiaProductos}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </AuthWrapper>
-      </UserContextProvider>
-    </SelectProvider>
+    <SafeAreaProvider>
+      <SelectProvider>
+        <UserContextProvider>
+          <AuthWrapper>
+            <NavigationContainer>
+              <Stack.Navigator>
+                <Stack.Screen
+                  name="Home"
+                  options={{ headerShown: false }}
+                  component={Guias}
+                />
+                <Stack.Screen
+                  name="CreateGuia"
+                  options={{ headerShown: false }}
+                  component={CreateGuia}
+                />
+                <Stack.Screen
+                  name="CreateGuiaProductos"
+                  options={{ headerShown: false }}
+                  component={CreateGuiaProductos}
+                />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </AuthWrapper>
+        </UserContextProvider>
+      </SelectProvider>
+    </SafeAreaProvider>
   );
 }
 
