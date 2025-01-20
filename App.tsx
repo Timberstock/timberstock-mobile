@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import UserContextProvider from "@/context/UserContext";
 import AuthWrapper from "@/AuthWrapper";
