@@ -5,7 +5,7 @@ import React, {
   MutableRefObject,
   useContext,
   useState,
-} from "react";
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -15,17 +15,16 @@ import {
   TextInput,
   Alert,
   Platform,
-} from "react-native";
+} from 'react-native';
 import {
   Select,
   SelectRef,
   SelectStyles,
-} from "@mobile-reality/react-native-select-pro";
-import colors from "@/resources/Colors";
-import Header from "@/components/Header";
-import { AppContext } from "@/context/AppContext";
-import { UserContext } from "@/context/UserContext";
-import { IOption } from "@/interfaces/screens/screens";
+} from '@mobile-reality/react-native-select-pro';
+import colors from '@/resources/Colors';
+import { AppContext } from '@/context/AppContext';
+import { UserContext } from '@/context/UserContext';
+import { IOption } from '@/interfaces/screens/screens';
 import {
   GuiaDespachoOptions,
   IOptionClienteContratoCompra,
@@ -35,11 +34,11 @@ import {
   IOptionCarguio,
   IOptionCosecha,
   IOptionCamion,
-} from "@/interfaces/screens/emision/create";
+} from '@/interfaces/screens/emision/create';
 import {
   initialStateGuia,
   initialStatesOptionsCreate,
-} from "@/resources/initialStates";
+} from '@/resources/initialStates';
 import {
   isGuiaValid,
   getInitialOptions,
@@ -55,15 +54,16 @@ import {
   selectCosechaLogic,
   folioProveedorChangeLogic,
   selectCarroLogic,
-} from "./createLogic";
-import OverlayLoading from "@/components/OverlayLoading";
-import { parseProductosFromContratos } from "./productosLogic";
-import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
+} from '@/functions/datos-guia';
+import OverlayLoading from '@/components/OverlayLoading';
+import { parseProductosFromContratos } from '@/functions/datos-producto';
+import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
 // import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Icon from "react-native-vector-icons/Ionicons";
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 
-export default function CreateGuia(props: any) {
-  const { navigation } = props;
+export default function CreateGuia() {
+  const router = useRouter();
   // const insets = useSafeAreaInsets();
   const { empresa, guiasSummary, contratosCompra, contratosVenta } =
     useContext(AppContext);
@@ -75,7 +75,7 @@ export default function CreateGuia(props: any) {
   // Folios options is apart from the rest since it comes from the user, not contratos
   const [foliosOptions, setFoliosOptions] = useState<IOption[]>([]);
   const [options, setOptions] = useState<GuiaDespachoOptions>(
-    initialStatesOptionsCreate,
+    initialStatesOptionsCreate
   );
 
   const proveedorRef = useRef() as MutableRefObject<SelectRef>;
@@ -102,10 +102,7 @@ export default function CreateGuia(props: any) {
     // Run only once after loading contratosCompra
     if (!optionsInitialized && contratosCompra.length > 0 && user) {
       const newOptions = getInitialOptions(contratosCompra);
-      const newFoliosOptions = parseFoliosOptions(
-        user.folios_reservados,
-        guiasSummary,
-      );
+      const newFoliosOptions = parseFoliosOptions(user.folios_reservados, guiasSummary);
 
       setRenderKey((prevKey) => prevKey + 1);
       setOptions(newOptions);
@@ -116,14 +113,14 @@ export default function CreateGuia(props: any) {
 
   const handleNavigateToCreateGuiaProductos = () => {
     if (!isGuiaValid(guia, options)) {
-      alert("Debes llenar todos los campos");
+      alert('Debes llenar todos los campos');
       return;
     }
 
     const { contratoVenta, productosOptions } = parseProductosFromContratos(
       contratosCompra,
       contratosVenta,
-      guia,
+      guia
     );
 
     // Get the corresponding faena from the selected destino_contrato from the cliente selected
@@ -131,21 +128,20 @@ export default function CreateGuia(props: any) {
       .find((destino) => destino.nombre === guia.destino.nombre)
       ?.faenas.find((faena) => faena.rol === guia.predio_origen.rol);
 
-    guia.codigo_fsc = faenaContratoVenta?.codigo_fsc || "";
-    guia.codigo_contrato_externo =
-      faenaContratoVenta?.codigo_contrato_externo || "";
-    guia.contrato_venta_id = contratoVenta?.firestoreID || "";
-    guia.receptor.giro = contratoVenta?.cliente.giro || "";
+    guia.codigo_fsc = faenaContratoVenta?.codigo_fsc || '';
+    guia.codigo_contrato_externo = faenaContratoVenta?.codigo_contrato_externo || '';
+    guia.contrato_venta_id = contratoVenta?.firestoreID || '';
+    guia.receptor.giro = contratoVenta?.cliente.giro || '';
 
     if (!productosOptions || productosOptions.length === 0) {
-      alert("No hay productos asociados a esta combinación");
+      alert('No hay productos asociados a esta combinación');
       return;
     }
 
     if (!guia.contrato_venta_id) {
       Alert.alert(
-        "Error",
-        "No se encontró contrato de venta vigente para esta combinación cliente-destino-origen-producto",
+        'Error',
+        'No se encontró contrato de venta vigente para esta combinación cliente-destino-origen-producto'
       );
       return;
     }
@@ -160,14 +156,9 @@ export default function CreateGuia(props: any) {
     };
 
     // Clean up the observaciones array from empty strings
-    guia.observaciones = guia.observaciones?.filter((obs) => obs !== "");
+    guia.observaciones = guia.observaciones?.filter((obs) => obs !== '');
 
-    navigation.push("CreateGuiaProductos", {
-      data: {
-        guiaCreate: guia,
-        productosOptions: productosOptions,
-      },
-    });
+    router.push('datos-producto');
     return;
   };
 
@@ -176,7 +167,7 @@ export default function CreateGuia(props: any) {
       ...guia,
       identificacion: {
         ...guia.identificacion,
-        folio: parseInt(option?.value || "-1"),
+        folio: parseInt(option?.value || '-1'),
       },
     });
 
@@ -188,7 +179,7 @@ export default function CreateGuia(props: any) {
       ...guia,
       identificacion: {
         ...guia.identificacion,
-        tipo_despacho: option?.value || "",
+        tipo_despacho: option?.value || '',
       },
     });
   }
@@ -198,17 +189,13 @@ export default function CreateGuia(props: any) {
       ...guia,
       identificacion: {
         ...guia.identificacion,
-        tipo_traslado: option?.value || "",
+        tipo_traslado: option?.value || '',
       },
     });
   }
 
   function selectProveedorHandler(option: IOption | null) {
-    const { newGuia, newOptions } = selectProveedorLogic(
-      option,
-      guia,
-      contratosCompra,
-    );
+    const { newGuia, newOptions } = selectProveedorLogic(option, guia, contratosCompra);
 
     predioRef.current?.clear();
     clienteRef.current?.clear();
@@ -229,11 +216,7 @@ export default function CreateGuia(props: any) {
   }
 
   function selectFaenaHandler(option: IOption | null) {
-    const { newGuia, newOptions } = selectFaenaLogic(
-      option,
-      guia,
-      contratosCompra,
-    );
+    const { newGuia, newOptions } = selectFaenaLogic(option, guia, contratosCompra);
 
     clienteRef.current?.clear();
     destinoContratoRef.current?.clear();
@@ -247,11 +230,7 @@ export default function CreateGuia(props: any) {
   }
 
   function selectClienteHandler(option: IOptionClienteContratoCompra | null) {
-    const { newGuia, newOptions } = selectClienteLogic(
-      option,
-      guia,
-      contratosCompra,
-    );
+    const { newGuia, newOptions } = selectClienteLogic(option, guia, contratosCompra);
 
     destinoContratoRef.current?.clear();
     empresaTransporteRef.current?.clear();
@@ -264,11 +243,7 @@ export default function CreateGuia(props: any) {
   }
 
   function selectDestinoContratoHandler(option: IOptionDestinoContrato | null) {
-    const { newGuia, newOptions } = selectDestinoContratoLogic(
-      option,
-      options,
-      guia,
-    );
+    const { newGuia, newOptions } = selectDestinoContratoLogic(option, options, guia);
 
     empresaTransporteRef.current?.clear();
     choferRef.current?.clear();
@@ -280,11 +255,7 @@ export default function CreateGuia(props: any) {
   }
 
   function selectTransportistaHandler(option: IOptionTransporte | null) {
-    const { newGuia, newOptions } = selectTransporteLogic(
-      option,
-      options,
-      guia,
-    );
+    const { newGuia, newOptions } = selectTransporteLogic(option, options, guia);
 
     choferRef.current?.clear();
     camionRef.current?.clear();
@@ -331,7 +302,7 @@ export default function CreateGuia(props: any) {
   function addObservacionHandler() {
     setGuia((prevGuia) => ({
       ...prevGuia,
-      observaciones: [...(prevGuia.observaciones || []), ""], // Immutably add new observation
+      observaciones: [...(prevGuia.observaciones || []), ''], // Immutably add new observation
     }));
     setRenderKey((prevKey) => prevKey + 1);
   }
@@ -352,7 +323,6 @@ export default function CreateGuia(props: any) {
 
   return (
     <View style={styles.screen}>
-      <Header screenName="CreateGuia" empresa={"TimberBiz"} {...props} />
       <OverlayLoading loading={!optionsInitialized} />
       <View style={styles.body}>
         <ScrollView style={styles.scrollView}>
@@ -366,8 +336,7 @@ export default function CreateGuia(props: any) {
                   animation={true}
                   options={foliosOptions}
                   defaultOption={foliosOptions.find(
-                    (option) =>
-                      option.value === guia.identificacion.folio.toString(),
+                    (option) => option.value === guia.identificacion.folio.toString()
                   )}
                   onSelect={selectFolioHandler}
                   onRemove={() => selectFolioHandler(null)}
@@ -381,10 +350,9 @@ export default function CreateGuia(props: any) {
                   styles={selectStyles}
                   placeholderText="Tipo Despacho"
                   animation={true}
-                  options={options.tipoDespacho}
-                  defaultOption={options.tipoDespacho.find(
-                    (option) =>
-                      option.value === guia.identificacion.tipo_despacho,
+                  options={options.tipo_despacho}
+                  defaultOption={options.tipo_despacho.find(
+                    (option) => option.value === guia.identificacion.tipo_despacho
                   )}
                   onSelect={selectTipoDespachoHandler}
                   onRemove={() => selectTipoDespachoHandler(null)}
@@ -395,10 +363,9 @@ export default function CreateGuia(props: any) {
                   styles={selectStyles}
                   placeholderText="Tipo Traslado"
                   animation={true}
-                  options={options.tipoTraslado}
-                  defaultOption={options.tipoTraslado.find(
-                    (option) =>
-                      option.value === guia.identificacion.tipo_traslado,
+                  options={options.tipo_traslado}
+                  defaultOption={options.tipo_traslado.find(
+                    (option) => option.value === guia.identificacion.tipo_traslado
                   )}
                   onSelect={selectTipoTrasladoHandler}
                   onRemove={() => selectTipoTrasladoHandler(null)}
@@ -417,7 +384,7 @@ export default function CreateGuia(props: any) {
               options={options.proveedores}
               ref={proveedorRef}
               defaultOption={options.proveedores.find(
-                (option) => option.value === guia.proveedor.rut,
+                (option) => option.value === guia.proveedor.rut
               )}
               onSelect={selectProveedorHandler}
               onRemove={() => selectProveedorHandler(null)}
@@ -429,15 +396,15 @@ export default function CreateGuia(props: any) {
                 value={
                   guia.folio_guia_proveedor && guia.folio_guia_proveedor !== 0
                     ? guia.folio_guia_proveedor.toString()
-                    : ""
+                    : ''
                 }
-                placeholder={"Folio Proveedor (opcional)"}
+                placeholder={'Folio Proveedor (opcional)'}
                 keyboardType="numeric"
                 onChangeText={folioProveedorChangeHandler}
               />
             </View>
           </View>
-          <View style={{ ...styles.section, ...styles.section.predio }}>
+          <View style={[styles.section, { height: 230 }]}>
             <Text style={styles.sectionTitle}> Origen </Text>
             <View style={styles.row}>
               <View style={styles.container}>
@@ -450,9 +417,9 @@ export default function CreateGuia(props: any) {
                   ref={predioRef}
                   options={options.faenas}
                   defaultOption={options.faenas.find(
-                    (option) => option.value === guia.predio_origen.rol,
+                    (option) => option.value === guia.predio_origen.rol
                   )}
-                  disabled={guia.proveedor.razon_social === ""}
+                  disabled={guia.proveedor.razon_social === ''}
                   onSelect={selectFaenaHandler}
                   onRemove={() => selectFaenaHandler(null)}
                   key={`predios-${renderKey}`}
@@ -472,8 +439,7 @@ export default function CreateGuia(props: any) {
                 )}
                 {guia.predio_origen.rol && (
                   <Text style={styles.text}>
-                    Plan de Manejo o Uso Suelo:{" "}
-                    {guia.predio_origen.plan_de_manejo}
+                    Plan de Manejo o Uso Suelo: {guia.predio_origen.plan_de_manejo}
                   </Text>
                 )}
               </View>
@@ -486,7 +452,7 @@ export default function CreateGuia(props: any) {
               </View>
             )}
           </View>
-          <View style={{ ...styles.section, ...styles.section.receptor }}>
+          <View style={[styles.section, { height: 250 }]}>
             <Text style={styles.sectionTitle}> Cliente </Text>
             <View style={styles.row}>
               <View style={styles.container}>
@@ -497,11 +463,10 @@ export default function CreateGuia(props: any) {
                   ref={clienteRef}
                   options={options.clientes}
                   disabled={
-                    guia.predio_origen.rol === "" ||
-                    guia.proveedor.razon_social === ""
+                    guia.predio_origen.rol === '' || guia.proveedor.razon_social === ''
                   }
                   defaultOption={options.clientes.find(
-                    (option) => option.value === guia.receptor.rut,
+                    (option) => option.value === guia.receptor.rut
                   )}
                   onSelect={selectClienteHandler}
                   onRemove={() => selectClienteHandler(null)}
@@ -511,10 +476,10 @@ export default function CreateGuia(props: any) {
             </View>
             <View style={styles.row}>
               <View style={styles.textContainer}>
-                {guia.receptor.rut !== "" && (
+                {guia.receptor.rut !== '' && (
                   <Text style={styles.text}>RUT: {guia.receptor.rut}</Text>
                 )}
-                {guia.receptor.rut !== "" && (
+                {guia.receptor.rut !== '' && (
                   <Text style={styles.text}>
                     Direccion: {guia.receptor.direccion}, {guia.receptor.comuna}
                   </Text>
@@ -530,12 +495,12 @@ export default function CreateGuia(props: any) {
                   ref={destinoContratoRef}
                   options={options.destinos_contrato}
                   defaultOption={options.destinos_contrato.find(
-                    (option) => option.value === guia.destino.nombre,
+                    (option) => option.value === guia.destino.nombre
                   )}
                   disabled={
-                    guia.proveedor.rut === "" ||
-                    guia.predio_origen.rol === "" ||
-                    guia.receptor.razon_social === ""
+                    guia.proveedor.rut === '' ||
+                    guia.predio_origen.rol === '' ||
+                    guia.receptor.razon_social === ''
                   }
                   onSelect={selectDestinoContratoHandler}
                   onRemove={() => selectDestinoContratoHandler(null)}
@@ -565,13 +530,12 @@ export default function CreateGuia(props: any) {
                   ref={carguioRef}
                   options={options.empresas_carguio}
                   defaultOption={options.empresas_carguio.find(
-                    (option) =>
-                      option.value === guia.servicios?.carguio?.empresa.rut,
+                    (option) => option.value === guia.servicios?.carguio?.empresa.rut
                   )}
                   disabled={
-                    guia.proveedor.rut === "" ||
-                    guia.predio_origen.rol === "" ||
-                    guia.receptor.rut === "" ||
+                    guia.proveedor.rut === '' ||
+                    guia.predio_origen.rol === '' ||
+                    guia.receptor.rut === '' ||
                     options.empresas_carguio.length === 0
                   }
                   onSelect={selectCarguioHandler}
@@ -589,13 +553,12 @@ export default function CreateGuia(props: any) {
                   ref={cosechaRef}
                   options={options.empresas_cosecha}
                   defaultOption={options.empresas_cosecha.find(
-                    (option) =>
-                      option.value === guia.servicios?.cosecha?.empresa.rut,
+                    (option) => option.value === guia.servicios?.cosecha?.empresa.rut
                   )}
                   disabled={
-                    guia.proveedor.rut === "" ||
-                    guia.predio_origen.rol === "" ||
-                    guia.receptor.rut === "" ||
+                    guia.proveedor.rut === '' ||
+                    guia.predio_origen.rol === '' ||
+                    guia.receptor.rut === '' ||
                     options.empresas_cosecha.length === 0
                   }
                   onSelect={selectCosechaHandler}
@@ -605,7 +568,7 @@ export default function CreateGuia(props: any) {
               </View>
             </View>
           </View>
-          <View style={{ ...styles.section, ...styles.section.despacho }}>
+          <View style={[styles.section, { height: 250 }]}>
             <Text style={styles.sectionTitle}> Datos Despacho </Text>
             <View style={styles.row}>
               <View style={styles.textContainer}>
@@ -616,13 +579,13 @@ export default function CreateGuia(props: any) {
                   ref={empresaTransporteRef}
                   options={options.empresas_transporte}
                   defaultOption={options.empresas_transporte.find(
-                    (option) => option.value === guia.transporte.empresa.rut,
+                    (option) => option.value === guia.transporte.empresa.rut
                   )}
                   disabled={
-                    guia.proveedor.rut === "" ||
-                    guia.receptor.rut === "" ||
-                    guia.predio_origen.rol === "" ||
-                    guia.destino.nombre === ""
+                    guia.proveedor.rut === '' ||
+                    guia.receptor.rut === '' ||
+                    guia.predio_origen.rol === '' ||
+                    guia.destino.nombre === ''
                   }
                   onSelect={selectTransportistaHandler}
                   onRemove={() => selectTransportistaHandler(null)}
@@ -639,14 +602,14 @@ export default function CreateGuia(props: any) {
                   ref={choferRef}
                   options={options.choferes}
                   defaultOption={options.choferes.find(
-                    (option) => option.value === guia.transporte.chofer.rut,
+                    (option) => option.value === guia.transporte.chofer.rut
                   )}
                   disabled={
-                    guia.proveedor.rut === "" ||
-                    guia.receptor.rut === "" ||
-                    guia.predio_origen.rol === "" ||
-                    guia.destino.nombre === "" ||
-                    guia.transporte.empresa.rut === ""
+                    guia.proveedor.rut === '' ||
+                    guia.receptor.rut === '' ||
+                    guia.predio_origen.rol === '' ||
+                    guia.destino.nombre === '' ||
+                    guia.transporte.empresa.rut === ''
                   }
                   onSelect={selectChoferHandler}
                   onRemove={() => selectChoferHandler(null)}
@@ -663,14 +626,14 @@ export default function CreateGuia(props: any) {
                   ref={camionRef}
                   options={options.camiones}
                   defaultOption={options.camiones.find(
-                    (option) => option.value === guia.transporte.camion.patente,
+                    (option) => option.value === guia.transporte.camion.patente
                   )}
                   disabled={
-                    guia.proveedor.rut === "" ||
-                    guia.receptor.rut === "" ||
-                    guia.predio_origen.rol === "" ||
-                    guia.destino.nombre === "" ||
-                    guia.transporte.empresa.rut === ""
+                    guia.proveedor.rut === '' ||
+                    guia.receptor.rut === '' ||
+                    guia.predio_origen.rol === '' ||
+                    guia.destino.nombre === '' ||
+                    guia.transporte.empresa.rut === ''
                   }
                   onSelect={selectCamionHandler}
                   onRemove={() => selectCamionHandler(null)}
@@ -685,14 +648,14 @@ export default function CreateGuia(props: any) {
                   ref={carroRef}
                   options={options.carros}
                   defaultOption={options.carros.find(
-                    (option) => option.value === guia.transporte.carro,
+                    (option) => option.value === guia.transporte.carro
                   )}
                   disabled={
-                    guia.proveedor.rut === "" ||
-                    guia.receptor.rut === "" ||
-                    guia.predio_origen.rol === "" ||
-                    guia.destino.nombre === "" ||
-                    guia.transporte.empresa.rut === ""
+                    guia.proveedor.rut === '' ||
+                    guia.receptor.rut === '' ||
+                    guia.predio_origen.rol === '' ||
+                    guia.destino.nombre === '' ||
+                    guia.transporte.empresa.rut === ''
                   }
                   onSelect={selectCarroHandler}
                   onRemove={() => selectCarroHandler(null)}
@@ -709,37 +672,33 @@ export default function CreateGuia(props: any) {
           >
             <View
               style={{
-                flexDirection: "row",
-                width: "100%",
-                justifyContent: "space-between",
+                flexDirection: 'row',
+                width: '100%',
+                justifyContent: 'space-between',
               }}
             >
               <Text style={{ ...styles.sectionTitle }}>Observaciones</Text>
               <TouchableOpacity
                 style={{
-                  marginTop: "1%",
-                  marginRight: "5%",
+                  marginTop: '1%',
+                  marginRight: '5%',
                 }}
                 onPress={addObservacionHandler}
               >
-                <Icon
-                  name="add-circle-outline"
-                  size={40}
-                  color={colors.secondary}
-                />
+                <Icon name="add-circle-outline" size={40} color={colors.secondary} />
               </TouchableOpacity>
             </View>
             {guia.observaciones?.map((observacion, index) => (
               <View
                 style={{
                   ...styles.container,
-                  flexDirection: "row",
-                  justifyContent: "center",
+                  flexDirection: 'row',
+                  justifyContent: 'center',
                 }}
                 key={`view-${renderKey}-${index}`}
               >
                 <TextInput
-                  style={{ ...styles.input, width: "80%" }}
+                  style={{ ...styles.input, width: '80%' }}
                   value={observacion}
                   placeholder={`Observacion ${index + 1}`}
                   maxLength={100}
@@ -750,8 +709,8 @@ export default function CreateGuia(props: any) {
                 />
                 <TouchableOpacity
                   style={{
-                    justifyContent: "center",
-                    marginLeft: "2%",
+                    justifyContent: 'center',
+                    marginLeft: '2%',
                   }}
                   key={`touchable-${renderKey}-${index}`}
                   onPress={() => {
@@ -789,49 +748,40 @@ export default function CreateGuia(props: any) {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    marginTop: "1%",
+    marginTop: '1%',
     fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: "2.5%",
+    fontWeight: 'bold',
+    marginLeft: '2.5%',
   },
   scrollView: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
   screen: {
     flex: 1,
     backgroundColor: colors.white,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   section: {
-    marginTop: "4%",
+    marginTop: '4%',
     height: 150,
     backgroundColor: colors.crudo,
     borderRadius: 15,
-    receptor: {
-      height: 250,
-    },
-    predio: {
-      height: 230,
-    },
-    despacho: {
-      height: 250,
-    },
   },
   body: {
     flex: 9,
-    width: "100%",
+    width: '100%',
     backgroundColor: colors.white,
-    display: "flex",
+    display: 'flex',
   },
   row: {
     flex: 1,
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    borderStyle: "solid",
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    borderStyle: 'solid',
   },
   container: {
     flex: 1,
@@ -840,18 +790,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     backgroundColor: colors.white,
     padding: 7,
-    borderColor: "#cccccc",
+    borderColor: '#cccccc',
     borderRadius: 13,
-    alignSelf: "center",
-    width: "50%",
-    textAlign: "center",
+    alignSelf: 'center',
+    width: '50%',
+    textAlign: 'center',
     marginVertical: 7,
     fontSize: 13,
   },
   text: {
     fontSize: 14,
-    fontWeight: "normal",
-    textAlign: "left",
+    fontWeight: 'normal',
+    textAlign: 'left',
     margin: 5,
   },
 
@@ -862,18 +812,18 @@ const styles = StyleSheet.create({
   // },
   textContainer: {
     flex: 1,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "90%",
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '90%',
   },
   button: {
     backgroundColor: colors.secondary,
     borderRadius: 12,
     padding: 15,
     margin: 10,
-    flexDirection: "row",
-    width: "90%",
+    flexDirection: 'row',
+    width: '90%',
   },
   buttonText: {
     color: colors.white,
@@ -883,8 +833,8 @@ const styles = StyleSheet.create({
   icon: {
     flex: 1,
     right: 0,
-    textAlign: "right",
-    fontWeight: "bold",
+    textAlign: 'right',
+    fontWeight: 'bold',
   },
 });
 
@@ -892,10 +842,10 @@ const selectStyles: SelectStyles = {
   select: {
     container: {
       borderWidth: 2,
-      borderColor: "#cccccc",
+      borderColor: '#cccccc',
       borderRadius: 13,
-      alignSelf: "center",
-      width: "90%",
+      alignSelf: 'center',
+      width: '90%',
     },
   },
   // optionsList: {

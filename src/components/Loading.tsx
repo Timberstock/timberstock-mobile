@@ -1,13 +1,11 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-function Loading() {
+function Loading({ errorMessage }: { errorMessage: string }) {
   return (
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#4E4E4E" />
-      <Text style={styles.errorMessage}>
-        Intendando conectarse al servidor o buscando datos en cache{' '}
-      </Text>
+      <Text style={styles.errorMessage}>{errorMessage}</Text>
     </View>
   );
 }

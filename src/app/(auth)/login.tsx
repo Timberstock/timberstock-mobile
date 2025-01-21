@@ -1,14 +1,9 @@
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
+import Loading from '@/components/Loading';
 import { authenticateUser } from '@/functions/firebase/auth';
 import colors from '@/resources/Colors';
-import Loading from '@/components/Loading';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function Login() {
   const [email, setEmail] = useState(''); //SACAR EL VALOR POR DEFECTO
@@ -26,8 +21,9 @@ export default function Login() {
       setErrorMessage(authResponseMessage);
       return;
     }
-    setErrorMessage(authResponseMessage);
-    return;
+    // No need to navigate manually, _layout.tsx will handle redirection
+    setErrorMessage(null);
+    setLoading(false);
   };
 
   return (
@@ -50,7 +46,7 @@ export default function Login() {
         <Text style={styles.buttonText}>Iniciar Sesión</Text>
       </TouchableOpacity>
       <Text style={styles.errorMessage}>{errorMessage}</Text>
-      <View style={styles.loadingContainer}>{loading && <Loading />}</View>
+      <View style={styles.loadingContainer}>{loading && <Loading errorMessage="Intentando iniciar sesión..." />}</View>
     </View>
   );
 }
