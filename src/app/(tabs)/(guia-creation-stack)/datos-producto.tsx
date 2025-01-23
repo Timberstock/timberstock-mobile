@@ -1,61 +1,146 @@
-import { useRef, useState, useContext, useEffect, MutableRefObject } from 'react';
+import Aserrable from '@/components/productos/Aserrable';
+import PrecioModal from '@/components/productos/PrecioModal';
+import Pulpable from '@/components/productos/Pulpable';
+import colors from '@/constants/colors';
+import { initialStatesProducto } from '@/constants/initialStates';
+import { useApp } from '@/context/app/AppContext';
+import { useFolio } from '@/context/folio/FolioContext';
+import { CAF } from '@/context/folio/types';
+import { useUser } from '@/context/user/UserContext';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-} from 'react-native';
+  checkProductosValues,
+  handleCreateGuiaLogic,
+  handleIncreaseNumberOfClasesDiametricasLogic,
+  handleSelectProductoLogic,
+  handleSelectTipoLogic,
+  handleUpdateBancoPulpableValueLogic,
+  handleUpdateClaseDiametricaValueLogic,
+  resetBancosPulpable,
+} from '@/functions/datos-producto';
+import {
+  ClaseDiametricaGuia,
+  GuiaDespachoFirestore,
+} from '@/interfaces/firestore/guia';
+import {
+  Banco,
+  IOptionProducto,
+  IOptionTipoProducto,
+  ProductoScreenOptions,
+} from '@/interfaces/screens/emision/productos';
 import {
   Select,
   SelectRef,
   SelectStyles,
 } from '@mobile-reality/react-native-select-pro';
-import colors from '@/resources/Colors';
-import Header from '@/components/Header';
-import { UserContext } from '@/context/UserContext';
-import Aserrable from '@/components/productos/Aserrable';
-import Pulpable from '@/components/productos/Pulpable';
-import PrecioModal from '@/components/productos/PrecioModal';
+import { GeoPoint } from '@react-native-firebase/firestore';
+import { MutableRefObject, useEffect, useRef, useState } from 'react';
 import {
-  handleSelectProductoLogic,
-  handleSelectTipoLogic,
-  checkProductosValues,
-  handleUpdateClaseDiametricaValueLogic,
-  handleIncreaseNumberOfClasesDiametricasLogic,
-  handleUpdateBancoPulpableValueLogic,
-  handleCreateGuiaLogic,
-  resetBancosPulpable,
-} from '@/functions/datos-producto';
-import { initialStatesProducto } from '@/resources/initialStates';
-import {
-  Banco,
-  IOptionProducto,
-  IOptionTipoProducto,
-  ProductoOptionObject,
-  ProductoScreenOptions,
-} from '@/interfaces/screens/emision/productos';
-import {
-  ClaseDiametricaGuia,
-  GuiaDespachoFirestore,
-} from '@/interfaces/firestore/guia';
-import { AppContext } from '@/context/AppContext';
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function CreateGuiaProductos(props: any) {
   const { navigation } = props;
-  const {
-    guiaCreate,
-    productosOptions,
-  }: {
-    guiaCreate: GuiaDespachoFirestore;
-    productosOptions: ProductoOptionObject[];
-  } = props.route.params.data;
+  // const {
+  //   guiaCreate,
+  //   productosOptions,
+  // }: {
+  //   guiaCreate: GuiaDespachoFirestore;
+  //   productosOptions: ProductoOptionObject[];
+  // } = props.route.params.data;
 
-  const { empresa } = useContext(AppContext);
-  const { user, updateUserReservedFolios } = useContext(UserContext);
+  const guiaCreate = {
+    codigo_contrato_externo: '',
+    codigo_fsc: 'FSC CONTROLLED WOOD SA-CW-006947',
+    contrato_compra_id: 'bizXpjoTyClb7mxVWxJH',
+    contrato_venta_id: 'LZ2k53qEWzmHLZTVInZu',
+    destino: {
+      comuna: 'MACHALI',
+      georreferencia: new GeoPoint(0, 0),
+      nombre: 'Planta Villareal',
+      rol: '111-018',
+    },
+    emisor: {
+      actividad_economica: [],
+      comuna: 'PADRE LAS CASAS',
+      direccion: 'PARCELA 2 PUENTE EL SAPO',
+      giro: 'Servicios Tecnologicos',
+      razon_social: 'Alfa Trading Chile',
+      rut: '77068553-2',
+    },
+    estado: '',
+    folio_guia_proveedor: 0,
+    identificacion: {
+      folio: 447,
+      tipo_despacho: 'Por cuenta del emisor a instalaciones cliente',
+      tipo_traslado: 'Constituye venta',
+    },
+    monto_total_guia: 0,
+    observaciones: [],
+    precio_unitario_guia: 0,
+    predio_origen: {
+      certificado: 'SA-COC-007358',
+      comuna: 'TRAIGUEN',
+      georreferencia: new GeoPoint(0, 0),
+      nombre: 'La Preferida',
+      plan_de_manejo: '292/66-112/21',
+      rol: '853-020',
+    },
+    producto: { calidad: '', codigo: '', especie: '', largo: 0, tipo: '', unidad: '' },
+    proveedor: { razon_social: 'Bosques El Barraco', rut: '77601689- 6' },
+    receptor: {
+      comuna: 'CHILLAN',
+      direccion: 'Ruta 5 - Los Coligues',
+      giro: 'Servicios forestales',
+      razon_social: 'Celulosas Valle Grande',
+      rut: '93458000-1',
+    },
+    servicios: {},
+    transporte: {
+      camion: { marca: 'MERCEDES-BENZ', patente: 'DXVG-08', patente_carro: '' },
+      carro: 'BB2233',
+      chofer: { nombre: 'Hipólito Restendería Fisher', rut: '8166548-6' },
+      empresa: { razon_social: 'Transportes Júpiter S.A.', rut: '93460000-2' },
+      precio_unitario_transporte: 0,
+    },
+    usuario_metadata: {
+      len_cafs: 0,
+      len_folios_reservados: 0,
+      usuario_email: '',
+      usuario_id: '',
+      version_app: '',
+    },
+    volumen_total_emitido: 0,
+  };
+
+  const productosOptions = [
+    {
+      calidad: 'Trozo Pulpable',
+      codigo: 'TPEGPU244',
+      especie: 'Euca Globulus',
+      largo: '2.44',
+      precio_unitario_compra_mr: 53000,
+      precio_unitario_venta_mr: 60000,
+      tipo: 'Pulpable',
+      unidad: 'MR',
+    },
+  ];
+
+  const {
+    state: { empresa },
+  } = useApp();
+  const {
+    state: { user },
+    // updateUserReservedFolios,
+  } = useUser();
+
+  const { reserveFolios } = useFolio();
 
   const [guia, setGuia] = useState<GuiaDespachoFirestore>(guiaCreate);
 
@@ -174,7 +259,8 @@ export default function CreateGuiaProductos(props: any) {
       bancosPulpable,
       setCreateGuiaLoading,
       setModalVisible,
-      updateUserReservedFolios
+      (newReservedFolios: number[], newCafs?: CAF[]) =>
+        new Promise((resolve) => resolve())
     );
   };
 
@@ -439,8 +525,8 @@ const selectStyles: SelectStyles = {
     //   alignItems: 'center',
     // },
   },
-  // optionsList: {
-  //   borderColor: "#cccccc",
-  //   marginTop: Platform.OS === "ios" ? 0 : 51,
-  // },
+  optionsList: {
+    borderColor: '#cccccc',
+    marginTop: Platform.OS === 'ios' ? 0 : 51,
+  },
 };

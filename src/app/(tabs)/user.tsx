@@ -1,49 +1,24 @@
 import FoliosRequestModal from '@/components/FoliosRequestModal';
-import { AppContext } from '@/context/AppContext';
-import { UserContext } from '@/context/UserContext';
-import { logoutUser } from '@/functions/firebase/auth';
-import { requestReservarFolios } from '@/functions/firebase/cloud_functions';
-import colors from '@/resources/Colors';
+import colors from '@/constants/colors';
+import { useApp } from '@/context/app/AppContext';
+import { useFolio } from '@/context/folio/FolioContext';
+import { useUser } from '@/context/user/UserContext';
 import * as Updates from 'expo-updates';
-import React, { useContext, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function User() {
-  const { user, updateUserReservedFolios, devolverFolios } = useContext(UserContext);
+  const { handleUpdateAvailable } = useApp();
+  const { liberarFolios } = useFolio();
 
-  const { handleUpdateAvailable } = useContext(AppContext);
+  const {
+    state: { user },
+    logout,
+  } = useUser();
 
-  const [foliosRequestLoading, setFoliosRequestLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleGetFolios = async (numFolios: number) => {
-    // TODO: Fix the Loading icon to not make the size of the Modal change
-    // Call the function to reserve the folios
-    if (user === null || user.firebaseAuth === null || numFolios <= 0) return;
-
-    setFoliosRequestLoading(true);
-
-    const response = await requestReservarFolios(user.firebaseAuth.uid, numFolios);
-
-    if (response.message.includes('No such object')) {
-      Alert.alert(
-        'Error',
-        'No se pudo encontrar un archivo CAF valido para solicitar folios'
-      );
-      setFoliosRequestLoading(false);
-      return;
-    }
-
-    // Update the user's folios locally
-    await updateUserReservedFolios(response.folios_reservados, response.cafs);
-
-    // Close the modal after successful action
-    setFoliosRequestLoading(false);
-    setModalVisible(false);
-  };
-
-  // Confirm the user wants to devolver folios
   const handleDevolverFolios = () => {
     Alert.alert('Devolver folios', '¿Estás seguro de devolver todos los folios?', [
       {
@@ -53,24 +28,12 @@ export default function User() {
       {
         text: 'Devolver folios',
         onPress: async () => {
-          await devolverFolios();
-          Alert.alert('Folios devueltos', 'Se han devuelto todos los folios');
-        },
-      },
-    ]);
-  };
-
-  // Confirm the user wants to logout
-  const handleLogoutUser = () => {
-    Alert.alert('Cerrar sesión', '¿Estás seguro de cerrar sesión?', [
-      {
-        text: 'Cancelar',
-        style: 'cancel',
-      },
-      {
-        text: 'Cerrar sesión',
-        onPress: () => {
-          logoutUser();
+          const success = await liberarFolios();
+          if (success) {
+            Alert.alert('Folios devueltos', 'Se han devuelto todos los folios');
+          } else {
+            Alert.alert('Error', 'No se pudieron devolver los folios');
+          }
         },
       },
     ]);
@@ -106,9 +69,7 @@ export default function User() {
           <View style={styles.buttonsContainer}>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => {
-                setModalVisible(true);
-              }}
+              onPress={() => setModalVisible(true)}
             >
               <Icon
                 name="file-tray-full"
@@ -120,7 +81,7 @@ export default function User() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.button}
-              disabled={!((user?.folios_reservados.length || 0) > 0)}
+              disabled={user?.folios_reservados.length === 0}
               onPress={handleDevolverFolios}
             >
               <Icon
@@ -146,7 +107,7 @@ export default function User() {
           </View>
 
           <View style={styles.logoutButtonContainer}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutUser}>
+            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
               <Text style={styles.buttonText}>Cerrar Sesión y Limpiar Cache</Text>
             </TouchableOpacity>
           </View>
@@ -159,10 +120,8 @@ export default function User() {
         </Text>
       </View>
       <FoliosRequestModal
-        foliosRequestLoading={foliosRequestLoading}
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
-        handleGetFolios={handleGetFolios}
       />
     </View>
   );

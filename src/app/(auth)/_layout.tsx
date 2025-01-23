@@ -1,8 +1,8 @@
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 
 export default function AuthLayout() {
   return (
-    <Stack
+    <Slot
       screenOptions={{
         headerShown: false,
         animation: 'fade',

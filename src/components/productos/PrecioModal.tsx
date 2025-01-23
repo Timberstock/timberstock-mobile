@@ -1,15 +1,15 @@
+import colors from '@/constants/colors';
 import { useEffect, useState } from 'react';
 import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  Text,
   ActivityIndicator,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import colors from '@/resources/Colors';
 
 // TODO: fix types
 const PrecioModal = (props: any) => {
@@ -50,6 +50,7 @@ const PrecioModal = (props: any) => {
               disabled={!valorPrecioUnidadGuia || createGuiaLoading}
               // Error handling for empty input (disable the button)
               onPress={async () => {
+                console.log('valorPrecioUnidadGuia', valorPrecioUnidadGuia);
                 await handleCreateGuia(parseInt(valorPrecioUnidadGuia));
               }}
             >

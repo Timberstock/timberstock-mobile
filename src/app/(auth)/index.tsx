@@ -1,29 +1,19 @@
 import Loading from '@/components/Loading';
-import { authenticateUser } from '@/functions/firebase/auth';
-import colors from '@/resources/Colors';
-import { router } from 'expo-router';
+import colors from '@/constants/colors';
+import { useUser } from '@/context/user/UserContext';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function Login() {
-  const [email, setEmail] = useState(''); //SACAR EL VALOR POR DEFECTO
-  const [password, setPassword] = useState(''); //SACAR EL VALOR POR DEFECTO
-  //   const [email, setEmail] = useState('mateo@timberstock.cl'); //SACAR EL VALOR POR DEFECTO
-  //   const [password, setPassword] = useState('Lumber157'); //SACAR EL VALOR POR DEFECTO
-  const [errorMessage, setErrorMessage] = useState<null | string>(null);
-  const [loading, setLoading] = useState(false);
+  const { state, login } = useUser();
+
+  // const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('mateo@timberstock.cl');
+  // const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('Lumber157');
 
   const handleLogin = async () => {
-    setLoading(true);
-    const authResponseMessage = await authenticateUser(email, password);
-    if (authResponseMessage !== 'Sesión iniciada') {
-      setLoading(false);
-      setErrorMessage(authResponseMessage);
-      return;
-    }
-    // No need to navigate manually, _layout.tsx will handle redirection
-    setErrorMessage(null);
-    setLoading(false);
+    await login(email, password);
   };
 
   return (
@@ -42,11 +32,17 @@ export default function Login() {
         onChangeText={(text) => setPassword(text)}
         value={password}
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleLogin}
+        disabled={state.loading}
+      >
         <Text style={styles.buttonText}>Iniciar Sesión</Text>
       </TouchableOpacity>
-      <Text style={styles.errorMessage}>{errorMessage}</Text>
-      <View style={styles.loadingContainer}>{loading && <Loading errorMessage="Intentando iniciar sesión..." />}</View>
+      {state.error && <Text style={styles.errorMessage}>{state.error}</Text>}
+      <View style={styles.loadingContainer}>
+        {state.loading && <Loading errorMessage="Intentando iniciar sesión..." />}
+      </View>
     </View>
   );
 }

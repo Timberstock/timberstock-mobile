@@ -1,49 +1,43 @@
-import Loading from '@/components/Loading';
-import AppProvider from '@/context/AppContext';
-import UserContextProvider from '@/context/UserContext';
-import { UserContext } from '@/context/UserContext';
+import { AppProvider } from '@/context/app/AppContext';
+import { FolioProvider } from '@/context/folio/FolioContext';
+import { NetworkProvider } from '@/context/network/NetworkContext';
+import { UserProvider } from '@/context/user/UserContext';
 import { SelectProvider } from '@mobile-reality/react-native-select-pro';
-import auth from '@react-native-firebase/auth';
-import { Redirect, Slot } from 'expo-router';
-import { useContext, useEffect } from 'react';
+import '@react-native-firebase/app';
+import firestore from '@react-native-firebase/firestore';
+import { firebase } from '@react-native-firebase/functions';
+import { Slot } from 'expo-router';
 
-function RootLayoutNav() {
-  const { user, loading, updateUserAuth } = useContext(UserContext);
-
-  // Handle authentication state changes
-  useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(async (inputUser) => {
-      await updateUserAuth(inputUser);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) {
-    return (
-      <Loading errorMessage="Intentando conectarse al servidor o buscando datos en cache" />
-    );
+if (__DEV__) {
+  try {
+    console.log('🔥 Connecting to Firebase emulators...');
+    // Change to "10.0.2.2" for Android
+    firestore().useEmulator('localhost', 8080);
+    firebase.app().functions('us-central1').useEmulator('localhost', 5001);
+    console.log('✅ Connected to Firebase emulators');
+  } catch (error) {
+    console.error('❌ Failed to connect to emulators:', error);
   }
-
-  // If user is not authenticated, redirect to login
-  if (!user) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  return (
-    <SelectProvider>
-      <AppProvider>
-        {/* This is the way to render a a view that is neither a tab nor a stack (as per this route in particular, (tabs) will have its own layout)  with tabs navigation*/}
-        <Slot screenOptions={{ headerShown: false }} />
-      </AppProvider>
-    </SelectProvider>
-  );
 }
 
+// This component handles the auth flow and protected routes
+function AuthLayout() {
+  return <Slot />;
+}
+
+// Root layout sets up providers
 export default function RootLayout() {
   return (
-    <UserContextProvider>
-      <RootLayoutNav />
-    </UserContextProvider>
+    <NetworkProvider>
+      <SelectProvider>
+        <UserProvider>
+          <FolioProvider>
+            <AppProvider>
+              <AuthLayout />
+            </AppProvider>
+          </FolioProvider>
+        </UserProvider>
+      </SelectProvider>
+    </NetworkProvider>
   );
 }

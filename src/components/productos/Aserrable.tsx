@@ -1,13 +1,7 @@
-import React from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
-import colors from "@/resources/Colors";
-import { ClaseDiametricaGuia } from "@/interfaces/firestore/guia";
+import colors from '@/constants/colors';
+import { ClaseDiametricaGuia } from '@/interfaces/firestore/guia';
+import React from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function Aserrable({
   clasesDiametricas,
@@ -31,12 +25,18 @@ export default function Aserrable({
       ))}
       <View style={styles.row}>
         <TouchableOpacity
-          style={{ ...styles.button, ...styles.button.claseDiametrica }}
+          style={[
+            styles.button,
+            {
+              marginTop: 15,
+              width: '50%',
+              alignSelf: 'center',
+              // justifySelf: 'center',
+            },
+          ]}
           onPress={increaseNumberOfClasesDiametricas}
         >
-          <Text style={styles.claseDiametricaButtonText}>
-            + Clase Diametrica
-          </Text>
+          <Text style={styles.claseDiametricaButtonText}>+ Clase Diametrica</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -82,32 +82,32 @@ const ClaseDiametricaRow = ({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-    justifyContent: "space-evenly",
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
     paddingBottom: 5,
   },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   input: {
     borderWidth: 2,
     height: 35,
     backgroundColor: colors.white,
     padding: 7,
-    borderColor: "#cccccc",
+    borderColor: '#cccccc',
     borderRadius: 13,
-    alignSelf: "center",
-    width: "30%",
-    textAlign: "center",
+    alignSelf: 'center',
+    width: '30%',
+    textAlign: 'center',
     marginVertical: 7,
   },
   text: {
     fontSize: 14,
-    fontWeight: "normal",
-    textAlign: "left",
+    fontWeight: 'normal',
+    textAlign: 'left',
     margin: 5,
   },
   button: {
@@ -115,13 +115,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
     marginHorizontal: 10,
-    alignItems: "center",
+    alignItems: 'center',
     width: 30,
-    claseDiametrica: {
-      marginTop: 15,
-      width: "50%",
-      justifySelf: "center",
-    },
   },
   buttonText: {
     color: colors.white,

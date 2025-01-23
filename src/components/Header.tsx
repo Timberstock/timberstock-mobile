@@ -1,17 +1,18 @@
+import colors from '@/constants/colors';
+import { useNetwork } from '@/context/network/NetworkContext';
+import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
   ImageBackground,
   Platform,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, usePathname } from 'expo-router';
-import colors from '@/resources/Colors';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const HEADER_HEIGHT = 80;
 
@@ -25,8 +26,8 @@ export default function Header() {
 
   const title = {
     '/datos-guia': 'Datos de la Guía',
-    '/datos-producto': 'Datos del Producto de la Guía',
-    '/user': 'TimberStock',
+    '/datos-producto': 'Producto de la Guía',
+    '/user': 'Usuario',
     '/': 'TimberStock',
   };
 
@@ -36,7 +37,7 @@ export default function Header() {
       <ImageBackground
         source={require('../../assets/header_gradient.png')}
         style={[
-          styles.container,
+          headerStyles.container,
           {
             height: HEADER_HEIGHT,
           },
@@ -44,18 +45,18 @@ export default function Header() {
       >
         <View
           style={[
-            styles.innerContainer,
+            headerStyles.innerContainer,
             {
               paddingTop: Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight,
             },
           ]}
         >
-          <View style={styles.contentContainer}>
+          <View style={headerStyles.contentContainer}>
             {/* Always render a View for the back button space to maintain layout */}
-            <View style={styles.backButtonContainer}>
+            <View style={headerStyles.backButtonContainer}>
               {shouldShowBackButton && (
                 <TouchableOpacity
-                  style={styles.backButton}
+                  style={headerStyles.backButton}
                   onPress={() => router.back()}
                 >
                   <Icon name="arrow-back" size={25} color={colors.white} />
@@ -63,12 +64,14 @@ export default function Header() {
               )}
             </View>
 
-            <Text style={styles.titleText}>
+            <Text style={headerStyles.titleText}>
               {title[pathname as keyof typeof title]}
             </Text>
 
             {/* Placeholder to maintain symmetry */}
-            <View style={styles.backButtonContainer} />
+            <View style={headerStyles.backButtonContainer}>
+              <NetworkIndicator />
+            </View>
           </View>
         </View>
       </ImageBackground>
@@ -76,7 +79,7 @@ export default function Header() {
   );
 }
 
-const styles = StyleSheet.create({
+const headerStyles = StyleSheet.create({
   container: {
     width: '100%',
   },
@@ -104,5 +107,51 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
+  },
+});
+
+function NetworkIndicator() {
+  const { networkStatus } = useNetwork();
+
+  const getStatusConfig = () => {
+    if (!networkStatus?.isConnected) {
+      return {
+        icon: 'cloud-offline-outline',
+        color: colors.error,
+      };
+    }
+    if (!networkStatus?.isInternetReachable) {
+      return {
+        icon: 'wifi-outline',
+        color: colors.warning,
+      };
+    }
+    return {
+      icon: 'wifi-outline',
+      color: colors.success,
+    };
+  };
+
+  const config = getStatusConfig();
+
+  return (
+    <View style={netIndicatorStyles.container}>
+      <Icon name={config.icon} size={28} color={config.color} />
+    </View>
+  );
+}
+
+const netIndicatorStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
   },
 });

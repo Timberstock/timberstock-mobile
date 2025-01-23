@@ -1,30 +1,61 @@
-import { useEffect, useState } from "react";
+import colors from '@/constants/colors';
+import { useFolio } from '@/context/folio/FolioContext';
+import { useNetwork } from '@/context/network/NetworkContext';
+import { useState } from 'react';
 import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  Text,
   ActivityIndicator,
-} from "react-native";
-import colors from "@/resources/Colors";
-import Icon from "react-native-vector-icons/Ionicons";
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-// TODO: fix types
-const FoliosRequestModal = (props: any) => {
+interface Props {
+  modalVisible: boolean;
+  setModalVisible: (visible: boolean) => void;
+}
+
+const FoliosRequestModal = ({ modalVisible, setModalVisible }: Props) => {
   const {
-    foliosRequestLoading,
-    modalVisible,
-    setModalVisible,
-    handleGetFolios,
-  } = props;
+    state: { loading },
+    reserveFolios,
+  } = useFolio();
+  const [numFolios, setNumFolios] = useState('');
 
-  const [numFolios, setNumFolios] = useState("");
-  // UseEffect to clear the input when the modal is closed
-  useEffect(() => {
-    setNumFolios("");
-  }, [modalVisible]);
+  const { networkStatus } = useNetwork();
+
+  const handleRequest = async () => {
+    const num = parseInt(numFolios, 10);
+    if (isNaN(num) || num <= 0) return;
+
+    if (!networkStatus?.isConnected) {
+      Alert.alert(
+        'Sin conexión',
+        'Se requiere conexión a internet para reservar folios'
+      );
+      return;
+    }
+
+    const result = await reserveFolios(num);
+    if (result.success && result.foliosReservados?.length === num) {
+      Alert.alert(
+        'Folios reservados',
+        `Se han reservado los ${num} folios solicitados`
+      );
+    } else if (result.success && result.foliosReservados?.length !== num) {
+      Alert.alert(
+        `Folios reservados (${result.foliosReservados?.length}/${num})`,
+        `Se han reservado ${result.foliosReservados?.length} folios de los ${num} solicitados. Folios agotados de la empresa, revisar los CAFs y los folios reservados sin ocupar.`
+      );
+    } else {
+      Alert.alert('Error', 'No se pudieron reservar los folios');
+    }
+    setModalVisible(false);
+  };
 
   return (
     <View>
@@ -37,9 +68,9 @@ const FoliosRequestModal = (props: any) => {
             >
               <Icon name="close-circle" size={25} color="grey" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              Ingrese número de folios a reservar
-            </Text>
+
+            <Text style={styles.modalTitle}>Ingrese número de folios a reservar</Text>
+
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -47,20 +78,16 @@ const FoliosRequestModal = (props: any) => {
               onChangeText={setNumFolios}
               placeholder="Número de folios"
             />
+
             <TouchableOpacity
-              style={styles.acceptButton}
-              // Error handling for empty input (disable the button)
-              onPress={() => {
-                console.log("Solicitando folios...");
-                console.log("Número de folios a solicitar: ", numFolios);
-                handleGetFolios(numFolios);
-              }}
+              style={[styles.acceptButton, loading && styles.disabledButton]}
+              disabled={loading}
+              onPress={handleRequest}
             >
               <Text style={styles.acceptButtonText}>Solicitar</Text>
             </TouchableOpacity>
-            {foliosRequestLoading && (
-              <ActivityIndicator size="large" color="#4E4E4E" />
-            )}
+
+            {loading && <ActivityIndicator size="large" color="#4E4E4E" />}
           </View>
         </View>
       </Modal>
@@ -71,40 +98,40 @@ const FoliosRequestModal = (props: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   openModalButton: {
-    backgroundColor: "blue",
+    backgroundColor: 'blue',
     padding: 10,
     borderRadius: 5,
   },
   openModalButtonText: {
-    color: "white",
-    textAlign: "center",
+    color: 'white',
+    textAlign: 'center',
   },
   modalContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     padding: 20,
     paddingTop: 40,
     borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 10,
   },
   input: {
     borderWidth: 1,
-    borderColor: "gray",
+    borderColor: 'gray',
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
@@ -115,16 +142,19 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 15,
     margin: 5,
-    alignItems: "center",
+    alignItems: 'center',
   },
   acceptButtonText: {
-    color: "white",
-    textAlign: "center",
+    color: 'white',
+    textAlign: 'center',
   },
   closeIconContainer: {
-    position: "absolute",
+    position: 'absolute',
     top: 10,
     right: 10,
+  },
+  disabledButton: {
+    backgroundColor: colors.gray,
   },
 });
 

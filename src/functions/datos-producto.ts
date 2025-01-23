@@ -5,6 +5,7 @@ import * as Print from 'expo-print';
 import { toDataURL } from '@bwip-js/react-native';
 // import bwipjs from "@bwip-js/react-native";
 
+import { initialStatesProducto } from '@/constants/initialStates';
 import {
   createGuiaDoc,
   updateGuiaDocWithErrorMsg,
@@ -34,7 +35,6 @@ import {
   IOptionTipoProducto,
   ProductoOptionObject,
 } from '@/interfaces/screens/emision/productos';
-import { initialStatesProducto } from '@/resources/initialStates';
 import { Alert, Platform } from 'react-native';
 
 import { Empresa } from '@/interfaces/context/app';
@@ -256,12 +256,12 @@ export const handleCreateGuiaLogic = async (
     log.debug('handleCreateGuiaLogic', 'PDF generated and shared');
 
     // Remove the folio from the list of folios_reserved
-    const newFoliosReserved = user.folios_reservados.filter(
-      (folio) => folio !== guia.identificacion.folio
-    );
+    // const newFoliosReserved = user.folios_reservados.filter(
+    //   (folio) => folio !== guia.identificacion.folio
+    // );
 
-    // Update the user's folios locally popping the one just used
-    await updateUserReservedFolios(newFoliosReserved);
+    // // Update the user's folios locally popping the one just used
+    // await updateUserReservedFolios(newFoliosReserved);
     log.debug('handleCreateGuiaLogic', 'User folios updated');
 
     setModalVisible(false);

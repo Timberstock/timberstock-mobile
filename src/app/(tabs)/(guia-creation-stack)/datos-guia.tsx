@@ -1,73 +1,69 @@
 // Arreglo de renderkeys para que se actualicen los selects desde https://github.com/MobileReality/react-native-select-pro/issues/237
-import React, {
-  useEffect,
-  useRef,
-  MutableRefObject,
-  useContext,
-  useState,
-} from 'react';
+import OverlayLoading from '@/components/OverlayLoading';
+import colors from '@/constants/colors';
 import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Alert,
-  Platform,
-} from 'react-native';
+  initialStateGuia,
+  initialStatesOptionsCreate,
+} from '@/constants/initialStates';
+import { useApp } from '@/context/app/AppContext';
+import { useUser } from '@/context/user/UserContext';
+import {
+  folioProveedorChangeLogic,
+  getInitialOptions,
+  isGuiaValid,
+  parseFoliosOptions,
+  selectCamionLogic,
+  selectCarguioLogic,
+  selectCarroLogic,
+  selectChoferLogic,
+  selectClienteLogic,
+  selectCosechaLogic,
+  selectDestinoContratoLogic,
+  selectFaenaLogic,
+  selectProveedorLogic,
+  selectTransporteLogic,
+} from '@/functions/datos-guia';
+import { parseProductosFromContratos } from '@/functions/datos-producto';
+import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
+import {
+  GuiaDespachoOptions,
+  IOptionCamion,
+  IOptionCarguio,
+  IOptionChofer,
+  IOptionClienteContratoCompra,
+  IOptionCosecha,
+  IOptionDestinoContrato,
+  IOptionTransporte,
+} from '@/interfaces/screens/emision/create';
+import { IOption } from '@/interfaces/screens/screens';
 import {
   Select,
   SelectRef,
   SelectStyles,
 } from '@mobile-reality/react-native-select-pro';
-import colors from '@/resources/Colors';
-import { AppContext } from '@/context/AppContext';
-import { UserContext } from '@/context/UserContext';
-import { IOption } from '@/interfaces/screens/screens';
+import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
 import {
-  GuiaDespachoOptions,
-  IOptionClienteContratoCompra,
-  IOptionDestinoContrato,
-  IOptionTransporte,
-  IOptionChofer,
-  IOptionCarguio,
-  IOptionCosecha,
-  IOptionCamion,
-} from '@/interfaces/screens/emision/create';
-import {
-  initialStateGuia,
-  initialStatesOptionsCreate,
-} from '@/resources/initialStates';
-import {
-  isGuiaValid,
-  getInitialOptions,
-  parseFoliosOptions,
-  selectClienteLogic,
-  selectProveedorLogic,
-  selectTransporteLogic,
-  selectChoferLogic,
-  selectCamionLogic,
-  selectFaenaLogic,
-  selectDestinoContratoLogic,
-  selectCarguioLogic,
-  selectCosechaLogic,
-  folioProveedorChangeLogic,
-  selectCarroLogic,
-} from '@/functions/datos-guia';
-import OverlayLoading from '@/components/OverlayLoading';
-import { parseProductosFromContratos } from '@/functions/datos-producto';
-import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 // import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Icon from 'react-native-vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function CreateGuia() {
   const router = useRouter();
-  // const insets = useSafeAreaInsets();
-  const { empresa, guiasSummary, contratosCompra, contratosVenta } =
-    useContext(AppContext);
-  const { user } = useContext(UserContext);
+  const {
+    state: { user },
+  } = useUser();
+  const {
+    state: { empresa, guiasSummary, contratosCompra, contratosVenta },
+  } = useApp();
 
   const [guia, setGuia] = useState<GuiaDespachoFirestore>({
     ...initialStateGuia,
@@ -157,6 +153,9 @@ export default function CreateGuia() {
 
     // Clean up the observaciones array from empty strings
     guia.observaciones = guia.observaciones?.filter((obs) => obs !== '');
+
+    console.log(guia);
+    console.log(productosOptions);
 
     router.push('datos-producto');
     return;
@@ -848,8 +847,8 @@ const selectStyles: SelectStyles = {
       width: '90%',
     },
   },
-  // optionsList: {
-  //   borderColor: "#cccccc",
-  //   marginTop: Platform.OS === "ios" ? 0 : 51,
-  // },
+  optionsList: {
+    borderColor: '#cccccc',
+    marginTop: Platform.OS === 'ios' ? 0 : 51,
+  },
 };

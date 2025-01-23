@@ -1,17 +1,20 @@
 import {
   ClaseDiametricaContratoCompra,
   ProductoContratoCompra,
-} from "@/interfaces/contratos/contratoCompra";
+} from '@/interfaces/contratos/contratoCompra';
 import {
   ClaseDiametricaContratoVenta,
   ProductoContratoVenta,
-} from "@/interfaces/contratos/contratoVenta";
-import { Producto } from "@/interfaces/esenciales";
-import { IOption } from "@/interfaces/screens/screens";
+} from '@/interfaces/contratos/contratoVenta';
+
+interface IOption {
+  value: string;
+  label: string;
+}
 
 export interface IOptionTipoProducto {
-  value: "Aserrable" | "Pulpable" | "";
-  label: "Aserrable" | "Pulpable" | "";
+  value: 'Aserrable' | 'Pulpable' | '';
+  label: 'Aserrable' | 'Pulpable' | '';
 }
 
 export interface IOptionProducto extends IOption {

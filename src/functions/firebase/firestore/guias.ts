@@ -1,16 +1,14 @@
-import firestore, {
-  FirebaseFirestoreTypes,
-} from "@react-native-firebase/firestore";
-import { GuiaDespachoSummaryProps } from "@/interfaces/screens/home";
-import { Alert } from "react-native";
-import { GuiaDespachoFirestore } from "@/interfaces/firestore/guia";
+import { GuiaDespachoFirestore } from '@/interfaces/firestore/guia';
+import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { Alert } from 'react-native';
 
 export const createGuiaDoc = async (
   rutEmpresa: string,
-  preGuia: GuiaDespachoFirestore,
+  preGuia: GuiaDespachoFirestore
 ): Promise<string | null> => {
   function snapshotPromise(
-    ref: FirebaseFirestoreTypes.DocumentReference,
+    ref: FirebaseFirestoreTypes.DocumentReference
   ): Promise<FirebaseFirestoreTypes.DocumentSnapshot> {
     // From https://github.com/firebase/firebase-js-sdk/issues/1497
     // Workaround for the issue of createGuiaDoc not resolving when creating a new guia offline.
@@ -25,7 +23,7 @@ export const createGuiaDoc = async (
         },
         (error) => {
           reject(error);
-        },
+        }
       );
     });
   }
@@ -35,10 +33,12 @@ export const createGuiaDoc = async (
   const guia: GuiaDespachoFirestore = {
     ...preGuia,
     identificacion: { ...preGuia.identificacion, fecha: creationDate },
-    estado: "pendiente",
+    estado: 'pendiente',
   };
+
+  console.log(guia);
   try {
-    const guiaDocumentId = "DTE_GD_f" + guia.identificacion.folio.toString();
+    const guiaDocumentId = 'DTE_GD_f' + guia.identificacion.folio.toString();
 
     const newGuiaDocRef = firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
@@ -49,7 +49,7 @@ export const createGuiaDoc = async (
     newGuiaDocRef.set(guia);
     const createdGuiaDoc = await snapshotPromise(newGuiaDocRef);
 
-    // console.log("Guía agregada a firebase: ", guiaDocumentId);
+    console.log('Guía agregada a firebase: ', guiaDocumentId);
 
     // if (createdGuiaDoc.metadata.hasPendingWrites) {
     //   Alert.alert(
@@ -59,14 +59,14 @@ export const createGuiaDoc = async (
     // } else {
     // }
     Alert.alert(
-      "Guía agregada correctamente",
-      `Guía de folio: ${guia.identificacion.folio}`,
+      'Guía agregada correctamente',
+      `Guía de folio: ${guia.identificacion.folio}`
     );
     return creationDate.toISOString();
   } catch (e) {
-    console.error("Error adding document: ", e);
-    Alert.alert("Error al agregar guía");
-    throw new Error(" Error al agregar guía: " + e);
+    console.error('Error adding document: ', e);
+    Alert.alert('Error al agregar guía');
+    throw new Error(' Error al agregar guía: ' + e);
   }
 };
 
@@ -74,92 +74,93 @@ export const updateGuiaDocWithErrorMsg = async (
   rutEmpresa: string,
   folioGuia: number,
   errorMsg: string,
-  errorField: string,
+  errorField: string
 ): Promise<void> => {
   try {
-    const guiaDocumentId = "DTE_GD_f" + folioGuia.toString();
+    const guiaDocumentId = 'DTE_GD_f' + folioGuia.toString();
 
-    await firestore()
-      .collection(`empresas/${rutEmpresa}/guias`)
-      .doc(guiaDocumentId)
-      // .update({ estado: "error_local", _error_msg_local: errorMsg });
-      .set(
-        {
-          folio: folioGuia,
-          estado: "error_local",
-          // Use errorField to use as name of the function where the error is coming from
-          [errorField]: errorMsg,
-        },
-        { merge: true },
-      );
-    console.log("Guía actualizada con error: ", guiaDocumentId);
+    // await firestore()
+    //   .collection(`empresas/${rutEmpresa}/guias`)
+    //   .doc(guiaDocumentId)
+    //   // .update({ estado: "error_local", _error_msg_local: errorMsg });
+    //   .set(
+    //     {
+    //       folio: folioGuia,
+    //       estado: 'error_local',
+    //       // Use errorField to use as name of the function where the error is coming from
+    //       [errorField]: errorMsg,
+    //     },
+    //     { merge: true }
+    //   );
+    console.error(errorMsg);
+    console.log('Guía actualizada con error: ', guiaDocumentId);
   } catch (e) {
-    console.error("Error updating document: ", e);
-    throw new Error(" Error al actualizar guía ");
+    console.error('Error updating document: ', e);
+    throw new Error(' Error al actualizar guía ');
   }
 };
 
 export const _createGuiaTest = async (folio: number) => {
-  console.log("[TEST GUIA CREATION]");
-  const rutEmpresa = "770685532";
+  console.log('[TEST GUIA CREATION]');
+  const rutEmpresa = '770685532';
   const guia = {
     transporte: {
       chofer: {
-        nombre: "Chofer de Prueba",
-        rut: "19810662-3",
+        nombre: 'Chofer de Prueba',
+        rut: '19810662-3',
       },
-      direccion_destino: "Planta Laja",
-      patente: "CH1203",
-      rut_transportista: "77068553-2",
+      direccion_destino: 'Planta Laja',
+      patente: 'CH1203',
+      rut_transportista: '77068553-2',
     },
     emisor: {
       actividad_economica: [477399, 492300, 702000],
-      comuna: "PADRE LAS CASAS",
-      direccion: "PARCELA 2 PUENTE EL SAPO",
-      giro: "466301",
-      razon_social: "Alfa Trading Chile SPA",
-      rut: "77068553-2",
+      comuna: 'PADRE LAS CASAS',
+      direccion: 'PARCELA 2 PUENTE EL SAPO',
+      giro: '466301',
+      razon_social: 'Alfa Trading Chile SPA',
+      rut: '77068553-2',
     },
-    estado: "pendiente",
+    estado: 'pendiente',
     identificacion: {
       // fecha: new Date().toISOString(),
       fecha: new Date(),
       folio: folio,
-      tipo_despacho: "Por cuenta del emisor a instalaciones cliente",
-      tipo_traslado: "Venta por efectuar",
+      tipo_despacho: 'Por cuenta del emisor a instalaciones cliente',
+      tipo_traslado: 'Venta por efectuar',
     },
     predio: {
-      certificado: "FSC CONTROLLED WOOD SA-CW 006947",
-      comuna: "TOLTEN",
+      certificado: 'FSC CONTROLLED WOOD SA-CW 006947',
+      comuna: 'TOLTEN',
       georreferencia: {
         latitude: -38.213758,
         longitude: -73.107909,
       },
-      manzana: "243",
-      nombre: "LOTE 3",
-      plan_de_manejo: ["N.M. 311/32-13/21"],
-      rol: "243-62",
+      manzana: '243',
+      nombre: 'LOTE 3',
+      plan_de_manejo: ['N.M. 311/32-13/21'],
+      rol: '243-62',
     },
     productos: [
       {
-        calidad: "Metro Ruma",
+        calidad: 'Metro Ruma',
         cantidad: 14,
-        claseDiametrica: "",
-        especie: "Pino",
+        claseDiametrica: '',
+        especie: 'Pino',
         largo: 2.44,
         precio_ref: 38000,
-        tipo: "Pulpable",
+        tipo: 'Pulpable',
         total: 1298079,
-        unidad: "mr",
+        unidad: 'mr',
         volumen: 34.16,
       },
     ],
     receptor: {
-      comuna: "NACIMIENTO",
-      direccion: "AVDA JULIO HEMMELMANN 320",
-      giro: "",
-      razon_social: "CMPC PULP SPA",
-      rut: "96532330-9",
+      comuna: 'NACIMIENTO',
+      direccion: 'AVDA JULIO HEMMELMANN 320',
+      giro: '',
+      razon_social: 'CMPC PULP SPA',
+      rut: '96532330-9',
     },
     precio_ref: 38000,
     total: 1298079,
@@ -167,21 +168,21 @@ export const _createGuiaTest = async (folio: number) => {
 
   try {
     const guiaDocumentId =
-      "DTE_GD_" + rutEmpresa + "f" + guia.identificacion.folio.toString();
+      'DTE_GD_' + rutEmpresa + 'f' + guia.identificacion.folio.toString();
     await firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
       .doc(guiaDocumentId)
       .set(guia);
-    console.log("Guía agregada a firebase: ", guiaDocumentId);
+    console.log('Guía agregada a firebase: ', guiaDocumentId);
     Alert.alert(
-      "Guía agregada correctamente",
-      `Guía de folio: ${guia.identificacion.folio}`,
+      'Guía agregada correctamente',
+      `Guía de folio: ${guia.identificacion.folio}`
     );
     return guia;
   } catch (e) {
-    console.error("Error adding document: ", e);
-    Alert.alert("Error al agregar guía");
-    throw new Error(" Error al agregar guía ");
+    console.error('Error adding document: ', e);
+    Alert.alert('Error al agregar guía');
+    throw new Error(' Error al agregar guía ');
   }
 };
 
@@ -194,9 +195,9 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
   try {
     const querySnapshot = await firestore()
       .collection(`empresas/${rutEmpresa}/guias`)
-      .orderBy("identificacion.fecha", "desc")
+      .orderBy('identificacion.fecha', 'desc')
       .get();
-    console.log("Guias read from cache: ", querySnapshot.metadata.fromCache);
+    console.log('Guias read from cache: ', querySnapshot.metadata.fromCache);
     const guiasSummary: GuiaDespachoSummaryProps[] = [];
     querySnapshot.forEach((doc: FirebaseFirestoreTypes.DocumentData) => {
       const data = doc.data();
@@ -209,20 +210,20 @@ export const fetchGuiasDocs = async (rutEmpresa: string) => {
         // We parse the firestore timestamp to a string
         fecha: formatDateToYYYYMMDD(data.identificacion.fecha.toDate()),
         volumen_total_emitido: data.volumen_total_emitido,
-        pdf_url: data?.pdf_url ? data.pdf_url : "",
+        pdf_url: data?.pdf_url ? data.pdf_url : '',
       };
       guiasSummary.push(guiaData);
     });
     return guiasSummary;
   } catch (e: any) {
-    console.error("Error read document: ", e);
+    console.error('Error read document: ', e);
     throw new Error(`Error al leer guía(s): ${e}`);
   }
 };
 
 const formatDateToYYYYMMDD = (date: Date) => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };

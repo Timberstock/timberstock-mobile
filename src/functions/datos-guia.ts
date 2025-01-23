@@ -1,4 +1,8 @@
 import {
+  initialStateGuia,
+  initialStatesOptionsCreate,
+} from '@/constants/initialStates';
+import {
   ClienteContratoCompra,
   ContratoCompra,
   DestinoContratoCompra,
@@ -19,10 +23,6 @@ import {
 import { GuiaDespachoSummaryProps } from '@/interfaces/screens/home';
 import { IOption } from '@/interfaces/screens/screens';
 import { Predio } from '@/interfaces/sii/detalles';
-import {
-  initialStateGuia,
-  initialStatesOptionsCreate,
-} from '@/resources/initialStates';
 
 export function getInitialOptions(
   contratosCompra: ContratoCompra[]

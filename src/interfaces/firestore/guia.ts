@@ -1,19 +1,13 @@
-import { Predio } from "@/interfaces/sii/detalles";
-import { Proveedor, Producto, Destino } from "@/interfaces/esenciales";
-import {
-  Emisor,
-  Identificacion,
-  Receptor,
-  Transporte,
-} from "@/interfaces/sii/guia";
-import { ClaseDiametricaContratos } from "../screens/emision/productos";
+import { Destino, Producto, Proveedor } from '@/interfaces/esenciales';
+import { Predio } from '@/interfaces/sii/detalles';
+import { Emisor, Identificacion, Receptor, Transporte } from '@/interfaces/sii/guia';
 import {
   CarguioContratoCompra,
   CosechaContratoCompra,
   OtroContratoCompra,
-} from "../contratos/contratoCompra";
-export interface DestinoGuia
-  extends Omit<Destino, "productos" | "transportes"> {}
+} from '../contratos/contratoCompra';
+import { ClaseDiametricaContratos } from '../screens/emision/productos';
+export interface DestinoGuia extends Omit<Destino, 'productos' | 'transportes'> {}
 
 export interface TransporteGuia extends Transporte {
   precio_unitario_transporte: number;

@@ -42,6 +42,16 @@ prebuild:
 	npx expo prebuild --clean
 	@echo "AFTER PREBUILDING, REMEMBER TO CHANGE THE PODFILE BEFORE BUILDING FOR IOS (Podfile_fix_49_0_23 for SDK 49.0.23)"
 
+# Add this to before the command to wipe out the caches
+# killall Simulator
+# rm -rf ~/Library/Developer/Xcode/DerivedData/*
+.PHONY: reset-ios-build
+reset-ios-build:
+	rm -rf node_modules/
+	npm install
+	npx expo prebuild --clean
+	npx expo run ios
+
 # IOS
 # Build for iOS simulator and run the metro server
 .PHONY: ios-build-local-and-run-metro
