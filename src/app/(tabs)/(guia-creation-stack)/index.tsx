@@ -3,8 +3,9 @@ import PDFActionModal from '@/components/guias/PDFActionModal';
 import colors from '@/constants/colors';
 import { useApp } from '@/context/app/AppContext';
 import { GuiaDespachoSummary } from '@/context/app/types';
+import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
 import { useUser } from '@/context/user/UserContext';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,7 +17,7 @@ import {
   View,
 } from 'react-native';
 
-export default function GuiasHome() {
+export default function GuiasIndex() {
   const {
     state: { guiasSummary, loading, lastSync },
     fetchAllEmpresaData,
@@ -24,14 +25,16 @@ export default function GuiasHome() {
   const {
     state: { user },
   } = useUser();
-  const router = useRouter();
+  const { resetForm } = useGuiaForm();
+
   const [pdfItem, setPdfItem] = useState<GuiaDespachoSummary | null>(null);
 
   const handleCreateGuia = () => {
     if (user?.folios_reservados.length === 0 || !user?.folios_reservados) {
       Alert.alert('No tienes folios reservados');
     } else {
-      router.push('/(tabs)/(guia-creation-stack)/datos-guia');
+      resetForm();
+      router.push('/(tabs)/(guia-creation-stack)/guia-form');
     }
   };
 

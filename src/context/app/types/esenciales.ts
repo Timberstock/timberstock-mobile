@@ -17,15 +17,15 @@ export interface Faena {
 
 export interface Producto {
   codigo: string;
-  tipo: "Aserrable" | "Pulpable" | "";
+  tipo: 'Aserrable' | 'Pulpable' | null;
   especie: string;
   calidad: string;
   largo: number;
-  unidad: "MR" | "M3" | "";
+  unidad: 'MR' | 'M3' | '';
 }
 
 export interface Destino
-  extends Omit<Faena, "productos" | "plan_de_manejo" | "certificado"> {}
+  extends Omit<Faena, 'productos' | 'plan_de_manejo' | 'certificado'> {}
 
 export interface Cliente {
   razon_social: string;

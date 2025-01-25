@@ -1,5 +1,3 @@
-import { ContratoCompra } from '@/interfaces/contratos/contratoCompra';
-import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as FileSystem from 'expo-file-system';
@@ -7,6 +5,8 @@ import { shareAsync } from 'expo-sharing';
 import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
 import { Empresa, GuiaDespachoSummary, LocalFile } from './types';
+import { ContratoCompra } from './types/contratoCompra';
+import { ContratoVenta } from './types/contratoVenta';
 
 export class AppService {
   private static formatDateToYYYYMMDD(date: Date): string {
@@ -118,6 +118,7 @@ export class AppService {
     try {
       const snapshot = await firestore()
         .collection(`empresas/${empresaId}/contratos_compra`)
+        .where('vigente', '==', true)
         .get();
 
       return snapshot.docs.map((doc) => ({
@@ -134,6 +135,7 @@ export class AppService {
     try {
       const snapshot = await firestore()
         .collection(`empresas/${empresaId}/contratos_venta`)
+        .where('vigente', '==', true)
         .get();
 
       return snapshot.docs.map((doc) => ({

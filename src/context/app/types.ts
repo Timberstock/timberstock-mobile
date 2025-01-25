@@ -1,10 +1,11 @@
-import { ContratoCompra } from '@/interfaces/contratos/contratoCompra';
-import { ContratoVenta } from '@/interfaces/contratos/contratoVenta';
-import { Cliente, Faena, Producto, Proveedor } from '@/interfaces/esenciales';
-import { Receptor } from '@/interfaces/sii/guia';
 import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { ContratoCompra } from './types/contratoCompra';
+import { ContratoVenta } from './types/contratoVenta';
+import { Cliente, Faena, Producto, Proveedor } from './types/esenciales';
+import { GuiaDespachoFirestore } from './types/guia';
+import { Receptor } from './types/sii/guia';
 
-export interface GuiaDespachoSummary {
+export interface GuiaDespachoSummary extends Partial<GuiaDespachoFirestore> {
   id: string;
   folio: number;
   estado: string;

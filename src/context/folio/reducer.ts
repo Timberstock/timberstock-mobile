@@ -1,4 +1,3 @@
-import { initialState } from './initialState';
 import { FolioAction, FolioState } from './types';
 
 export function folioReducer(state: FolioState, action: FolioAction): FolioState {
@@ -22,15 +21,6 @@ export function folioReducer(state: FolioState, action: FolioAction): FolioState
         ...state,
         syncStatus: action.payload,
       };
-
-    case 'CLEAR_ERROR':
-      return {
-        ...state,
-        error: null,
-      };
-
-    case 'RESET_STATE':
-      return initialState;
 
     default:
       console.warn('Unknown action type:', action);

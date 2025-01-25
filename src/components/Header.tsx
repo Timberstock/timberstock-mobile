@@ -22,11 +22,11 @@ export default function Header() {
   const pathname = usePathname();
 
   const shouldShowBackButton =
-    pathname.includes('datos-guia') || pathname.includes('datos-producto');
+    pathname.includes('guia-form') || pathname.includes('producto-form');
 
   const title = {
-    '/datos-guia': 'Datos de la Guía',
-    '/datos-producto': 'Producto de la Guía',
+    '/guia-form': 'Datos de la Guía',
+    '/producto-form': 'Producto de la Guía',
     '/user': 'Usuario',
     '/': 'TimberStock',
   };

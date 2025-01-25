@@ -1,77 +1,57 @@
+import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
 import React from 'react';
-import { StyleSheet, View, TextInput, Text } from 'react-native';
-import { Banco } from '@/interfaces/screens/emision/productos';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
-export default function Pulpable({
-  bancosPulpable,
-  updateBancoPulpableValue,
-}: {
-  bancosPulpable: Banco[];
-  updateBancoPulpableValue: (
-    bancoIndex: number,
-    dimension: keyof Banco,
-    value: number
-  ) => void;
-}) {
+export default function Pulpable() {
+  const {
+    state: { productoForm },
+  } = useProductoForm();
+
+  console.log(productoForm);
+  const bancos = productoForm.bancos;
+
   return (
     <View style={styles.container}>
       {/* Banco reference is done by string `banco${index + 1}`  */}
-      {bancosPulpable.map((banco, index) => (
-        <BancoRow
-          key={index}
-          bancoIndex={index}
-          altura1={banco.altura1}
-          altura2={banco.altura2}
-          ancho={banco.ancho}
-          updateBancoPulpableValue={updateBancoPulpableValue}
-        />
+      {bancos!.map((banco, index) => (
+        <BancoRow key={index} bancoIndex={index} />
       ))}
     </View>
   );
 }
 
-const BancoRow = ({
-  bancoIndex,
-  altura1,
-  altura2,
-  ancho,
-  updateBancoPulpableValue,
-}: {
-  bancoIndex: number;
-  altura1: number;
-  altura2: number;
-  ancho: number;
-  updateBancoPulpableValue: (
-    bancoIndex: number,
-    dimension: keyof Banco,
-    value: number
-  ) => void;
-}) => {
-  // Function that generates the onChangeText handler according to the dimension (to avoid repeating code)
-  // TODO: will the returned functions be re created every time the component re renders?
-  const onChangeTextHandlerGenerator = (dimension: keyof Banco) => {
+const BancoRow = ({ bancoIndex }: { bancoIndex: number }) => {
+  const {
+    state: {
+      productoForm: { bancos },
+    },
+    updateBancos,
+  } = useProductoForm();
+
+  const onChangeTextHandlerGenerator = (dimension: 'altura1' | 'altura2' | 'ancho') => {
     return (text: string) => {
       if (isNaN(parseInt(text))) {
-        updateBancoPulpableValue(bancoIndex, dimension, 0);
+        updateBancos(bancoIndex, dimension, 0);
       } else {
-        updateBancoPulpableValue(bancoIndex, dimension, parseInt(text));
+        updateBancos(bancoIndex, dimension, parseInt(text));
       }
     };
   };
 
   return (
     <View style={styles.row}>
-      <Text style={styles.bancoLabel}>
-        {' '}
-        Banco{(bancoIndex + 1).toString()}{' '}
-      </Text>
+      <Text style={styles.bancoLabel}> Banco{(bancoIndex + 1).toString()} </Text>
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Altura 1</Text>
         <TextInput
           style={styles.input}
           keyboardType="numeric"
           // TODO: this is a hacky solution to show no value when the value is 0
-          value={altura1 !== 0 ? altura1.toString() : undefined}
+          value={
+            bancos![bancoIndex].altura1 !== 0
+              ? bancos![bancoIndex].altura1.toString()
+              : undefined
+          }
           placeholder={'cm'}
           onChangeText={onChangeTextHandlerGenerator('altura1')}
         />
@@ -81,7 +61,11 @@ const BancoRow = ({
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          value={altura2 !== 0 ? altura2.toString() : undefined}
+          value={
+            bancos![bancoIndex].altura2 !== 0
+              ? bancos![bancoIndex].altura2.toString()
+              : undefined
+          }
           placeholder={'cm'}
           onChangeText={onChangeTextHandlerGenerator('altura2')}
         />
@@ -91,7 +75,11 @@ const BancoRow = ({
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          value={ancho !== 0 ? ancho.toString() : undefined}
+          value={
+            bancos![bancoIndex].ancho !== 0
+              ? bancos![bancoIndex].ancho.toString()
+              : undefined
+          }
           placeholder={'cm'}
           onChangeText={onChangeTextHandlerGenerator('ancho')}
         />

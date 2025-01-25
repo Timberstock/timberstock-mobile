@@ -1,4 +1,5 @@
 import colors from '@/constants/colors';
+import { useGuiaCreation } from '@/context/guia-creation/creation/CreationContext';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,14 +12,23 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-// TODO: fix types
-const PrecioModal = (props: any) => {
-  const { createGuiaLoading, modalVisible, setModalVisible, handleCreateGuia } = props;
+const PrecioModal = ({
+  modalVisible,
+  setModalVisible,
+}: {
+  modalVisible: boolean;
+  setModalVisible: (visible: boolean) => void;
+}) => {
+  const {
+    state: { isSubmitting },
+    submitGuia,
+  } = useGuiaCreation();
+
   const [valorPrecioUnidadGuia, setValorPrecioUnidadGuia] = useState('');
 
   useEffect(() => {
     setValorPrecioUnidadGuia('');
-  }, [modalVisible, handleCreateGuia]);
+  }, [modalVisible]);
 
   return (
     <View>
@@ -40,23 +50,24 @@ const PrecioModal = (props: any) => {
             />
             <TouchableOpacity
               style={
-                !valorPrecioUnidadGuia || createGuiaLoading
+                !valorPrecioUnidadGuia || isSubmitting
                   ? {
                       ...styles.acceptButton,
                       ...styles.acceptButtonDisabled,
                     }
                   : styles.acceptButton
               }
-              disabled={!valorPrecioUnidadGuia || createGuiaLoading}
+              disabled={!valorPrecioUnidadGuia || isSubmitting}
               // Error handling for empty input (disable the button)
               onPress={async () => {
                 console.log('valorPrecioUnidadGuia', valorPrecioUnidadGuia);
-                await handleCreateGuia(parseInt(valorPrecioUnidadGuia));
+                // await handleCreateGuia(parseInt(valorPrecioUnidadGuia));
+                await submitGuia();
               }}
             >
               <Text style={styles.acceptButtonText}>Crear</Text>
             </TouchableOpacity>
-            {createGuiaLoading && <ActivityIndicator size="large" color="#4E4E4E" />}
+            {isSubmitting && <ActivityIndicator size="large" color="#4E4E4E" />}
           </View>
         </View>
       </Modal>

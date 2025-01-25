@@ -1,26 +1,23 @@
 import colors from '@/constants/colors';
-import { ClaseDiametricaGuia } from '@/interfaces/firestore/guia';
+import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
 import React from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-export default function Aserrable({
-  clasesDiametricas,
-  updateClaseDiametricaValue,
-  increaseNumberOfClasesDiametricas,
-}: {
-  clasesDiametricas: ClaseDiametricaGuia[];
-  updateClaseDiametricaValue: (clase: string, cantidad: number) => void;
-  increaseNumberOfClasesDiametricas: () => void;
-}) {
+export default function Aserrable() {
+  const {
+    state: { productoForm },
+    updateClasesDiametricas,
+  } = useProductoForm();
+
+  const { clases_diametricas_guia } = productoForm;
+
   return (
     <View style={styles.container}>
-      {clasesDiametricas.map((claseDiametrica, index) => (
+      {clases_diametricas_guia!.map((claseDiametrica, index) => (
         <ClaseDiametricaRow
           key={index}
           clase={claseDiametrica.clase}
           cantidad={claseDiametrica.cantidad_emitida || 0}
-          // TODO: prop drilling bad practice
-          updateClaseDiametricaValue={updateClaseDiametricaValue}
         />
       ))}
       <View style={styles.row}>
@@ -34,7 +31,7 @@ export default function Aserrable({
               // justifySelf: 'center',
             },
           ]}
-          onPress={increaseNumberOfClasesDiametricas}
+          onPress={() => updateClasesDiametricas()}
         >
           <Text style={styles.claseDiametricaButtonText}>+ Clase Diametrica</Text>
         </TouchableOpacity>
@@ -46,12 +43,11 @@ export default function Aserrable({
 const ClaseDiametricaRow = ({
   clase,
   cantidad,
-  updateClaseDiametricaValue,
 }: {
   clase: string;
   cantidad: number;
-  updateClaseDiametricaValue: (clase: string, cantidad: number) => void;
 }) => {
+  const { updateClasesDiametricas } = useProductoForm();
   return (
     <View style={styles.row}>
       <Text style={styles.text}>{clase}</Text>
@@ -59,7 +55,7 @@ const ClaseDiametricaRow = ({
         disabled={cantidad <= 0}
         style={styles.button}
         // Decrease the cantidad by 1
-        onPress={() => updateClaseDiametricaValue(clase, cantidad - 1)}
+        onPress={() => updateClasesDiametricas(clase, cantidad - 1)}
       >
         <Text style={styles.buttonText}>-</Text>
       </TouchableOpacity>
@@ -67,12 +63,12 @@ const ClaseDiametricaRow = ({
         style={styles.input}
         value={cantidad.toString()}
         keyboardType="numeric"
-        // onChangeText={(text) => updateClaseDiametricaValue(clase, parseInt(text))}
+        // onChangeText={(text) => updateClasesDiametricas(clase, parseInt(text))}
       />
       <TouchableOpacity
         style={styles.button}
         // Increase the cantidad by 1
-        onPress={() => updateClaseDiametricaValue(clase, cantidad + 1)}
+        onPress={() => updateClasesDiametricas(clase, cantidad + 1)}
       >
         <Text style={styles.buttonText}>+</Text>
       </TouchableOpacity>

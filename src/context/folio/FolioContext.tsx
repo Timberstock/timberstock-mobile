@@ -1,9 +1,15 @@
 import { useUser } from '@/context/user/UserContext';
 import React, { createContext, useContext, useReducer } from 'react';
-import { initialState } from './initialState';
 import { folioReducer } from './reducer';
 import { FolioService } from './service';
-import { FolioContextType } from './types';
+import { FolioContextType, FolioState } from './types';
+
+const initialState: FolioState = {
+  loading: false,
+  error: null,
+  lastSync: null,
+  syncStatus: 'synced',
+};
 
 export const FolioContext = createContext<FolioContextType | undefined>(undefined);
 
