@@ -49,7 +49,7 @@ export const productoFormReducer = (
       return {
         ...state,
         productoForm: {
-          ...action.payload.optionObject!,
+          ...action.payload,
         },
         // Options remain the same
       };
@@ -65,7 +65,7 @@ export const productoFormReducer = (
         newClasesDiametricas[claseIndex] = {
           ...newClasesDiametricas[claseIndex],
           cantidad_emitida: claseItem.cantidad!,
-          volumen_emitido: claseItem.volumen_emitido!,
+          volumen_emitido: Number(claseItem.volumen_emitido!.toFixed(4)),
         };
       } else {
         // Add new clase diametrica if index is not provided
@@ -84,7 +84,7 @@ export const productoFormReducer = (
       }
 
       newVolumenTotalEmitido = newClasesDiametricas.reduce(
-        (acc, clase) => acc + clase.volumen_emitido,
+        (acc, clase) => acc + Number(clase.volumen_emitido.toFixed(4)),
         0
       );
 
@@ -93,7 +93,7 @@ export const productoFormReducer = (
         productoForm: {
           ...state.productoForm,
           clases_diametricas_guia: newClasesDiametricas,
-          volumen_total_emitido: newVolumenTotalEmitido,
+          volumen_total_emitido: Number(newVolumenTotalEmitido.toFixed(4)),
         },
       };
 
@@ -107,7 +107,7 @@ export const productoFormReducer = (
       };
 
       newVolumenTotalEmitido = newBancos.reduce(
-        (acc, banco) => acc + banco.volumen_banco,
+        (acc, banco) => acc + Number(banco.volumen_banco.toFixed(4)),
         0
       );
 
@@ -116,18 +116,18 @@ export const productoFormReducer = (
         productoForm: {
           ...state.productoForm,
           bancos: newBancos,
-          volumen_total_emitido: newVolumenTotalEmitido,
+          volumen_total_emitido: Number(newVolumenTotalEmitido.toFixed(4)),
         },
       };
 
     case 'RESET_VIEW':
-      // TODO: Reset view
       return {
         productoForm: {
           ...productoFormInitialState.productoForm,
         },
         options: {
           ...productoFormInitialState.options,
+          ...action.payload.newOptions,
         },
       };
 

@@ -1,75 +1,54 @@
+import { GuiaDespachoState } from '@/context/app/types';
 import { ContratoCompra } from '@/context/app/types/contratoCompra';
 import { GuiaDespachoFirestore } from '@/context/app/types/guia';
-import { OptionType } from '@mobile-reality/react-native-select-pro';
-
-export interface SelectorOption<
-  OptionObject =
-    | number // Identificacion Folio
-    | string // Identificacion Tipo Despacho, Tipo Traslado
-    | ContratoCompra['proveedor'] // Proveedor
-    | ContratoCompra['faena'] // Predio Origen
-    | ContratoCompra['clientes'][number] // Receptor
-    | ContratoCompra['clientes'][number]['destinos_contrato'][number] // Predio Destino
-    | ContratoCompra['servicios']['carguio'] // Servicio Carguio Empresa
-    | ContratoCompra['servicios']['cosecha'] // Servicio Cosecha Empresa
-    | ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number] // Transporte Empresa
-    | ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['choferes'][number] // Transporte Empresa Chofer
-    | ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['camiones'][number] // Transporte Empresa Camión
-    | ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['carros'][number] // Transporte Empresa Carro
-    | string[], // Observaciones
-> extends OptionType {
-  optionObject?: OptionObject;
-}
-
-export interface GuiaFormOptions {
-  identificacion_folios: SelectorOption<number>[];
-  identificacion_tipos_despacho: SelectorOption<string>[];
-  identificacion_tipos_traslado: SelectorOption<string>[];
-  proveedores: SelectorOption<ContratoCompra['proveedor']>[];
-  // folio_guia_proveedor: ; // not a selector
-  predios: SelectorOption<ContratoCompra['faena']>[];
-  clientes: SelectorOption<ContratoCompra['clientes'][number]>[];
-  destinos: SelectorOption<
-    ContratoCompra['clientes'][number]['destinos_contrato'][number]
-  >[];
-  transporte_empresas: SelectorOption<{
-    rut: string;
-    razon_social: string;
-  }>[];
-  transporte_empresa_choferes: SelectorOption<
-    ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['choferes'][number]
-  >[];
-  transporte_empresa_camiones: SelectorOption<
-    ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['camiones'][number]
-  >[];
-  transporte_empresa_carros: SelectorOption<
-    ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['carros'][number]
-  >[];
-  servicio_carguio_empresas: SelectorOption<ContratoCompra['servicios']['carguio']>[];
-  servicio_cosecha_empresas: SelectorOption<ContratoCompra['servicios']['cosecha']>[];
-}
 
 export type GuiaFormData = {
   identificacion_folio: number | null; // Folio belongs to identificacion
   identificacion_tipo_despacho: string | null; // Tipo Despacho belongs to identificacion
   identificacion_tipo_traslado: string | null; // Tipo Traslado belongs to identificacion
   proveedor: GuiaDespachoFirestore['proveedor'] | null;
-  folio_guia_proveedor: number | null;
-  receptor: GuiaDespachoFirestore['receptor'] | null;
-  predio_origen: GuiaDespachoFirestore['predio_origen'] | null;
-  destino: GuiaDespachoFirestore['destino'] | null;
-  transporte_empresa: GuiaDespachoFirestore['transporte']['empresa'] | null;
-  transporte_empresa_chofer: GuiaDespachoFirestore['transporte']['chofer'] | null; // Chofer belongs to transporte
-  transporte_empresa_camion: GuiaDespachoFirestore['transporte']['camion'] | null; // Camión belongs to transporte
-  transporte_empresa_carro: GuiaDespachoFirestore['transporte']['carro'] | null; // Carro belongs to transporte
-  servicios_carguio_empresa: GuiaDespachoFirestore['servicios']['carguio'] | null;
-  servicios_cosecha_empresa: GuiaDespachoFirestore['servicios']['cosecha'] | null;
-  observaciones: GuiaDespachoFirestore['observaciones'] | null;
-  contrato_compra_id: GuiaDespachoFirestore['contrato_compra_id'] | null;
-  contrato_venta_id: GuiaDespachoFirestore['contrato_venta_id'] | null;
-  codigo_fsc: GuiaDespachoFirestore['codigo_fsc'] | null;
-  codigo_contrato_externo: GuiaDespachoFirestore['codigo_contrato_externo'] | null;
+  cliente: GuiaFormOptions['clientes'][number] | null;
+  faena: GuiaFormOptions['faenas'][number] | null;
+  destino_contrato: GuiaFormOptions['destinos_contrato'][number] | null;
+  transporte_empresa: GuiaFormOptions['transporte_empresas'][number] | null;
+  transporte_empresa_chofer:
+    | GuiaFormOptions['transporte_empresa_choferes'][number]
+    | null; // Chofer belongs to transporte
+  transporte_empresa_camion:
+    | GuiaFormOptions['transporte_empresa_camiones'][number]
+    | null; // Camión belongs to transporte
+  transporte_empresa_carro: { patente: string } | null; // Carro belongs to transporte
+  servicios_carguio_empresa:
+    | GuiaFormOptions['servicios_carguio_empresas'][number]
+    | null;
+  servicios_cosecha_empresa:
+    | GuiaFormOptions['servicios_cosecha_empresas'][number]
+    | null;
+  folio_guia_proveedor: number | null; // NOT A SELECTOR
+  observaciones: GuiaDespachoFirestore['observaciones'] | null; // NOT A SELECTOR
+  contrato_compra_id: GuiaDespachoFirestore['contrato_compra_id'] | null; // NOT A SELECTOR
+  contrato_venta_id: GuiaDespachoFirestore['contrato_venta_id'] | null; // NOT A SELECTOR
+  codigo_fsc: GuiaDespachoFirestore['codigo_fsc'] | null; // NOT A SELECTOR
+  codigo_contrato_externo: GuiaDespachoFirestore['codigo_contrato_externo'] | null; // NOT A SELECTOR
 };
+
+// Here we map the fields that are selected from contratos with different field names
+export interface GuiaFormOptions {
+  // Only fields that will be selected from a Dropdown, and therefore need options
+  identificacion_folios: { value: number; label: string }[];
+  identificacion_tipos_despacho: { value: string; label: string }[];
+  identificacion_tipos_traslado: { value: string; label: string }[];
+  proveedores: ContratoCompra['proveedor'][];
+  clientes: ContratoCompra['clientes']; // options for receptor, comes with name "cliente" in contratos
+  faenas: ContratoCompra['faena'][]; // options for predio_origen, comes with name "faena" in contratos
+  destinos_contrato: ContratoCompra['clientes'][number]['destinos_contrato'];
+  transporte_empresas: ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'];
+  transporte_empresa_choferes: ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['choferes'];
+  transporte_empresa_camiones: ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]['camiones'];
+  transporte_empresa_carros: { patente: string }[];
+  servicios_carguio_empresas: NonNullable<ContratoCompra['servicios']['carguio']>;
+  servicios_cosecha_empresas: NonNullable<ContratoCompra['servicios']['cosecha']>;
+}
 
 export interface GuiaFormState {
   guia: GuiaFormData;
@@ -81,10 +60,10 @@ export type GuiaFormAction =
       type: 'UPDATE_FIELD';
       payload: {
         field: keyof GuiaFormData;
-        value: SelectorOption['optionObject'] | null;
+        value: GuiaFormData[keyof GuiaFormData];
         selectionResult?: {
           newData: Partial<GuiaFormData>;
-          newOptions: Partial<GuiaFormOptions>;
+          newOptions: Partial<GuiaFormState['options']>;
         };
       };
     }
@@ -94,7 +73,7 @@ export interface GuiaFormContextType {
   state: GuiaFormState;
   updateField: (
     field: keyof GuiaFormData,
-    value: SelectorOption['optionObject'] | number | null
+    value: GuiaFormData[keyof GuiaFormData]
   ) => void;
   updateObservacionField: (
     mode: 'add' | 'update' | 'remove',
@@ -103,4 +82,5 @@ export interface GuiaFormContextType {
   ) => void;
   isFormValid: () => boolean;
   resetForm: () => void;
+  repetirGuia: (guiaTemplate: GuiaDespachoState) => boolean;
 }

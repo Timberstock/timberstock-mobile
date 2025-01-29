@@ -1,4 +1,5 @@
-import { Camion } from "../servicios";
+import { Timestamp } from '@react-native-firebase/firestore';
+import { Camion } from '../servicios';
 
 // 2nd Level Interfaces
 export interface Chofer {
@@ -28,7 +29,7 @@ export interface Identificacion {
   folio: number;
   tipo_traslado: string;
   tipo_despacho: string;
-  fecha?: Date; // Optional because its set in the function at the moment of creation
+  fecha?: Date | Timestamp; // Optional because its set in the function at the moment of creation
 }
 
 export interface Emisor {
@@ -55,7 +56,7 @@ export interface Transporte {
   };
   chofer: Chofer;
   camion: Camion;
-  carro: string;
+  carro: { patente: string } | string;
 }
 
 export interface Totales {

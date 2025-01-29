@@ -1,21 +1,19 @@
 // Arreglo de renderkeys para que se actualicen los selects desde https://github.com/MobileReality/react-native-select-pro/issues/237
-import colors from '@/constants/colors';
+import CustomDropdown from '@/components/CustomDropdown';
 import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
-import { SelectorOption } from '@/context/guia-creation/guia-form/types';
 import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
-import { Select, SelectStyles } from '@mobile-reality/react-native-select-pro';
+import { theme } from '@/theme';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import {
-  Alert,
-  Platform,
-  ScrollView,
-  StyleSheet,
+  Button,
+  Divider,
+  IconButton,
+  Surface,
   Text,
   TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function GuiaForm() {
@@ -28,8 +26,6 @@ export default function GuiaForm() {
   } = useGuiaForm();
 
   const { resetForm } = useProductoForm();
-
-  const [renderKey, setRenderKey] = useState(0);
 
   const nextStep = () => {
     const valid = isFormValid();
@@ -45,610 +41,424 @@ export default function GuiaForm() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.body}>
-        <ScrollView style={styles.scrollView}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}> Identificación Guía </Text>
-            <View style={styles.row}>
-              <View style={styles.container}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Nº Folio"
-                  animation={true}
-                  options={guiaFormOptions.identificacion_folios}
-                  defaultOption={guiaFormOptions.identificacion_folios.find(
-                    (option) =>
-                      option.value === guiaFormData.identificacion_folio?.toString()
-                  )}
-                  onSelect={(option) => {
-                    updateField('identificacion_folio', option.value);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('identificacion_folio', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-folio`}
-                />
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.container}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Tipo Despacho"
-                  animation={true}
-                  options={guiaFormOptions.identificacion_tipos_despacho}
-                  defaultOption={guiaFormOptions.identificacion_tipos_despacho.find(
-                    (option) =>
-                      option.value === guiaFormData.identificacion_tipo_despacho
-                  )}
-                  onSelect={(option) => {
-                    updateField('identificacion_tipo_despacho', option.value);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('identificacion_tipo_despacho', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-tipo-despacho`}
-                />
-              </View>
-              <View style={styles.container}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Tipo Traslado"
-                  animation={true}
-                  options={guiaFormOptions.identificacion_tipos_traslado}
-                  defaultOption={guiaFormOptions.identificacion_tipos_traslado.find(
-                    (option) =>
-                      option.value === guiaFormData.identificacion_tipo_traslado
-                  )}
-                  onSelect={(option) => {
-                    updateField('identificacion_tipo_traslado', option.value);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('identificacion_tipo_traslado', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-tipo-traslado`}
-                />
-              </View>
-            </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Identification */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Identificación Guía
+            </Text>
           </View>
-          <View style={{ ...styles.section }}>
-            <Text style={styles.sectionTitle}> Proveedor</Text>
-            <Select
-              styles={selectStyles}
-              placeholderText="Proveedor"
-              // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
-              // searchable={true}
-              animation={true}
-              options={guiaFormOptions.proveedores}
-              defaultOption={guiaFormOptions.proveedores.find(
-                (option) => option.value === guiaFormData.proveedor?.rut
-              )}
-              onSelect={(option: SelectorOption) => {
-                updateField('proveedor', option?.optionObject);
-                setRenderKey(renderKey + 1);
-              }}
-              onRemove={() => {
-                updateField('proveedor', null);
-                setRenderKey(renderKey + 1);
-              }}
-              key={`${renderKey}-proveedor`}
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <CustomDropdown
+              placeholder="Nº Folio"
+              value={guiaFormData.identificacion_folio}
+              data={guiaFormOptions.identificacion_folios}
+              labelField="label"
+              valueField="value"
+              onChange={(item) => updateField('identificacion_folio', item.value)}
+              onClear={() => updateField('identificacion_folio', null)}
             />
-            <View style={styles.container}>
-              <TextInput
-                style={styles.input}
-                value={
-                  guiaFormData.folio_guia_proveedor &&
-                  guiaFormData.folio_guia_proveedor !== 0
-                    ? guiaFormData.folio_guia_proveedor.toString()
-                    : ''
+            <View style={styles.row}>
+              <CustomDropdown
+                placeholder="Tipo Despacho"
+                value={guiaFormData.identificacion_tipo_despacho}
+                data={guiaFormOptions.identificacion_tipos_despacho}
+                labelField="label"
+                valueField="value"
+                onChange={(item) =>
+                  updateField('identificacion_tipo_despacho', item.value)
                 }
-                placeholder={'Folio Proveedor (opcional)'}
-                keyboardType="numeric"
-                onChangeText={(text) => updateField('folio_guia_proveedor', text)}
+                onClear={() => updateField('identificacion_tipo_despacho', null)}
+                style={styles.flex1}
+              />
+              <CustomDropdown
+                placeholder="Tipo Traslado"
+                value={guiaFormData.identificacion_tipo_traslado}
+                data={guiaFormOptions.identificacion_tipos_traslado}
+                labelField="label"
+                valueField="value"
+                onChange={(item) =>
+                  updateField('identificacion_tipo_traslado', item.value)
+                }
+                onClear={() => updateField('identificacion_tipo_traslado', null)}
+                style={styles.flex1}
               />
             </View>
           </View>
-          <View style={[styles.section, { height: 230 }]}>
-            <Text style={styles.sectionTitle}> Origen </Text>
-            <View style={styles.row}>
-              <View style={styles.container}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Predio - Comuna"
-                  // TODO: FIX PROBLEMS WITH SEARCHABLE TRUE AND KEYBOARD AWARE SCROLL VIEW
-                  // searchable={true}
-                  animation={true}
-                  options={guiaFormOptions.predios}
-                  defaultOption={guiaFormOptions.predios.find(
-                    (option) => option.value === guiaFormData.predio_origen?.rol
-                  )}
-                  disabled={!guiaFormData.proveedor}
-                  onSelect={(option: SelectorOption) => {
-                    updateField('predio_origen', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('predio_origen', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-predios`}
-                />
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.textContainer}>
-                {guiaFormData.predio_origen?.rol && (
-                  <Text style={styles.text}>Rol: {guiaFormData.predio_origen.rol}</Text>
-                )}
-                {guiaFormData.predio_origen?.rol && (
-                  <Text style={styles.text}>
-                    GEO: {guiaFormData.predio_origen?.georreferencia.latitude},
-                    {guiaFormData.predio_origen?.georreferencia.longitude}
-                  </Text>
-                )}
-                {guiaFormData.predio_origen?.rol && (
-                  <Text style={styles.text}>
-                    Plan de Manejo o Uso Suelo:{' '}
-                    {guiaFormData.predio_origen.plan_de_manejo}
-                  </Text>
-                )}
-              </View>
-            </View>
-            {guiaFormData.predio_origen?.rol && (
-              <View style={styles.textContainer}>
-                <Text style={styles.text}>
-                  Cert. Proveedor: {guiaFormData.predio_origen.certificado}
+        </Surface>
+
+        {/* Provider */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Proveedor
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <CustomDropdown
+              placeholder="Proveedor"
+              value={guiaFormData.proveedor?.rut || null}
+              data={guiaFormOptions.proveedores}
+              labelField="razon_social"
+              valueField="rut"
+              onChange={(item) => updateField('proveedor', item)}
+              onClear={() => updateField('proveedor', null)}
+            />
+            <TextInput
+              mode="outlined"
+              label="Folio Proveedor (opcional)"
+              value={guiaFormData.folio_guia_proveedor?.toString() || ''}
+              onChangeText={(text) => updateField('folio_guia_proveedor', text)}
+              keyboardType="numeric"
+              outlineStyle={styles.inputOutline}
+              style={styles.textInput}
+            />
+          </View>
+        </Surface>
+
+        {/* Origin */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Origen
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <CustomDropdown
+              placeholder="Predio"
+              value={guiaFormData.faena?.rol || null}
+              data={guiaFormOptions.faenas}
+              labelField="nombre"
+              valueField="rol"
+              onChange={(item) => updateField('faena', item)}
+              onClear={() => updateField('faena', null)}
+              disabled={!guiaFormData.proveedor}
+            />
+            {guiaFormData.faena?.rol && (
+              <Surface style={styles.infoCard} mode="flat">
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Rol: {guiaFormData.faena.rol}
                 </Text>
-              </View>
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  GEO: {guiaFormData.faena.georreferencia.latitude},{' '}
+                  {guiaFormData.faena.georreferencia.longitude}
+                </Text>
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Plan de Manejo: {guiaFormData.faena.plan_de_manejo}
+                </Text>
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Cert. Proveedor: {guiaFormData.faena.certificado}
+                </Text>
+              </Surface>
             )}
           </View>
-          <View style={[styles.section, { height: 250 }]}>
-            <Text style={styles.sectionTitle}> Cliente </Text>
+        </Surface>
+
+        {/* Client */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Cliente
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <CustomDropdown
+              placeholder="Receptor"
+              value={guiaFormData.cliente?.rut || null}
+              data={guiaFormOptions.clientes}
+              labelField="razon_social"
+              valueField="rut"
+              onChange={(item) => updateField('cliente', item)}
+              onClear={() => updateField('cliente', null)}
+              disabled={!guiaFormData.faena || !guiaFormData.proveedor}
+            />
+            {guiaFormData.cliente?.rut && (
+              <Surface style={styles.infoCard} mode="flat">
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  RUT: {guiaFormData.cliente.rut}
+                </Text>
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Dirección: {guiaFormData.cliente.direccion},{' '}
+                  {guiaFormData.cliente.comuna}
+                </Text>
+              </Surface>
+            )}
+            <CustomDropdown
+              placeholder="Dirección Despacho"
+              value={guiaFormData.destino_contrato?.nombre || null}
+              data={guiaFormOptions.destinos_contrato}
+              labelField="nombre"
+              valueField="nombre"
+              onChange={(item) => updateField('destino_contrato', item)}
+              onClear={() => updateField('destino_contrato', null)}
+              disabled={
+                !guiaFormData.proveedor || !guiaFormData.faena || !guiaFormData.cliente
+              }
+            />
+            {guiaFormData.destino_contrato?.rol && (
+              <Surface style={styles.infoCard} mode="flat">
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Rol: {guiaFormData.destino_contrato.rol} | Comuna:{' '}
+                  {guiaFormData.destino_contrato.comuna}
+                </Text>
+              </Surface>
+            )}
+          </View>
+        </Surface>
+
+        {/* Services */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Servicios
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <CustomDropdown
+              placeholder="Servicio Carguío"
+              value={guiaFormData.servicios_carguio_empresa?.empresa.rut || null}
+              data={guiaFormOptions.servicios_carguio_empresas || []}
+              labelField="empresa.razon_social"
+              valueField="empresa.rut"
+              onChange={(item) => updateField('servicios_carguio_empresa', item)}
+              onClear={() => updateField('servicios_carguio_empresa', null)}
+              disabled={
+                !guiaFormData.proveedor ||
+                !guiaFormData.faena ||
+                !guiaFormData.cliente ||
+                guiaFormOptions.servicios_carguio_empresas.length === 0
+              }
+            />
+            <CustomDropdown
+              placeholder="Servicio Cosecha"
+              value={guiaFormData.servicios_cosecha_empresa?.empresa.rut || null}
+              data={guiaFormOptions.servicios_cosecha_empresas || []}
+              labelField="empresa.razon_social"
+              valueField="empresa.rut"
+              onChange={(item) => updateField('servicios_cosecha_empresa', item)}
+              onClear={() => updateField('servicios_cosecha_empresa', null)}
+              disabled={
+                !guiaFormData.proveedor ||
+                !guiaFormData.faena ||
+                !guiaFormData.cliente ||
+                guiaFormOptions.servicios_cosecha_empresas.length === 0
+              }
+            />
+          </View>
+        </Surface>
+
+        {/* Dispatch */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Datos Despacho
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <CustomDropdown
+              placeholder="Empresa Transporte"
+              value={guiaFormData.transporte_empresa?.rut || null}
+              data={guiaFormOptions.transporte_empresas || []}
+              labelField="razon_social"
+              valueField="rut"
+              onChange={(item) => updateField('transporte_empresa', item)}
+              onClear={() => updateField('transporte_empresa', null)}
+              disabled={
+                !guiaFormData.proveedor ||
+                !guiaFormData.cliente ||
+                !guiaFormData.faena ||
+                !guiaFormData.destino_contrato
+              }
+            />
+            <CustomDropdown
+              placeholder="Chofer"
+              value={guiaFormData.transporte_empresa_chofer?.rut || null}
+              data={guiaFormOptions.transporte_empresa_choferes || []}
+              labelField="nombre"
+              valueField="rut"
+              onChange={(item) => updateField('transporte_empresa_chofer', item)}
+              onClear={() => updateField('transporte_empresa_chofer', null)}
+              disabled={
+                !guiaFormData.proveedor ||
+                !guiaFormData.cliente ||
+                !guiaFormData.faena ||
+                !guiaFormData.destino_contrato ||
+                !guiaFormData.transporte_empresa
+              }
+            />
             <View style={styles.row}>
-              <View style={styles.container}>
-                <Select
-                  placeholderText="Razon Social"
-                  styles={selectStyles}
-                  animation={true}
-                  options={guiaFormOptions.clientes}
-                  disabled={!guiaFormData.predio_origen || !guiaFormData.proveedor}
-                  defaultOption={guiaFormOptions.clientes.find(
-                    (option) => option.value === guiaFormData.receptor?.rut
-                  )}
-                  onSelect={(option: SelectorOption) => {
-                    updateField('receptor', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('receptor', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-clientes`}
-                />
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.textContainer}>
-                {guiaFormData.receptor?.rut !== '' && (
-                  <Text style={styles.text}>RUT: {guiaFormData.receptor?.rut}</Text>
-                )}
-                {guiaFormData.receptor?.rut !== '' && (
-                  <Text style={styles.text}>
-                    Direccion: {guiaFormData.receptor?.direccion},{' '}
-                    {guiaFormData.receptor?.comuna}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.container}>
-                <Select
-                  placeholderText="Direccion Despacho"
-                  styles={selectStyles}
-                  animation={true}
-                  options={guiaFormOptions.destinos}
-                  defaultOption={guiaFormOptions.destinos.find(
-                    (option) => option.value === guiaFormData.destino?.nombre
-                  )}
-                  disabled={
-                    !guiaFormData.proveedor ||
-                    !guiaFormData.predio_origen ||
-                    !guiaFormData.receptor
-                  }
-                  onSelect={(option: SelectorOption) => {
-                    updateField('destino', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('destino', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-despachos`}
-                />
-              </View>
-            </View>
-            <View />
-            <View style={styles.row}>
-              <View style={styles.textContainer}>
-                {guiaFormData.destino?.rol && (
-                  <Text style={styles.text}>
-                    Rol: {guiaFormData.destino.rol} || Comuna:{' '}
-                    {guiaFormData.destino.comuna}
-                  </Text>
-                )}
-              </View>
+              <CustomDropdown
+                placeholder="Camión"
+                value={guiaFormData.transporte_empresa_camion?.patente || null}
+                data={guiaFormOptions.transporte_empresa_camiones || []}
+                labelField="patente"
+                valueField="patente"
+                onChange={(item) => updateField('transporte_empresa_camion', item)}
+                onClear={() => updateField('transporte_empresa_camion', null)}
+                disabled={
+                  !guiaFormData.proveedor ||
+                  !guiaFormData.cliente ||
+                  !guiaFormData.faena ||
+                  !guiaFormData.destino_contrato ||
+                  !guiaFormData.transporte_empresa
+                }
+                style={styles.flex1}
+              />
+              <CustomDropdown
+                placeholder="Carro"
+                value={guiaFormData.transporte_empresa_carro?.patente || null}
+                data={guiaFormOptions.transporte_empresa_carros || []}
+                labelField="patente"
+                valueField="patente"
+                onChange={(item) => updateField('transporte_empresa_carro', item)}
+                onClear={() => updateField('transporte_empresa_carro', null)}
+                disabled={
+                  !guiaFormData.proveedor ||
+                  !guiaFormData.cliente ||
+                  !guiaFormData.faena ||
+                  !guiaFormData.destino_contrato ||
+                  !guiaFormData.transporte_empresa
+                }
+                style={styles.flex1}
+              />
             </View>
           </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}> Servicios </Text>
-            <View style={styles.row}>
-              <View style={styles.textContainer}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Empresa Carguio"
-                  animation={true}
-                  options={guiaFormOptions.servicio_carguio_empresas}
-                  defaultOption={guiaFormOptions.servicio_carguio_empresas.find(
-                    (option) =>
-                      option.value ===
-                      guiaFormData.servicios_carguio_empresa?.empresa.rut
-                  )}
-                  disabled={
-                    !guiaFormData.proveedor ||
-                    !guiaFormData.predio_origen ||
-                    !guiaFormData.receptor ||
-                    guiaFormOptions.servicio_carguio_empresas.length === 0
-                  }
-                  onSelect={(option: SelectorOption) => {
-                    updateField('servicios_carguio_empresa', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('servicios_carguio_empresa', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-carguio`}
-                />
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.textContainer}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Empresa Cosecha"
-                  animation={true}
-                  options={guiaFormOptions.servicio_cosecha_empresas}
-                  defaultOption={guiaFormOptions.servicio_cosecha_empresas.find(
-                    (option) =>
-                      option.value ===
-                      guiaFormData.servicios_cosecha_empresa?.empresa.rut
-                  )}
-                  disabled={
-                    !guiaFormData.proveedor ||
-                    !guiaFormData.predio_origen ||
-                    !guiaFormData.receptor ||
-                    guiaFormOptions.servicio_cosecha_empresas.length === 0
-                  }
-                  onSelect={(option: SelectorOption) => {
-                    updateField('servicios_cosecha_empresa', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('servicios_cosecha_empresa', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-cosecha`}
-                />
-              </View>
-            </View>
+        </Surface>
+
+        {/* Observations */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Observaciones
+            </Text>
+            <IconButton
+              icon="plus-circle"
+              mode="contained-tonal"
+              onPress={() => updateObservacionField('add')}
+              style={styles.addButton}
+            />
           </View>
-          <View style={[styles.section, { height: 250 }]}>
-            <Text style={styles.sectionTitle}> Datos Despacho </Text>
-            <View style={styles.row}>
-              <View style={styles.textContainer}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Empresa Transportista"
-                  animation={true}
-                  options={guiaFormOptions.transporte_empresas}
-                  defaultOption={guiaFormOptions.transporte_empresas.find(
-                    (option) => option.value === guiaFormData.transporte_empresa?.rut
-                  )}
-                  disabled={
-                    !guiaFormData.proveedor ||
-                    !guiaFormData.receptor ||
-                    !guiaFormData.predio_origen ||
-                    !guiaFormData.destino
-                  }
-                  onSelect={(option: SelectorOption) => {
-                    updateField('transporte_empresa', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('transporte_empresa', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-transportistas`}
-                />
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.textContainer}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Chofer"
-                  animation={true}
-                  options={guiaFormOptions.transporte_empresa_choferes}
-                  defaultOption={guiaFormOptions.transporte_empresa_choferes.find(
-                    (option) =>
-                      option.value === guiaFormData.transporte_empresa_chofer?.rut
-                  )}
-                  disabled={
-                    !guiaFormData.proveedor ||
-                    !guiaFormData.receptor ||
-                    !guiaFormData.predio_origen ||
-                    !guiaFormData.destino ||
-                    !guiaFormData.transporte_empresa
-                  }
-                  onSelect={(option: SelectorOption) => {
-                    updateField('transporte_empresa_chofer', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('transporte_empresa_chofer', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-choferes`}
-                />
-              </View>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.container}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Camion"
-                  animation={true}
-                  options={guiaFormOptions.transporte_empresa_camiones}
-                  defaultOption={guiaFormOptions.transporte_empresa_camiones.find(
-                    (option) =>
-                      option.value === guiaFormData.transporte_empresa_camion?.patente
-                  )}
-                  disabled={
-                    !guiaFormData.proveedor ||
-                    !guiaFormData.receptor ||
-                    !guiaFormData.predio_origen ||
-                    !guiaFormData.destino ||
-                    !guiaFormData.transporte_empresa
-                  }
-                  onSelect={(option: SelectorOption) => {
-                    updateField('transporte_empresa_camion', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('transporte_empresa_camion', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-camiones`}
-                />
-              </View>
-              <View style={styles.container}>
-                <Select
-                  styles={selectStyles}
-                  placeholderText="Carro"
-                  animation={true}
-                  options={guiaFormOptions.transporte_empresa_carros}
-                  defaultOption={guiaFormOptions.transporte_empresa_carros.find(
-                    (option) => option.value === guiaFormData.transporte_empresa_carro
-                  )}
-                  disabled={
-                    !guiaFormData.proveedor ||
-                    !guiaFormData.receptor ||
-                    !guiaFormData.predio_origen ||
-                    !guiaFormData.destino ||
-                    !guiaFormData.transporte_empresa
-                  }
-                  onSelect={(option: SelectorOption) => {
-                    updateField('transporte_empresa_carro', option?.optionObject);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  onRemove={() => {
-                    updateField('transporte_empresa_carro', null);
-                    setRenderKey(renderKey + 1);
-                  }}
-                  key={`${renderKey}-carros`}
-                />
-              </View>
-            </View>
-          </View>
-          <View
-            style={{
-              ...styles.section,
-              height: 150 + (guiaFormData.observaciones?.length || 0) * 50,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                width: '100%',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Text style={{ ...styles.sectionTitle }}>Observaciones</Text>
-              <TouchableOpacity
-                style={{
-                  marginTop: '1%',
-                  marginRight: '5%',
-                }}
-                onPress={() => updateObservacionField('add')}
-              >
-                <Icon name="add-circle-outline" size={40} color={colors.secondary} />
-              </TouchableOpacity>
-            </View>
-            {guiaFormData.observaciones?.map((observacion, index) => (
-              <View
-                style={{
-                  ...styles.container,
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                }}
-                // key={`${renderKey}-view-${renderKey}-${index}`}
-              >
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            {guiaFormData.observaciones?.map((obs, index) => (
+              <View key={index} style={styles.observationRow}>
                 <TextInput
-                  style={{ ...styles.input, width: '80%' }}
-                  value={observacion}
-                  placeholder={`Observacion ${index + 1}`}
-                  maxLength={100}
-                  // key={`${renderKey}-textinput-${renderKey}-${index}`}
-                  onChangeText={(text) => {
-                    updateObservacionField('update', index, text);
-                  }}
+                  mode="outlined"
+                  value={obs}
+                  onChangeText={(text) => updateObservacionField('update', index, text)}
+                  style={styles.flex1}
+                  outlineStyle={styles.inputOutline}
                 />
-                <TouchableOpacity
-                  style={{
-                    justifyContent: 'center',
-                    marginLeft: '2%',
-                  }}
-                  // key={`${renderKey}-touchable-${renderKey}-${index}`}
-                  onPress={() => {
-                    updateObservacionField('remove', index);
-                  }}
-                >
-                  <Icon
-                    name="remove-circle-outline"
-                    size={35}
-                    color={colors.secondary}
-                  />
-                </TouchableOpacity>
+                <IconButton
+                  icon="close-circle"
+                  mode="contained-tonal"
+                  onPress={() => updateObservacionField('remove', index)}
+                />
               </View>
             ))}
           </View>
-          {/* Add an empty space */}
-          <View style={{ height: 30 }} />
-          <TouchableOpacity style={styles.button} onPress={() => nextStep()}>
-            <Text style={styles.buttonText}> Agregar Productos </Text>
-            <Icon
-              name="arrow-forward"
-              style={styles.icon}
-              size={20}
-              color={colors.white}
-            />
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+        </Surface>
+
+        <Button
+          mode="contained"
+          onPress={nextStep}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+          icon={({ size, color }) => (
+            <Icon name="arrow-forward" size={size} color={color} />
+          )}
+        >
+          Agregar Productos
+        </Button>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionTitle: {
-    marginTop: '1%',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: '2.5%',
-  },
-  scrollView: {
-    width: '100%',
-    height: '100%',
-  },
   screen: {
     flex: 1,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    gap: 16,
+    paddingBottom: 32,
   },
   section: {
-    marginTop: '4%',
-    height: 150,
-    backgroundColor: colors.crudo,
-    borderRadius: 15,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surface,
   },
-  body: {
-    flex: 9,
-    width: '100%',
-    backgroundColor: colors.white,
-    display: 'flex',
+  sectionHeader: {
+    padding: 16,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    color: theme.colors.onSurface,
+    fontWeight: '500',
+  },
+  divider: {
+    backgroundColor: theme.colors.outlineVariant,
+  },
+  sectionContent: {
+    padding: 16,
+    gap: 12,
   },
   row: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+  },
+  flex1: {
     flex: 1,
-    display: 'flex',
+  },
+  textInput: {
+    backgroundColor: theme.colors.surfaceContainerHighest,
+  },
+  inputOutline: {
+    borderRadius: 8,
+  },
+  infoCard: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceContainerHighest,
+  },
+  infoText: {
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: 4,
+  },
+  observationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    borderStyle: 'solid',
+    gap: 8,
   },
-  container: {
-    flex: 1,
-  },
-  input: {
-    borderWidth: 2,
-    backgroundColor: colors.white,
-    padding: 7,
-    borderColor: '#cccccc',
-    borderRadius: 13,
-    alignSelf: 'center',
-    width: '50%',
-    textAlign: 'center',
-    marginVertical: 7,
-    fontSize: 13,
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: 'normal',
-    textAlign: 'left',
-    margin: 5,
-  },
-
-  // textCertificate: {
-  //   fontSize: 14,
-  //   fontWeight: "normal",
-  //   alignSelf: "center",
-  // },
-  textContainer: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '90%',
+  addButton: {
+    margin: 0,
   },
   button: {
-    backgroundColor: colors.secondary,
-    borderRadius: 12,
-    padding: 15,
-    margin: 10,
-    flexDirection: 'row',
-    width: '90%',
+    marginTop: 8,
+    borderRadius: 100,
+    height: 56,
   },
-  buttonText: {
-    color: colors.white,
-    fontSize: 16,
-    flex: 3,
-  },
-  icon: {
-    flex: 1,
-    right: 0,
-    textAlign: 'right',
-    fontWeight: 'bold',
+  buttonContent: {
+    height: 56,
   },
 });
-
-const selectStyles: SelectStyles = {
-  select: {
-    container: {
-      borderWidth: 2,
-      borderColor: '#cccccc',
-      borderRadius: 13,
-      alignSelf: 'center',
-      width: '90%',
-    },
-  },
-  optionsList: {
-    borderColor: '#cccccc',
-    marginTop: Platform.OS === 'ios' ? 0 : 51,
-  },
-};

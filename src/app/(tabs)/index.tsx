@@ -13,7 +13,6 @@ export default function TabsIndex() {
   useEffect(() => {
     // @ts-ignore the segments array docs are wrong
     if (!loading && segments[0] === '(tabs)' && !segments[1]) {
-      console.log('REDIRECTING TO GUIA CREATION STACK');
       router.replace('/(tabs)/(guia-creation-stack)');
     }
   }, [loading, segments]);

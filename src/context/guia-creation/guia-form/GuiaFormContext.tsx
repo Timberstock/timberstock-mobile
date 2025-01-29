@@ -1,12 +1,18 @@
 import { useApp } from '@/context/app/AppContext';
-import { ContratoCompra } from '@/context/app/types/contratoCompra';
+import { GuiaDespachoState } from '@/context/app/types';
 import { useUser } from '@/context/user/UserContext';
+import { globals } from '@/utils/globals';
 import React, { createContext, useContext, useReducer } from 'react';
+import { Alert } from 'react-native';
 import { guiaFormInitialState, guiaFormOptionsInitialState } from './initialState';
 import { guiaFormReducer } from './reducer';
-import { ParserService } from './services/parser';
-import { SelectorService } from './services/selector';
-import { GuiaFormContextType, GuiaFormData, SelectorOption } from './types';
+import { SelectorService } from './service';
+import {
+  GuiaFormContextType,
+  GuiaFormData,
+  GuiaFormOptions,
+  GuiaFormState,
+} from './types';
 
 const GuiaFormContext = createContext<GuiaFormContextType | undefined>(undefined);
 
@@ -24,60 +30,63 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
 
   const updateField = (
     field: keyof GuiaFormData,
-    value: SelectorOption['optionObject'] | null
+    value: GuiaFormData[keyof GuiaFormData]
   ) => {
-    let selectionResult;
+    globals.startTime = Date.now();
+    globals.lastTime = globals.startTime;
+    globals.logTimeDelta('GuiaFormContext-Start');
 
+    let selectionResult;
     // Handle special field selections
     switch (field) {
-      case 'proveedor':
+      case 'proveedor': {
+        globals.logTimeDelta('Before-ProveedorSelection');
+
         selectionResult = SelectorService.handleProveedorSelection(
-          value as ContratoCompra['proveedor'] | null,
+          value as GuiaFormOptions['proveedores'][number] | null,
+          contratosCompra
+        );
+
+        globals.logTimeDelta('After-ProveedorSelection');
+        break;
+      }
+
+      case 'faena':
+        selectionResult = SelectorService.handleFaenaSelection(
+          value as GuiaFormOptions['faenas'][number] | null,
+          state.guia.proveedor!,
           contratosCompra
         );
         break;
 
-      case 'predio_origen':
-        selectionResult = SelectorService.handlePredioSelection(
-          value as ContratoCompra['faena'] | null,
-          state.guia.proveedor as ContratoCompra['proveedor'],
-          contratosCompra
+      case 'cliente':
+        selectionResult = SelectorService.handleClienteSelection(
+          value as GuiaFormOptions['clientes'][number] | null
         );
         break;
 
-      case 'receptor':
-        selectionResult = SelectorService.handleReceptorSelection(
-          value as ContratoCompra['clientes'][number] | null
-        );
-        break;
-
-      case 'destino':
-        selectionResult = SelectorService.handleDestinoSelection(
-          value as
-            | ContratoCompra['clientes'][number]['destinos_contrato'][number]
-            | null,
+      case 'destino_contrato':
+        selectionResult = SelectorService.handleDestinoContratoSelection(
+          value as GuiaFormOptions['destinos_contrato'][number] | null,
           contratosVenta,
-          state.guia.predio_origen,
-          state.guia.receptor
+          state.guia.faena,
+          state.guia.cliente!
         );
 
         break;
 
       case 'transporte_empresa':
         selectionResult = SelectorService.handleTransporteEmpresaSelection(
-          value as
-            | ContratoCompra['clientes'][number]['destinos_contrato'][number]['transportes'][number]
-            | null
+          value as GuiaFormOptions['transporte_empresas'][number] | null
         );
         break;
 
       default:
-        console.log('🔄 Entering default');
-        console.log(field);
-        console.log(value);
         // For simple fields like identificacion_folio, identificacion_tipo_despacho, identificacion_tipo_traslado, transporte_empresa_chofer, transporte_empresa_camion, transporte_empresa_carro, servicios_carguio_empresa, servicios_cosecha_empresa
         selectionResult = { newData: { [field]: value }, newOptions: {} };
     }
+
+    globals.logTimeDelta('Before-Dispatch');
 
     dispatch({
       type: 'UPDATE_FIELD',
@@ -87,6 +96,8 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
         selectionResult,
       },
     });
+
+    globals.logTimeDelta('After-Dispatch');
   };
 
   const updateObservacionField = (
@@ -144,9 +155,9 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
       'identificacion_tipo_despacho',
       'identificacion_tipo_traslado',
       'proveedor',
-      'receptor',
-      'predio_origen',
-      'destino',
+      'cliente',
+      'faena',
+      'destino_contrato',
       'transporte_empresa',
       'transporte_empresa_chofer',
       'transporte_empresa_camion',
@@ -174,18 +185,74 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
     return isValid;
   };
 
-  const resetForm = () => {
-    const resetState = {
+  const resetForm = (returnState: boolean = false) => {
+    // Parse folios from user
+    const initFolios = user!.folios_reservados
+      .sort((a, b) => a - b)
+      .map((folio) => ({ value: folio, label: folio.toString() }));
+    // Parse proveedores from contratosCompra
+    const initProveedores = contratosCompra
+      .reduce(
+        (proveedores: GuiaFormOptions['proveedores'], contrato) => {
+          if (!proveedores.some((p) => p.rut === contrato.proveedor.rut)) {
+            proveedores.push(contrato.proveedor);
+          }
+          return proveedores;
+        },
+        // init empty array
+        []
+      )
+      .sort((a, b) => a.razon_social.localeCompare(b.razon_social));
+
+    const resetState: GuiaFormState = {
       guia: { ...guiaFormInitialState },
       options: {
         ...guiaFormOptionsInitialState,
-        identificacion_folios: ParserService.parseFoliosOptions(
-          user!.folios_reservados
-        ),
-        proveedores: ParserService.parseProveedoresOptions(contratosCompra),
+        identificacion_folios: initFolios,
+        proveedores: initProveedores,
       },
     };
-    dispatch({ type: 'RESET_VIEW', payload: resetState });
+    if (returnState) {
+      return resetState;
+    } else {
+      dispatch({ type: 'RESET_VIEW', payload: resetState });
+    }
+  };
+
+  const repetirGuia = (guia: GuiaDespachoState): boolean => {
+    const validation = SelectorService.validateRepetirGuia(
+      guia,
+      contratosCompra,
+      contratosVenta
+    );
+
+    if (!validation.isValid) {
+      Alert.alert('No se puede copiar esta guía');
+      return false;
+    }
+
+    const resetState = resetForm(true);
+    const { templateFormData, templateFormOptions } =
+      SelectorService.initFromGuiaTemplate(
+        guia,
+        contratosCompra,
+        contratosVenta,
+        resetState!
+      );
+
+    dispatch({
+      type: 'RESET_VIEW',
+      payload: {
+        guia: {
+          ...templateFormData,
+        },
+        options: {
+          ...templateFormOptions,
+        },
+      },
+    });
+
+    return true;
   };
 
   return (
@@ -196,6 +263,7 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
         updateObservacionField,
         isFormValid,
         resetForm,
+        repetirGuia,
       }}
     >
       {children}

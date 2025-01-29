@@ -10,14 +10,11 @@ export default function AppIndex() {
 
   useEffect(() => {
     if (state.loading) return;
-    console.log('[segments]', segments);
 
     // @ts-ignore the segments array docs are wrong
     if (!state.user) {
-      console.log('👋 [User not found, redirecting to auth]');
       router.replace('/(auth)');
     } else if (state.user) {
-      console.log('👋 [User found, redirecting to tabs]');
       router.replace('/(tabs)');
     }
   }, [state.user, state.loading, segments]);

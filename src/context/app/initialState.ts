@@ -2,7 +2,7 @@ import firestore from '@react-native-firebase/firestore';
 import { AppState } from './types';
 
 export const initialState: AppState = {
-  guiasSummary: [],
+  guias: [],
   empresa: {
     id: '',
     razon_social: '',
@@ -20,4 +20,6 @@ export const initialState: AppState = {
   loading: true,
   error: null,
   lastSync: null,
+  hasMoreGuias: true,
+  isLoadingMore: false,
 };

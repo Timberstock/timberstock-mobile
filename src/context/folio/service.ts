@@ -17,13 +17,11 @@ export class FolioService {
       .httpsCallable('reservarFolios');
 
     try {
-      console.log('🔥 [Reserve Folios Function]', reservarFoliosFunction);
       // Call cloud function to reserve folios
       const result = await reservarFoliosFunction({
         uid: user.firebaseAuth?.uid,
         n_folios: cantidad,
       });
-      console.log('🔥 [Reserve Folios Response]', result);
 
       const response = result.data as ReserveFoliosCloudFunctionResponse;
 

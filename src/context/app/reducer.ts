@@ -2,10 +2,10 @@ import { AppAction, AppState } from './types';
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
-    case 'SET_GUIAS_SUMMARY':
+    case 'SET_GUIAS':
       return {
         ...state,
-        guiasSummary: action.payload,
+        guias: action.payload,
         lastSync: new Date(),
         error: null,
         loading: false,
@@ -39,6 +39,30 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         error: action.payload,
         loading: false,
+      };
+
+    case 'SET_LOADING_MORE':
+      return {
+        ...state,
+        isLoadingMore: action.payload,
+      };
+
+    case 'SET_HAS_MORE':
+      return {
+        ...state,
+        hasMoreGuias: action.payload,
+      };
+
+    case 'APPEND_GUIAS':
+      return {
+        ...state,
+        guias: [...state.guias, ...action.payload],
+      };
+
+    case 'SET_LAST_SYNC':
+      return {
+        ...state,
+        lastSync: action.payload,
       };
 
     default:

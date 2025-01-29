@@ -1,21 +1,15 @@
+import CustomDropdown from '@/components/CustomDropdown';
 import Aserrable from '@/components/productos/Aserrable';
-import PrecioModal from '@/components/productos/PrecioModal';
+import PreviewModal from '@/components/productos/PreviewModal';
 import Pulpable from '@/components/productos/Pulpable';
-import colors from '@/constants/colors';
+import { useGuiaCreation } from '@/context/guia-creation/creation/CreationContext';
 import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
 import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
-import { Select, SelectStyles } from '@mobile-reality/react-native-select-pro';
+import { theme } from '@/theme';
+import { SelectStyles } from '@mobile-reality/react-native-select-pro';
 import { useEffect, useState } from 'react';
-import {
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Divider, Surface, Text } from 'react-native-paper';
 
 export default function ProductoForm() {
   const {
@@ -23,14 +17,19 @@ export default function ProductoForm() {
   } = useGuiaForm();
 
   const {
-    state: { productoForm, options },
+    state: { productoForm: productoFormData, options: productoFormOptions },
+    isFormValid,
     updateTipo,
     updateProductoInfo,
   } = useProductoForm();
 
+  const {
+    state: { isSubmitting },
+    submitGuia,
+  } = useGuiaCreation();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const [renderKey, setRenderKey] = useState(0);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
@@ -47,232 +46,155 @@ export default function ProductoForm() {
   }, []);
 
   const onOpenModalButtonPress = () => {
-    // const allowOpen = checkProductosValues(guia.producto, bancosPulpable);
-    const allowOpen = true;
-    // setModalVisible(allowOpen);
+    const allowOpen = isFormValid();
+    setModalVisible(allowOpen);
   };
 
   return (
     <View style={styles.screen}>
-      <View style={styles.body}>
-        {isKeyboardVisible && (
-          <TouchableOpacity
-            style={styles.closeKeyboardButton}
-            onPress={Keyboard.dismiss}
-          >
-            <Text style={styles.closeKeyboardText}>Cerrar Teclado</Text>
-          </TouchableOpacity>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Contract Codes Section */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Códigos Contrato Venta
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoText}>
+                Código FSC: {guia.codigo_fsc || 'Sin Código'}
+              </Text>
+              <Text style={styles.infoText}>
+                Código Contrato Externo: {guia.codigo_contrato_externo || 'Sin Código'}
+              </Text>
+            </View>
+          </View>
+        </Surface>
+
+        {/* Product Selection Section */}
+        <Surface style={styles.section} mode="elevated" elevation={1}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Producto
+            </Text>
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.sectionContent}>
+            <CustomDropdown
+              placeholder="Tipo Producto"
+              value={productoFormData.tipo}
+              data={productoFormOptions.tipos}
+              labelField="label"
+              valueField="object"
+              onChange={(item) => updateTipo(item.object)}
+              onClear={() => updateTipo(null)}
+            />
+            <CustomDropdown
+              placeholder="Producto"
+              value={productoFormData.info?.codigo || null}
+              data={productoFormOptions.productos}
+              labelField="label"
+              valueField="info.codigo"
+              onChange={(item) => updateProductoInfo(item)}
+              onClear={() => updateProductoInfo(null)}
+              disabled={
+                !productoFormData.tipo || productoFormOptions.productos.length === 0
+              }
+            />
+          </View>
+        </Surface>
+
+        {/* Dynamic Product Detail Section */}
+        {productoFormData.info?.codigo && (
+          <Surface style={styles.section} mode="elevated" elevation={1}>
+            <View style={styles.sectionHeader}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Detalle
+              </Text>
+            </View>
+            <Divider style={styles.divider} />
+            <View style={styles.sectionContent}>
+              {productoFormData.tipo === 'Aserrable' && <Aserrable />}
+              {productoFormData.tipo === 'Pulpable' && <Pulpable />}
+            </View>
+          </Surface>
         )}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-          keyboardVerticalOffset={100}
-        >
-          <ScrollView style={styles.scrollView} contentContainerStyle={{ flexGrow: 1 }}>
-            <View style={[styles.section, { height: 120 }]}>
-              <Text style={styles.sectionTitle}>Codigos Contrato Venta</Text>
-              <Text style={{ marginTop: 10, marginLeft: 10 }}>
-                Codigo FSC: {guia.codigo_fsc || 'Sin Codigo'}
-              </Text>
-              <Text style={{ marginTop: 10, marginLeft: 10 }}>
-                Codigo Contrato Externo: {guia.codigo_contrato_externo || 'Sin Codigo'}
-              </Text>
-            </View>
-            <View style={[styles.section, { height: 200 }]}>
-              <Text style={styles.sectionTitle}>Producto</Text>
-              <Select
-                styles={selectStyles}
-                placeholderTextColor="#cccccc"
-                placeholderText="Seleccione el tipo del Producto"
-                options={options.tipos}
-                defaultOption={options.tipos.find(
-                  (option) => option.value === productoForm?.tipo
-                )}
-                onSelect={(option) => {
-                  updateTipo(option?.optionObject!);
-                  setRenderKey(renderKey + 1);
-                }}
-                onRemove={() => {
-                  updateTipo(null);
-                  setRenderKey(renderKey + 1);
-                }}
-                key={`tipo-${renderKey}`}
-              />
-              <Select
-                styles={selectStyles}
-                placeholderTextColor="#cccccc"
-                placeholderText="Seleccione el Producto"
-                options={options.productos}
-                defaultOption={options.productos.find(
-                  (option) => option.value === productoForm.info?.codigo
-                )}
-                disabled={
-                  productoForm.info?.codigo === '' || options.productos.length === 0
-                }
-                onSelect={(option) => {
-                  updateProductoInfo(option);
-                  setRenderKey(renderKey + 1);
-                }}
-                onRemove={() => {
-                  updateProductoInfo(null);
-                  setRenderKey(renderKey + 1);
-                }}
-                key={`producto-${renderKey}`}
-              />
-            </View>
-            <Text style={styles.sectionTitle}> Detalle </Text>
-            {productoForm.tipo === 'Aserrable' && productoForm.info?.codigo && (
-              <View style={[styles.section, { flex: 1 }]}>
-                <Aserrable />
-              </View>
-            )}
-            {productoForm.tipo === 'Pulpable' && productoForm.info?.codigo && (
-              <View style={[styles.section, { flex: 1 }]}>
-                <Pulpable />
-              </View>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-        <TouchableOpacity
-          style={{
-            ...styles.button,
-            backgroundColor:
-              productoForm.info?.calidad === '' ? 'grey' : colors.secondary,
-          }}
-          disabled={productoForm.info?.codigo === ''}
-          onPress={onOpenModalButtonPress}
-        >
-          <Text style={styles.buttonText}> Crear Guía Despacho </Text>
-        </TouchableOpacity>
-      </View>
-      <PrecioModal modalVisible={modalVisible} setModalVisible={setModalVisible} />
+      </ScrollView>
+
+      <Button
+        mode="contained"
+        onPress={onOpenModalButtonPress}
+        disabled={!productoFormData.info?.codigo}
+        style={styles.button}
+        contentStyle={styles.buttonContent}
+      >
+        Crear Guía Despacho
+      </Button>
+      {modalVisible && (
+        <PreviewModal modalVisible={modalVisible} setModalVisible={setModalVisible} />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  listContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    backgroundColor: 'grey',
-    borderRadius: 12,
-    padding: '2.5%',
-    marginHorizontal: '2.5%',
-    marginVertical: '1.5%',
-    justifyContent: 'center',
-  },
-  listItem: {
-    flex: 6,
-  },
-  listIcon: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionTitle: {
-    marginTop: '1%',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: '2.5%',
-  },
-  scrollView: {
-    width: '100%',
-    height: '100%',
-  },
   screen: {
     flex: 1,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    gap: 16,
+    paddingBottom: 32,
   },
   section: {
-    marginTop: '2%',
-    paddingTop: '2%',
-    backgroundColor: colors.crudo,
-    borderRadius: 15,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surface,
   },
-  body: {
-    flex: 9,
-    width: '100%',
-    backgroundColor: colors.white,
-    display: 'flex',
-  },
-  row: {
-    flex: 1,
-    display: 'flex',
+  sectionHeader: {
+    padding: 16,
+    paddingBottom: 8,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-  },
-  input: {
-    borderWidth: 2,
-    height: 35,
-    backgroundColor: colors.white,
-    padding: 7,
-    borderColor: '#cccccc',
-    borderRadius: 13,
-    alignSelf: 'center',
-    width: '40%',
-  },
-  container: {
-    flex: 1,
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: 'normal',
-    textAlign: 'left',
-    margin: 5,
-    marginLeft: '6%',
-  },
-  textContainer: {
-    flex: 1,
-    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '90%',
+  },
+  sectionTitle: {
+    color: theme.colors.onSurface,
+    fontWeight: '500',
+  },
+  divider: {
+    backgroundColor: theme.colors.outlineVariant,
+  },
+  sectionContent: {
+    padding: 16,
+    gap: 12,
+  },
+  infoCard: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surfaceContainerHighest,
+  },
+  infoText: {
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: 4,
   },
   button: {
-    backgroundColor: colors.secondary,
-    borderRadius: 12,
-    padding: 15,
-    margin: 10,
-    alignItems: 'center',
-    alignSelf: 'center',
-    width: '90%',
+    margin: 16,
+    borderRadius: 100,
+    height: 56,
   },
-  buttonLittle: {
-    paddingVertical: 7,
-    width: '40%',
-  },
-  buttonText: {
-    color: colors.white,
-  },
-  buttonTextLittle: {
-    fontSize: 12,
-  },
-  closeKeyboardButton: {
-    position: 'absolute',
-    top: 10,
-    alignSelf: 'center',
-    backgroundColor: colors.secondary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  closeKeyboardText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonContent: {
+    height: 56,
   },
 });
 

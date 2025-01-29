@@ -1,18 +1,21 @@
-import colors from '@/constants/colors';
 import { useApp } from '@/context/app/AppContext';
-import { GuiaDespachoSummary } from '@/context/app/types';
+import { GuiaDespachoState } from '@/context/app/types';
+import { theme } from '@/theme';
+import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FAB, Text } from 'react-native-paper';
 import Pdf from 'react-native-pdf';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface PDFViewerProps {
-  item: GuiaDespachoSummary;
+  item: GuiaDespachoState;
   onClose: () => void;
+  preview?: boolean;
 }
 
-export default function PDFViewer({ item, onClose }: PDFViewerProps) {
+export default function PDFViewer({ item, onClose, preview = false }: PDFViewerProps) {
   const { shareGuiaPDF } = useApp();
-  const source = { uri: item.pdf_local_uri, cache: true };
+  const source = { uri: item.pdf_local_checked_uri, cache: true };
 
   const handleShare = async () => {
     if (item) {
@@ -22,6 +25,12 @@ export default function PDFViewer({ item, onClose }: PDFViewerProps) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text variant="titleMedium" style={styles.headerText}>
+          Guía #{item.identificacion.folio}
+        </Text>
+      </View>
+
       <View style={styles.pdfContainer}>
         <Pdf
           source={source}
@@ -31,12 +40,27 @@ export default function PDFViewer({ item, onClose }: PDFViewerProps) {
           maxScale={3.0}
         />
       </View>
-      <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-        <Icon name="times" size={24} color={colors.white} />
+
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={onClose}
+        activeOpacity={0.7}
+      >
+        <Icon name="times" size={24} color={theme.colors.onPrimary} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-        <Icon name="share-alt" size={36} color={colors.white} />
-      </TouchableOpacity>
+
+      {!preview && (
+        <FAB
+          icon="share-variant"
+          style={styles.shareButton}
+          onPress={handleShare}
+          animated={true}
+          rippleColor={theme.colors.primary}
+          color={theme.colors.onPrimary}
+          size="large"
+          customSize={75}
+        />
+      )}
     </View>
   );
 }
@@ -44,19 +68,35 @@ export default function PDFViewer({ item, onClose }: PDFViewerProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+  },
+  header: {
+    position: 'absolute',
+    top: '10%',
+    left: 0,
+    right: 0,
+    zIndex: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    color: theme.colors.onPrimary,
+    textAlign: 'center',
   },
   pdfContainer: {
     height: '100%',
     width: '100%',
+    alignSelf: 'center',
     margin: 0,
     padding: 0,
+    paddingHorizontal: 10,
   },
   pdf: {
     height: '100%',
     width: '100%',
-    backgroundColor: 'transparent',
-    margin: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0)',
   },
   closeButton: {
     position: 'absolute',
@@ -69,18 +109,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  shareButton: {
-    position: 'absolute',
-    bottom: '25%',
-    zIndex: 999,
-    alignSelf: 'center',
-    width: 80,
-    height: 80,
-    backgroundColor: colors.secondary,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -88,6 +116,15 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 3,
+  },
+  shareButton: {
+    position: 'absolute',
+    bottom: '25%',
+    right: '5%',
+    zIndex: 999,
+    color: theme.colors.onPrimary,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 30,
   },
 });

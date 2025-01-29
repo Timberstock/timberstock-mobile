@@ -13,7 +13,7 @@ export interface Transporte {
   rut: string;
   camiones: Camion[];
   choferes: Chofer[];
-  carros: string[];
+  carros: string[] | { patente: string }[];
 }
 
 export interface Cosecha {

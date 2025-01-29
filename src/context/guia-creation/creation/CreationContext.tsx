@@ -1,10 +1,10 @@
 import { useApp } from '@/context/app/AppContext';
-import { ContratoCompra } from '@/context/app/types/contratoCompra';
-import { ContratoVenta } from '@/context/app/types/contratoVenta';
+import { useUser } from '@/context/user/UserContext';
+import { router } from 'expo-router';
 import React, { createContext, useContext, useReducer } from 'react';
 import { GuiaFormData } from '../guia-form/types';
 import { ProductoFormData } from '../producto-form/types';
-// import { GuiaCreationService } from './service';
+import { CreationService, GuiaDespachoIncomplete } from './services/creation';
 import {
   GuiaCreationAction,
   GuiaCreationContextType,
@@ -22,11 +22,6 @@ function guiaCreationReducer(
   action: GuiaCreationAction
 ): GuiaCreationState {
   switch (action.type) {
-    case 'SET_STEP':
-      return {
-        ...state,
-        currentStep: action.payload,
-      };
     case 'SET_SUBMITTING':
       return {
         ...state,
@@ -54,20 +49,46 @@ export function GuiaCreationProvider({ children }: { children: React.ReactNode }
   const [state, dispatch] = useReducer(guiaCreationReducer, initialState);
 
   const {
-    state: { contratosCompra, contratosVenta },
+    state: { empresa, localFiles },
   } = useApp();
 
-  const submitGuia = async () => {
+  const {
+    state: { user },
+  } = useUser();
+
+  const combineGuiaProductoForms = (
+    precioUnitarioGuia: number,
+    guiaForm: GuiaFormData,
+    productoForm: ProductoFormData
+  ): GuiaDespachoIncomplete => {
+    const guiaDespachoIncomplete = CreationService.formatGuiaDespacho(
+      precioUnitarioGuia,
+      guiaForm,
+      productoForm,
+      empresa
+    );
+
+    return guiaDespachoIncomplete;
+  };
+
+  const submitGuia = async (
+    guiaDespachoIncomplete: GuiaDespachoIncomplete
+  ): Promise<void> => {
     try {
       dispatch({ type: 'SET_SUBMITTING', payload: true });
 
-      // This will be implemented later when we have the form contexts
-      // const guiaData = await collectGuiaData();
-      // await validateGuiaData(guiaData);
-      // await submitGuiaToFirebase(guiaData);
+      // Format that fucken' guia
+      const guiaCreated = await CreationService.createGuia(
+        guiaDespachoIncomplete,
+        empresa,
+        user!,
+        localFiles
+      );
 
-      // For now, just a placeholder
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (guiaCreated) {
+        dispatch({ type: 'SET_SUBMITTING', payload: false });
+        router.replace('/');
+      }
     } catch (error) {
       dispatch({
         type: 'SET_ERROR',
@@ -78,38 +99,6 @@ export function GuiaCreationProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  const moveToNextStep = (
-    nextStepResetFunction: (
-      contratoCompra?: ContratoCompra,
-      contratoVenta?: ContratoVenta
-    ) => void,
-    guiaForm?: GuiaFormData,
-    productoForm?: ProductoFormData
-  ) => {
-    switch (state.currentStep) {
-      case 'index':
-        dispatch({ type: 'SET_STEP', payload: 'guia-form' });
-        break;
-      case 'guia-form':
-        // if (!contratoVenta || !contratoCompra) {
-        //   Alert.alert('Error', 'No se encontró contrato vigente');
-        //   return;
-        // }
-
-        // nextStepResetFunction(contratoCompra, contratoVenta);
-
-        dispatch({ type: 'SET_STEP', payload: 'producto-form' });
-        break;
-      case 'producto-form':
-        dispatch({ type: 'SET_STEP', payload: 'preview' });
-        break;
-    }
-  };
-
-  const moveToPreviousStep = () => {
-    dispatch({ type: 'SET_STEP', payload: 'index' });
-  };
-
   const resetCreation = () => {
     dispatch({ type: 'RESET_CREATION' });
   };
@@ -118,9 +107,8 @@ export function GuiaCreationProvider({ children }: { children: React.ReactNode }
     <GuiaCreationContext.Provider
       value={{
         state,
-        moveToNextStep,
-        moveToPreviousStep,
         submitGuia,
+        combineGuiaProductoForms,
         resetCreation,
       }}
     >
@@ -136,57 +124,3 @@ export function useGuiaCreation() {
   }
   return context;
 }
-
-// const handleNavigateToCreateGuiaProductos = () => {
-//   if (!isGuiaValid(guia, options)) {
-//     alert('Debes llenar todos los campos');
-//     return;
-//   }
-
-//   const { contratoVenta, productosOptions } = parseProductosFromContratos(
-//     contratosCompra,
-//     contratosVenta,
-//     guia
-//   );
-
-//   // Get the corresponding faena from the selected destino_contrato from the cliente selected
-//   const faenaContratoVenta = contratoVenta?.cliente.destinos_contrato
-//     .find((destino) => destino.nombre === guia.destino.nombre)
-//     ?.faenas.find((faena) => faena.rol === guia.predio_origen.rol);
-
-//   guia.codigo_fsc = faenaContratoVenta?.codigo_fsc || '';
-//   guia.codigo_contrato_externo = faenaContratoVenta?.codigo_contrato_externo || '';
-//   guia.contrato_venta_id = contratoVenta?.firestoreID || '';
-//   guia.receptor.giro = contratoVenta?.cliente.giro || '';
-
-//   if (!productosOptions || productosOptions.length === 0) {
-//     alert('No hay productos asociados a esta combinación');
-//     return;
-//   }
-
-//   if (!guia.contrato_venta_id) {
-//     Alert.alert(
-//       'Error',
-//       'No se encontró contrato de venta vigente para esta combinación cliente-destino-origen-producto'
-//     );
-//     return;
-//   }
-
-//   guia.emisor = {
-//     razon_social: empresa.razon_social,
-//     rut: empresa.rut,
-//     giro: empresa.giro,
-//     direccion: empresa.direccion,
-//     comuna: empresa.comuna,
-//     actividad_economica: empresa.actividad_economica,
-//   };
-
-//   // Clean up the observaciones array from empty strings
-//   guia.observaciones = guia.observaciones?.filter((obs) => obs !== '');
-
-//   console.log(guia);
-//   console.log(productosOptions);
-
-//   router.push('datos-producto');
-//   return;
-// };

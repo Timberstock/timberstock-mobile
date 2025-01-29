@@ -2,11 +2,13 @@ import { AppProvider } from '@/context/app/AppContext';
 import { FolioProvider } from '@/context/folio/FolioContext';
 import { NetworkProvider } from '@/context/network/NetworkContext';
 import { UserProvider } from '@/context/user/UserContext';
+import { theme } from '@/theme';
 import { SelectProvider } from '@mobile-reality/react-native-select-pro';
 import '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import { firebase } from '@react-native-firebase/functions';
 import { Slot } from 'expo-router';
+import { PaperProvider } from 'react-native-paper';
 
 if (__DEV__) {
   try {
@@ -28,16 +30,18 @@ function AuthLayout() {
 // Root layout sets up providers
 export default function RootLayout() {
   return (
-    <NetworkProvider>
-      <SelectProvider>
-        <UserProvider>
-          <FolioProvider>
-            <AppProvider>
-              <AuthLayout />
-            </AppProvider>
-          </FolioProvider>
-        </UserProvider>
-      </SelectProvider>
-    </NetworkProvider>
+    <PaperProvider theme={theme}>
+      <NetworkProvider>
+        <SelectProvider>
+          <UserProvider>
+            <FolioProvider>
+              <AppProvider>
+                <AuthLayout />
+              </AppProvider>
+            </FolioProvider>
+          </UserProvider>
+        </SelectProvider>
+      </NetworkProvider>
+    </PaperProvider>
   );
 }

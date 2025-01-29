@@ -4,17 +4,19 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ["babel-preset-expo"],
+    presets: ['babel-preset-expo'],
     plugins: [
       [
-        "module-resolver",
+        'module-resolver',
         {
           alias: {
-            "@assets": "./assets",
-            "@": "./src",
+            '@assets': './assets',
+            '@': './src',
           },
         },
       ],
+      //https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/
+      'react-native-reanimated/plugin',
     ],
   };
 };

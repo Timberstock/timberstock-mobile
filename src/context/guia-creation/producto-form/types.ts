@@ -1,18 +1,9 @@
 import { GuiaDespachoFirestore } from '@/context/app/types/guia';
-import { OptionType } from '@mobile-reality/react-native-select-pro';
-
-export interface SelectorOption<
-  OptionObject =
-    | 'Aserrable'
-    | 'Pulpable' // Tipo Producto
-    | ProductoFormData, // Producto
-> extends OptionType {
-  optionObject?: OptionObject;
-}
 
 // Form data structure
 export interface ProductoFormData {
-  tipo: 'Aserrable' | 'Pulpable' | null;
+  tipo: string | null;
+  label: string | null;
   info: Omit<
     GuiaDespachoFirestore['producto'],
     | 'tipo'
@@ -32,8 +23,11 @@ export interface ProductoFormData {
 
 // Available options for selectors
 export interface ProductoFormOptions {
-  tipos: SelectorOption<'Aserrable' | 'Pulpable'>[];
-  productos: SelectorOption<ProductoFormData>[];
+  tipos: {
+    label: string;
+    object: string;
+  }[];
+  productos: ProductoFormData[];
 }
 
 // Main state interface
@@ -47,13 +41,13 @@ export type ProductoFormAction =
   | {
       type: 'UPDATE_TIPO';
       payload: {
-        newTipo: ProductoFormData['tipo'];
+        newTipo: string | null;
         newOptions: Partial<ProductoFormOptions>;
       };
     }
   | {
       type: 'UPDATE_PRODUCTO_INFO';
-      payload: SelectorOption<ProductoFormData> | null;
+      payload: ProductoFormData | null;
     }
   | {
       type: 'UPDATE_CLASES_DIAMETRICAS'; // Triggers change in volumen_total_emitido
@@ -84,8 +78,8 @@ export type ProductoFormAction =
 // Context type
 export interface ProductoFormContextType {
   state: ProductoFormState;
-  updateTipo: (tipo: 'Aserrable' | 'Pulpable' | null) => void;
-  updateProductoInfo: (producto: SelectorOption<ProductoFormData> | null) => void;
+  updateTipo: (tipo: string | null) => void;
+  updateProductoInfo: (producto: ProductoFormData | null) => void;
   updateClasesDiametricas: (clase?: string, cantidad?: number) => void;
   updateBancos: (
     index: number,

@@ -1,12 +1,16 @@
+import colors from '@/constants/colors';
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { ActivityIndicator, Surface, Text } from 'react-native-paper';
 
 function Loading({ errorMessage }: { errorMessage: string }) {
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#4E4E4E" />
-      <Text style={styles.errorMessage}>{errorMessage}</Text>
-    </View>
+    <Surface style={styles.container} elevation={0}>
+      <ActivityIndicator size="large" color={colors.secondary} />
+      <Text variant="bodyLarge" style={styles.errorMessage}>
+        {errorMessage}
+      </Text>
+    </Surface>
   );
 }
 
@@ -15,10 +19,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.white,
   },
   errorMessage: {
-    color: 'blue',
-    marginTop: '5%',
+    marginTop: 20,
+    color: colors.secondary,
   },
 });
 

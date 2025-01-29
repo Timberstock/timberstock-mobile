@@ -2,6 +2,7 @@ import { ProductoFormData, ProductoFormOptions, ProductoFormState } from './type
 
 export const productoFormDataInitialState: ProductoFormData = {
   tipo: null,
+  label: null,
   info: null,
   clases_diametricas_guia: null,
   bancos: null,
@@ -11,10 +12,7 @@ export const productoFormDataInitialState: ProductoFormData = {
 };
 
 export const productoFormOptionsInitialState: ProductoFormOptions = {
-  tipos: [
-    { value: 'Aserrable', label: 'Aserrable', optionObject: 'Aserrable' },
-    { value: 'Pulpable', label: 'Pulpable', optionObject: 'Pulpable' },
-  ],
+  tipos: [],
   productos: [], // This will be populated based on tipo selection and contratos
 };
 
@@ -24,10 +22,10 @@ export const productoFormInitialState: ProductoFormState = {
 };
 
 export const INITIAL_BANCOS = [
-  { altura1: 0, altura2: 0, ancho: 0, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 0, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 0, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 0, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 0, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 0, volumen_banco: 0 },
+  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
 ];

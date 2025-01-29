@@ -1,5 +1,6 @@
+import { globals } from '@/utils/globals';
 import { getAllDependentFields } from './initialState';
-import { GuiaFormAction, GuiaFormData, GuiaFormState, SelectorOption } from './types';
+import { GuiaFormAction, GuiaFormData, GuiaFormState } from './types';
 
 export function guiaFormReducer(
   state: GuiaFormState,
@@ -7,13 +8,15 @@ export function guiaFormReducer(
 ): GuiaFormState {
   switch (action.type) {
     case 'UPDATE_FIELD': {
+      globals.logTimeDelta('Reducer-Start');
+
       const { field, value, selectionResult } = action.payload;
       const dependentFields = getAllDependentFields(field);
       const newGuia = { ...state.guia };
 
       // Apply the main field update if no selectionResult is provided
       if (!selectionResult) {
-        (newGuia[field] as SelectorOption['optionObject'] | null) = value;
+        (newGuia[field] as GuiaFormData[keyof GuiaFormData] | null) = value;
       }
 
       // Apply additional updates from selection logic
@@ -28,13 +31,16 @@ export function guiaFormReducer(
         }
       });
 
-      return {
+      const result = {
         ...state,
         guia: newGuia,
         options: selectionResult?.newOptions
           ? { ...state.options, ...selectionResult.newOptions }
           : state.options,
       };
+
+      globals.logTimeDelta('Reducer-End');
+      return result;
     }
 
     case 'RESET_VIEW':

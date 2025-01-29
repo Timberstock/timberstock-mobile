@@ -1,8 +1,6 @@
-import { ProductoFormData } from '../producto-form/types';
-
-import { ContratoCompra } from '@/context/app/types/contratoCompra';
-import { ContratoVenta } from '@/context/app/types/contratoVenta';
 import { GuiaFormData } from '../guia-form/types';
+import { ProductoFormData } from '../producto-form/types';
+import { GuiaDespachoIncomplete } from './services/creation';
 
 export type GuiaCreationStep = 'index' | 'guia-form' | 'producto-form' | 'preview';
 
@@ -20,16 +18,11 @@ export type GuiaCreationAction =
 
 export interface GuiaCreationContextType {
   state: GuiaCreationState;
-  moveToNextStep: (
-    // Any for now, but will be used to pass
-    resetNextStepFunc: (
-      contratoCompra?: ContratoCompra,
-      contratoVenta?: ContratoVenta
-    ) => void,
-    guiaForm?: GuiaFormData,
-    productoForm?: ProductoFormData
-  ) => void;
-  moveToPreviousStep: () => void;
-  submitGuia: () => Promise<void>;
+  submitGuia: (guiaDespachoIncomplete: GuiaDespachoIncomplete) => Promise<void>;
   resetCreation: () => void;
+  combineGuiaProductoForms: (
+    precioUnitarioGuia: number,
+    guiaForm: GuiaFormData,
+    productoForm: ProductoFormData
+  ) => GuiaDespachoIncomplete;
 }

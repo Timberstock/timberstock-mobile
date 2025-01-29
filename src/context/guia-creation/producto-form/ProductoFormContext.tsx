@@ -1,11 +1,16 @@
 import { useApp } from '@/context/app/AppContext';
-import React, { createContext, useCallback, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer } from 'react';
+import { Alert } from 'react-native';
 import { useGuiaForm } from '../guia-form/GuiaFormContext';
 import { productoFormInitialState } from './initialState';
 import { productoFormReducer } from './reducer';
 import { Calculator } from './services/calculator';
 import { ParserService } from './services/parser';
-import { ProductoFormContextType, ProductoFormData, SelectorOption } from './types';
+import {
+  ProductoFormContextType,
+  ProductoFormData,
+  ProductoFormOptions,
+} from './types';
 
 const ProductoFormContext = createContext<ProductoFormContextType | undefined>(
   undefined
@@ -21,31 +26,28 @@ export function ProductoFormProvider({ children }: { children: React.ReactNode }
     state: { contratosCompra, contratosVenta },
   } = useApp();
 
-  const updateTipo = useCallback(
-    (tipo: 'Aserrable' | 'Pulpable' | null) => {
-      const selectionResult = {
-        newTipo: tipo,
-        newOptions: {
-          ...state.options,
-          productos: ParserService.parseProductosOptions(
-            guiaForm,
-            contratosCompra,
-            contratosVenta
-          ).filter((producto) => producto.optionObject?.tipo === tipo),
-        },
-      };
+  const updateTipo = (tipo: string | null) => {
+    const selectionResult = {
+      newTipo: tipo,
+      newOptions: {
+        ...state.options,
+        productos: ParserService.parseProductosOptions(
+          guiaForm,
+          contratosCompra,
+          contratosVenta
+        ).filter((producto) => producto.tipo === tipo),
+      },
+    };
 
-      dispatch({
-        type: 'UPDATE_TIPO',
-        payload: selectionResult,
-      });
-    },
-    [guiaForm, contratosCompra, contratosVenta]
-  );
+    dispatch({
+      type: 'UPDATE_TIPO',
+      payload: selectionResult,
+    });
+  };
 
-  const updateProductoInfo = (producto: SelectorOption<ProductoFormData> | null) => {
-    console.log('🔄 Updating producto info');
-    console.log(producto);
+  const updateProductoInfo = (
+    producto: ProductoFormOptions['productos'][number] | null
+  ) => {
     dispatch({
       type: 'UPDATE_PRODUCTO_INFO',
       payload: producto,
@@ -53,10 +55,12 @@ export function ProductoFormProvider({ children }: { children: React.ReactNode }
   };
 
   const updateClasesDiametricas = (clase?: string, cantidad?: number) => {
-    const volumen_emitido = Calculator.volumenClaseDiametrica(
-      clase!,
-      cantidad!,
-      state.productoForm.info!.largo!
+    const volumen_emitido = Number(
+      Calculator.volumenClaseDiametrica(
+        clase!,
+        cantidad!,
+        state.productoForm.info!.largo!
+      ).toFixed(4)
     );
 
     dispatch({
@@ -71,30 +75,29 @@ export function ProductoFormProvider({ children }: { children: React.ReactNode }
     });
   };
 
-  const updateBancos = useCallback(
-    (
-      index: number,
-      dimension: keyof NonNullable<ProductoFormData['bancos']>[number],
-      value: number
-    ) => {
-      const banco = state.productoForm.bancos![index];
-      banco[dimension] = value;
-      banco.volumen_banco = Calculator.volumenBanco(
+  const updateBancos = (
+    index: number,
+    dimension: keyof NonNullable<ProductoFormData['bancos']>[number],
+    value: number
+  ) => {
+    const banco = state.productoForm.bancos![index];
+    banco[dimension] = value;
+    banco.volumen_banco = Number(
+      Calculator.volumenBanco(
         banco.altura1!,
         banco.altura2!,
         banco.ancho!,
         state.productoForm.info!.largo!
-      );
+      ).toFixed(4)
+    );
 
-      dispatch({
-        type: 'UPDATE_BANCOS',
-        payload: { index, item: banco },
-      });
-    },
-    [state.productoForm.bancos, state.productoForm.info?.largo]
-  );
+    dispatch({
+      type: 'UPDATE_BANCOS',
+      payload: { index, item: banco },
+    });
+  };
 
-  const isFormValid = useCallback(() => {
+  const isFormValid = () => {
     const { tipo, info, clases_diametricas_guia, bancos } = state.productoForm;
 
     if (!tipo || !info) return false;
@@ -114,18 +117,39 @@ export function ProductoFormProvider({ children }: { children: React.ReactNode }
       return false;
     }
 
-    return true;
-  }, [state.productoForm]);
+    let allow = false;
+    // Check if the user has entered any value in the products actual values
+    if (tipo === 'Aserrable') {
+      for (const claseDiametrica of clases_diametricas_guia || []) {
+        if (claseDiametrica.cantidad_emitida !== 0) {
+          // If any aserrable product has any valid clase diametrica, allow
+          allow = true;
+          break;
+        }
+      }
+    } else if (tipo === 'Pulpable') {
+      for (const value of bancos || []) {
+        if (value.altura1 !== 0 && value.altura2 !== 0 && value.ancho !== 0) {
+          // If any pulpable product has any valid banco, allow
+          allow = true;
+          break;
+        }
+      }
+    }
+    if (!allow)
+      Alert.alert('Error', 'No se puede crear una guía con todos los valores en 0');
+
+    return allow;
+  };
 
   const resetForm = () => {
-    console.log('🔄 Resetting producto form');
-    const productos = ParserService.parseProductosOptions(
+    const allProductos = ParserService.parseProductosOptions(
       guiaForm,
       contratosCompra,
       contratosVenta
     );
 
-    const tipos = ParserService.parseTiposOptions(productos);
+    const tiposOptions = ParserService.parseTiposOptions(allProductos);
 
     dispatch({
       type: 'RESET_VIEW',
@@ -133,7 +157,7 @@ export function ProductoFormProvider({ children }: { children: React.ReactNode }
         newData: {
           ...productoFormInitialState.productoForm,
         },
-        newOptions: { tipos, productos },
+        newOptions: { tipos: tiposOptions, productos: allProductos },
       },
     });
   };

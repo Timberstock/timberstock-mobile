@@ -1,4 +1,4 @@
-import { Proveedor, Producto, GeoPoint } from "@/interfaces/esenciales";
+import { GeoPoint, Producto, Proveedor } from '../esenciales';
 
 // 2nd Level
 export interface Predio {

@@ -1,29 +1,49 @@
-import colors from '@/constants/colors';
-import { GuiaDespachoSummary } from '@/context/app/types';
+import { GuiaDespachoState } from '@/context/app/types';
 import React, { useState } from 'react';
+import { Alert, Animated, Linking, Modal, StyleSheet, View } from 'react-native';
 import {
-  Alert,
-  Linking,
-  Modal,
-  Platform,
-  StyleSheet,
+  Button,
+  IconButton,
   Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+  TouchableRipple,
+  useTheme,
+} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import PDFViewer from './PDFViewer';
 
 interface PDFActionModalProps {
-  item: GuiaDespachoSummary | null;
-  setItem: (item: GuiaDespachoSummary | null) => void;
+  item: GuiaDespachoState | null;
+  setItem: (item: GuiaDespachoState | null) => void;
 }
 
 export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
   const [isViewing, setIsViewing] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
+  const theme = useTheme();
+
+  React.useEffect(() => {
+    if (item) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      fadeAnim.setValue(0);
+      slideAnim.setValue(50);
+    }
+  }, [item]);
 
   const handleView = () => {
-    if (!item?.pdf_local_uri) {
+    if (!item?.pdf_local_checked_uri) {
       _handleAlertNoPDF('local');
       return;
     }
@@ -47,8 +67,21 @@ export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
   };
 
   const handleClose = () => {
-    setIsViewing(false);
-    setItem(null);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 50,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsViewing(false);
+      setItem(null);
+    });
   };
 
   return (
@@ -58,40 +91,83 @@ export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
       visible={item !== null}
       statusBarTranslucent={true}
     >
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPressOut={handleClose}
-      >
-        <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>Opciones PDF</Text>
+      <TouchableRipple style={styles.overlay}>
+        <Animated.View
+          style={[
+            styles.modalView,
+            {
+              backgroundColor: theme.colors.surface,
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <View style={styles.modalHeader}>
+            <View>
+              <Text variant="titleLarge" style={{ color: theme.colors.onSurface }}>
+                Opciones PDF
+              </Text>
+              <Text
+                variant="labelLarge"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
+                Guía #{item?.identificacion.folio}
+              </Text>
+            </View>
+            <IconButton
+              icon="close"
+              mode="contained-tonal"
+              size={20}
+              onPress={handleClose}
+              style={styles.closeIcon}
+            />
+          </View>
 
-          <TouchableOpacity
+          <Button
+            mode="contained"
             onPress={handleView}
-            style={[styles.actionButton, !item?.pdf_local_uri && styles.disabledButton]}
+            disabled={!item?.pdf_local_checked_uri}
+            icon={({ size, color }) => (
+              <Icon name="file-pdf-o" size={size} color={color} />
+            )}
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: !item?.pdf_local_checked_uri
+                  ? theme.colors.onSurfaceDisabled
+                  : theme.colors.primary,
+              },
+            ]}
+            labelStyle={styles.actionButtonText}
           >
-            <Icon name="file-pdf-o" size={20} color={colors.white} />
-            <Text style={styles.actionButtonText}>Ver PDF Local</Text>
-          </TouchableOpacity>
+            Ver PDF Local
+          </Button>
 
-          <TouchableOpacity
-            style={[styles.actionButton, !item?.pdf_url && styles.disabledButton]}
+          <Button
+            mode="contained"
             onPress={handleWebView}
+            disabled={!item?.pdf_url}
+            icon={({ size, color }) => <Icon name="globe" size={size} color={color} />}
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: !item?.pdf_url
+                  ? theme.colors.onSurfaceDisabled
+                  : theme.colors.primary,
+              },
+            ]}
+            labelStyle={styles.actionButtonText}
           >
-            <Icon name="globe" size={20} color={colors.white} />
-            <Text style={styles.actionButtonText}>Ver PDF Web</Text>
-          </TouchableOpacity>
+            Ver PDF Web
+          </Button>
+        </Animated.View>
+      </TouchableRipple>
 
-          <TouchableOpacity style={styles.modalCloseButton} onPress={handleClose}>
-            <Text style={styles.closeButtonText}>Cerrar</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
       <Modal
         animationType="fade"
         statusBarTranslucent={true}
-        visible={isViewing}
         transparent={true}
+        visible={isViewing}
       >
         <View style={styles.pdfModalContainer}>
           <PDFViewer item={item!} onClose={handleClosePDFViewer} />
@@ -107,14 +183,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? -56 : 0,
   },
   modalView: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 20,
-    width: '80%',
-    alignItems: 'center',
+    borderRadius: 28,
+    padding: 24,
+    width: '85%',
+    alignItems: 'stretch',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -123,55 +197,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    marginTop: Platform.OS === 'android' ? 56 : 0,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 24,
+  },
+  closeIcon: {
+    margin: -8,
   },
   actionButton: {
-    flexDirection: 'row',
-    backgroundColor: colors.secondary,
-    padding: 15,
-    borderRadius: 10,
-    width: '100%',
-    marginBottom: 10,
-    alignItems: 'center',
+    marginBottom: 12,
+    borderRadius: 12,
+    height: 50,
     justifyContent: 'center',
   },
   actionButtonText: {
-    color: colors.white,
-    marginLeft: 10,
     fontSize: 16,
     fontWeight: '500',
   },
-  disabledButton: {
-    backgroundColor: colors.lightGrayButton,
-  },
-  modalCloseButton: {
-    marginTop: 15,
-    padding: 10,
-  },
-  closeButtonText: {
-    color: colors.darkGray,
-    fontSize: 16,
-  },
   pdfModalContainer: {
     flex: 1,
-    backgroundColor: '#000',
-  },
-  fullScreenContainer: {
-    flex: 1,
-    ...Platform.select({
-      android: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        elevation: 999,
-      },
-    }),
+    margin: 0,
+    padding: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
 });

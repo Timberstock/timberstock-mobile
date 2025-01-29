@@ -5,12 +5,16 @@ import { useFolio } from '@/context/folio/FolioContext';
 import { useUser } from '@/context/user/UserContext';
 import * as Updates from 'expo-updates';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, StyleSheet, View } from 'react-native';
+import { Avatar, Button, Card, Text, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function User() {
+  const theme = useTheme();
   const { handleUpdateAvailable } = useApp();
   const { liberarFolios } = useFolio();
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
 
   const {
     state: { user },
@@ -18,6 +22,21 @@ export default function User() {
   } = useUser();
 
   const [modalVisible, setModalVisible] = useState(false);
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleDevolverFolios = () => {
     Alert.alert('Devolver folios', '¿Estás seguro de devolver todos los folios?', [
@@ -55,70 +74,90 @@ export default function User() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.body}>
-        <View style={styles.profileContent}>
-          <Icon name="person" size={70} color={colors.secondary} />
-          <Text style={styles.name}>{user?.nombre}</Text>
-          <Text style={styles.rut}>{user?.rut}</Text>
-          <Text style={styles.folios}>
-            Cantidad de folios actual: {user?.folios_reservados.length}
-          </Text>
+      <Animated.View
+        style={[
+          styles.container,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        <Card style={styles.profileCard}>
+          <Card.Content style={styles.profileContent}>
+            <Avatar.Icon
+              size={80}
+              icon="account"
+              style={{ backgroundColor: theme.colors.primaryContainer }}
+              color={theme.colors.primary}
+            />
+            <Text variant="headlineSmall" style={styles.name}>
+              {user?.nombre}
+            </Text>
+            <Text variant="titleMedium" style={styles.rut}>
+              {user?.rut}
+            </Text>
+            <View style={styles.foliosContainer}>
+              <Icon
+                name="documents-outline"
+                size={24}
+                color={theme.colors.primary}
+                style={styles.foliosIcon}
+              />
+              <Text variant="titleMedium" style={styles.folios}>
+                {user?.folios_reservados.length} folios activos
+              </Text>
+            </View>
+          </Card.Content>
+        </Card>
+
+        <View style={styles.actionsContainer}>
+          <Button
+            mode="contained"
+            onPress={() => setModalVisible(true)}
+            icon="file-plus-outline"
+            style={styles.actionButton}
+          >
+            Reservar Folios
+          </Button>
+
+          <Button
+            mode="contained-tonal"
+            onPress={handleDevolverFolios}
+            icon="file-remove-outline"
+            style={styles.actionButton}
+            disabled={user?.folios_reservados.length === 0}
+          >
+            Devolver Folios
+          </Button>
+
+          <Button
+            mode="outlined"
+            onPress={handleCheckForUpdates}
+            icon="update"
+            style={styles.actionButton}
+          >
+            Buscar Actualizaciones
+          </Button>
         </View>
 
-        <View style={styles.bodyContent}>
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => setModalVisible(true)}
-            >
-              <Icon
-                name="file-tray-full"
-                style={styles.icon}
-                size={20}
-                color={colors.white}
-              />
-              <Text style={styles.buttonText}>Reservar Folios</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              disabled={user?.folios_reservados.length === 0}
-              onPress={handleDevolverFolios}
-            >
-              <Icon
-                name="file-tray"
-                style={styles.icon}
-                size={20}
-                color={colors.white}
-              />
-              <Text style={styles.buttonText}>Devolver Folios</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.updatesButton}
-              onPress={handleCheckForUpdates}
-            >
-              <Icon
-                name="cloud-download-outline"
-                style={styles.icon}
-                size={20}
-                color={colors.white}
-              />
-              <Text style={styles.buttonText}>Buscar Actualizaciones</Text>
-            </TouchableOpacity>
-          </View>
+        <Button
+          mode="contained"
+          onPress={logout}
+          icon="logout"
+          style={[styles.logoutButton, { backgroundColor: theme.colors.error }]}
+        >
+          Cerrar Sesión
+        </Button>
 
-          <View style={styles.logoutButtonContainer}>
-            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-              <Text style={styles.buttonText}>Cerrar Sesión y Limpiar Cache</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <Text style={styles.version}>
-          Última actualización app:{' '}
+        <Text variant="labelSmall" style={styles.version}>
+          Última actualización:{' '}
           {Updates.createdAt
             ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
             : '07/01/2025'}
         </Text>
-      </View>
+      </Animated.View>
+
       <FoliosRequestModal
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
@@ -130,100 +169,57 @@ export default function User() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    flex: 10,
-    width: '100%',
     backgroundColor: colors.white,
-    justifyContent: 'center',
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  profileCard: {
+    marginBottom: 24,
+    elevation: 2,
   },
   profileContent: {
-    flex: 3,
-    padding: 30,
     alignItems: 'center',
+    paddingVertical: 24,
   },
   name: {
-    marginTop: 10,
-    fontSize: 22,
+    marginTop: 16,
     fontWeight: '600',
   },
   rut: {
-    marginTop: 10,
-    fontSize: 16,
-    color: colors.accent,
+    marginTop: 4,
+    opacity: 0.7,
   },
-  version: {
-    // marginTop: 10,
-    fontSize: 16,
-    color: colors.gray,
+  foliosContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    backgroundColor: colors.white,
+    padding: 12,
+    borderRadius: 8,
+    elevation: 1,
+  },
+  foliosIcon: {
+    marginRight: 8,
   },
   folios: {
-    marginTop: 10,
-    fontSize: 16,
     color: colors.secondary,
   },
-  bodyContent: {
-    flex: 7,
-    alignItems: 'center',
-    padding: 30,
-    marginTop: 40,
+  actionsContainer: {
+    gap: 12,
+    marginBottom: 24,
   },
-  buttonsContainer: {
-    flex: 1,
-    alignItems: 'center',
-    alignSelf: 'center',
-    top: 0,
-    marginTop: 40,
-    position: 'absolute',
-    width: '100%',
-  },
-  logoutButtonContainer: {
-    flex: 1,
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginTop: 15,
-    position: 'absolute',
-    bottom: 10,
-    width: '50%',
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 25,
-    padding: 15,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 10,
-    flexDirection: 'row',
-  },
-  updatesButton: {
-    backgroundColor: colors.brown,
-    borderRadius: 15,
-    padding: 10,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 20,
-    flexDirection: 'row',
+  actionButton: {
+    borderRadius: 8,
   },
   logoutButton: {
-    backgroundColor: colors.darkRed,
-    borderRadius: 25,
-    padding: 15,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 10,
+    borderRadius: 8,
+    marginTop: 'auto',
   },
-  buttonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 3,
-  },
-  icon: {
-    flex: 1,
-    marginLeft: 10,
-    fontWeight: 'bold',
+  version: {
+    textAlign: 'center',
+    marginTop: 16,
+    opacity: 0.5,
   },
 });

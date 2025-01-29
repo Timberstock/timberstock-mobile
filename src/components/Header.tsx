@@ -1,25 +1,20 @@
-import colors from '@/constants/colors';
 import { useNetwork } from '@/context/network/NetworkContext';
+import { theme } from '@/theme';
 import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
-import {
-  ImageBackground,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Animated, Easing, Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const HEADER_HEIGHT = 80;
+const HEADER_HEIGHT = 85;
 
 export default function Header() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
+  const [fadeAnim] = React.useState(new Animated.Value(1));
+  const [slideAnim] = React.useState(new Animated.Value(0));
 
   const shouldShowBackButton =
     pathname.includes('guia-form') || pathname.includes('producto-form');
@@ -31,14 +26,35 @@ export default function Header() {
     '/': 'TimberStock',
   };
 
+  React.useEffect(() => {
+    slideAnim.setValue(-2);
+    fadeAnim.setValue(0.95);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [pathname]);
+
   return (
     <>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      <ImageBackground
-        source={require('../../assets/header_gradient.png')}
+      <Animated.View
         style={[
           headerStyles.container,
           {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
             height: HEADER_HEIGHT,
           },
         ]}
@@ -52,36 +68,98 @@ export default function Header() {
           ]}
         >
           <View style={headerStyles.contentContainer}>
-            {/* Always render a View for the back button space to maintain layout */}
             <View style={headerStyles.backButtonContainer}>
               {shouldShowBackButton && (
-                <TouchableOpacity
-                  style={headerStyles.backButton}
+                <IconButton
+                  icon="arrow-left"
+                  iconColor={theme.colors.onPrimary}
+                  size={24}
                   onPress={() => router.back()}
-                >
-                  <Icon name="arrow-back" size={25} color={colors.white} />
-                </TouchableOpacity>
+                  style={headerStyles.backButton}
+                  animated={true}
+                />
               )}
             </View>
 
-            <Text style={headerStyles.titleText}>
+            <Animated.Text style={[headerStyles.titleText, { opacity: fadeAnim }]}>
               {title[pathname as keyof typeof title]}
-            </Text>
+            </Animated.Text>
 
-            {/* Placeholder to maintain symmetry */}
             <View style={headerStyles.backButtonContainer}>
               <NetworkIndicator />
             </View>
           </View>
         </View>
-      </ImageBackground>
+      </Animated.View>
     </>
+  );
+}
+
+function NetworkIndicator() {
+  const { networkStatus } = useNetwork();
+  const [pulseAnim] = React.useState(new Animated.Value(1));
+
+  React.useEffect(() => {
+    if (!networkStatus?.isConnected) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.4,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [networkStatus?.isConnected]);
+
+  const getStatusConfig = () => {
+    if (!networkStatus?.isConnected) {
+      return {
+        icon: 'cloud-offline-outline',
+        color: theme.colors.error,
+      };
+    }
+    if (!networkStatus?.isInternetReachable) {
+      return {
+        icon: 'wifi-outline',
+        color: theme.colors.warning,
+      };
+    }
+    return {
+      icon: 'wifi-outline',
+      color: theme.colors.success,
+    };
+  };
+
+  const config = getStatusConfig();
+
+  return (
+    <Animated.View style={{ opacity: pulseAnim }}>
+      <Icon name={config.icon} size={24} color={config.color} />
+    </Animated.View>
   );
 }
 
 const headerStyles = StyleSheet.create({
   container: {
     width: '100%',
+    backgroundColor: theme.colors.primary,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   innerContainer: {
     flex: 1,
@@ -99,59 +177,13 @@ const headerStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   backButton: {
-    padding: 8,
+    margin: 0,
   },
   titleText: {
     flex: 1,
-    color: colors.white,
+    color: theme.colors.onPrimary,
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
-  },
-});
-
-function NetworkIndicator() {
-  const { networkStatus } = useNetwork();
-
-  const getStatusConfig = () => {
-    if (!networkStatus?.isConnected) {
-      return {
-        icon: 'cloud-offline-outline',
-        color: colors.error,
-      };
-    }
-    if (!networkStatus?.isInternetReachable) {
-      return {
-        icon: 'wifi-outline',
-        color: colors.warning,
-      };
-    }
-    return {
-      icon: 'wifi-outline',
-      color: colors.success,
-    };
-  };
-
-  const config = getStatusConfig();
-
-  return (
-    <View style={netIndicatorStyles.container}>
-      <Icon name={config.icon} size={28} color={config.color} />
-    </View>
-  );
-}
-
-const netIndicatorStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
   },
 });

@@ -1,62 +1,95 @@
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import * as FileSystem from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
 import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
-import { Empresa, GuiaDespachoSummary, LocalFile } from './types';
+import { User } from '../user/types';
+import { Empresa, GuiaDespachoState, LocalFile } from './types';
 import { ContratoCompra } from './types/contratoCompra';
 import { ContratoVenta } from './types/contratoVenta';
+import { GuiaDespachoFirestore } from './types/guia';
 
 export class AppService {
-  private static formatDateToYYYYMMDD(date: Date): string {
+  static formatDateToYYYYMMDD(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const day = String(date.getDate() + 1).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
   static listenToGuias(
-    empresaId: string,
+    currentUser: User,
     localFiles: LocalFile[],
-    callback: (guias: GuiaDespachoSummary[]) => void
+    callback: (guias: GuiaDespachoState[]) => void,
+    limit: number = 30 // Default initial load
   ) {
-    return firestore()
-      .collection(`empresas/${empresaId}/guias`)
+    // Keep realtime listener for recent guias
+    const realtimeQuery = firestore()
+      .collection(`empresas/${currentUser.empresa_id}/guias`)
       .orderBy('identificacion.fecha', 'desc')
-      .onSnapshot((querySnapshot) => {
-        const newGuias: GuiaDespachoSummary[] = [];
-        querySnapshot.forEach((doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
-          if (doc.exists) {
-            const data = doc.data();
-            const localFile = localFiles.find(
-              (file) =>
-                file.name === `GuiaFolio${data?.identificacion.folio}.pdf` ||
-                file.name === `GD_${data?.identificacion.folio}.pdf`
-            );
+      .limit(limit);
 
-            newGuias.push({
-              id: doc.id,
-              folio: data?.identificacion.folio,
-              estado: data?.estado,
-              monto_total_guia: data?.monto_total_guia,
-              receptor: data?.receptor,
-              fecha: this.formatDateToYYYYMMDD(data?.identificacion.fecha.toDate()),
-              pdf_url: data?.pdf_url,
-              pdf_local_uri: localFile?.path,
-              volumen_total_emitido: data?.volumen_total_emitido,
-            });
-          }
-        });
-        callback(newGuias);
+    return realtimeQuery.onSnapshot((querySnapshot) => {
+      const newGuias: GuiaDespachoState[] = [];
+      querySnapshot.forEach((doc) => {
+        if (doc.exists) {
+          const guiaData = doc.data() as GuiaDespachoFirestore;
+          const guiaState: GuiaDespachoState = {
+            ...guiaData,
+            id: doc.id,
+            pdf_local_checked_uri: this._checkForPdfURILocal(
+              guiaData as GuiaDespachoFirestore,
+              localFiles,
+              currentUser.id
+            ),
+          };
+
+          newGuias.push(guiaState);
+        }
       });
+      callback(newGuias);
+    });
   }
 
-  static async fetchAllData(empresaId: string) {
+  // New method for pagination
+  static async fetchMoreGuias(
+    currentUser: User,
+    localFiles: LocalFile[],
+    lastGuia: GuiaDespachoState,
+    limit: number = 20
+  ): Promise<GuiaDespachoState[]> {
+    const snapshot = await firestore()
+      .collection(`empresas/${currentUser.empresa_id}/guias`)
+      .orderBy('identificacion.fecha', 'desc')
+      .startAfter(lastGuia.identificacion.fecha)
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const guiaData = doc.data() as GuiaDespachoFirestore;
+      const guiaState: GuiaDespachoState = {
+        ...guiaData,
+        id: doc.id,
+        pdf_local_checked_uri: this._checkForPdfURILocal(
+          guiaData as GuiaDespachoState,
+          localFiles,
+          currentUser.id
+        ),
+      };
+      return guiaState;
+    });
+  }
+
+  static async fetchAllData(
+    empresaId: string,
+    localFiles: LocalFile[],
+    currentUser: User
+  ) {
     try {
       const [empresa, guias, contratosCompra, contratosVenta] = await Promise.all([
         this.fetchEmpresa(empresaId),
-        this.fetchGuias(empresaId),
+        this.fetchGuias(empresaId, localFiles, currentUser),
         this.fetchContratosCompra(empresaId),
         this.fetchContratosVenta(empresaId),
       ]);
@@ -80,15 +113,24 @@ export class AppService {
       if (!doc.exists) {
         throw new Error('Empresa not found');
       }
+      const data = doc.data();
 
-      return { id: doc.id, ...doc.data() } as Empresa;
+      return {
+        id: doc.id,
+        ...data,
+        actividad_economica: data?.activ_econom,
+      } as Empresa;
     } catch (error) {
       console.error('Error fetching empresa:', error);
       throw new Error('Failed to fetch empresa data');
     }
   }
 
-  static async fetchGuias(empresaId: string): Promise<GuiaDespachoSummary[]> {
+  static async fetchGuias(
+    empresaId: string,
+    localFiles: LocalFile[],
+    currentUser: User
+  ): Promise<GuiaDespachoState[]> {
     try {
       const snapshot = await firestore()
         .collection(`empresas/${empresaId}/guias`)
@@ -96,17 +138,17 @@ export class AppService {
         .get();
 
       return snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
+        const guiaData = doc.data() as GuiaDespachoFirestore;
+        const guiaState: GuiaDespachoState = {
+          ...guiaData,
           id: doc.id,
-          folio: data.identificacion.folio,
-          estado: data.estado,
-          monto_total_guia: data.monto_total_guia,
-          receptor: data.receptor,
-          fecha: this.formatDateToYYYYMMDD(data.identificacion.fecha.toDate()),
-          pdf_url: data.pdf_url,
-          volumen_total_emitido: data.volumen_total_emitido,
+          pdf_local_checked_uri: this._checkForPdfURILocal(
+            guiaData as GuiaDespachoFirestore,
+            localFiles,
+            currentUser.id
+          ),
         };
+        return guiaState;
       });
     } catch (error) {
       console.error('Error fetching guias:', error);
@@ -157,8 +199,6 @@ export class AppService {
     appFolderContent.forEach((fileName) => {
       const fileURI = FileSystem.documentDirectory + fileName;
 
-      console.log(fileName);
-
       if (fileName.includes('.pdf')) {
         localFiles.push({
           name: fileName,
@@ -171,7 +211,6 @@ export class AppService {
     const empresaFolder = FileSystem.documentDirectory + empresaId;
 
     if (!appFolderContent.includes(empresaId)) {
-      console.log('Empresa folder not found, creating...');
       await FileSystem.makeDirectoryAsync(empresaFolder);
     }
     const empresaFolderContent = await FileSystem.readDirectoryAsync(empresaFolder);
@@ -195,29 +234,15 @@ export class AppService {
 
     if (!empresaFolderContent.includes('logo.png')) {
       try {
-        console.log('🔍 [Logo Check] Checking storage for company logo...');
-
         const logoUrl = await storage()
           .ref(`empresas/${empresaId}/logo.png`)
           .getDownloadURL();
 
-        console.log(logoUrl);
-
-        console.log('🌐 [Storage] Found logo URL:', logoUrl);
-
         const fileUri = `${FileSystem.documentDirectory}${empresaId}/logo.png`;
-        console.log('📂 [Local] Setting save path:', fileUri);
 
         const downloadResult = await FileSystem.downloadAsync(logoUrl, fileUri);
 
-        console.log('📊 [Download] Status:', {
-          status: downloadResult.status,
-          size: `${Math.round(parseInt(downloadResult.headers['content-length']) / 1024)}KB`,
-          type: downloadResult.headers['content-type'],
-        });
-
         if (downloadResult.status === 200) {
-          console.log('✅ [Success] Logo downloaded and saved locally');
           localFiles.push({
             name: 'logo.png',
             path: fileUri,
@@ -233,19 +258,15 @@ export class AppService {
           message: error.message,
         });
         if (error.code === 'storage/object-not-found') {
-          console.log('ℹ️ [Info] No logo found for this empresa');
         }
       }
     } else {
-      console.log('📱 Logo found locally stored');
       localFiles.push({
         name: 'logo.png',
         path: `${FileSystem.documentDirectory}${empresaId}/logo.png`,
         type: 'image',
       });
     }
-
-    console.log('🔍 [Local Files] Found:', localFiles);
 
     return localFiles;
   }
@@ -256,8 +277,6 @@ export class AppService {
         (file) =>
           file.name === `GuiaFolio${folio}.pdf` || file.name === `GD_${folio}.pdf`
       );
-
-      console.log(pdfFile);
 
       if (pdfFile) {
         await shareAsync(pdfFile.path, {
@@ -281,5 +300,41 @@ export class AppService {
       console.error('Error checking for updates:', error);
       throw new Error('Failed to check for updates');
     }
+  }
+
+  static _checkForPdfURILocal(
+    guia: GuiaDespachoFirestore,
+    localFiles: LocalFile[],
+    currentUserID: string
+  ): string {
+    // First look for the direct uri stored in the guia if it was created by the current user
+    let pdfLocalUri = '';
+    if (
+      guia?.usuario_metadata &&
+      guia.usuario_metadata.usuario_id &&
+      guia.usuario_metadata.usuario_id === currentUserID &&
+      guia.usuario_metadata.pdf_local_uri
+    ) {
+      const localFile = localFiles.find((f) => {
+        f.path === guia.usuario_metadata.pdf_local_uri;
+      });
+      if (localFile) {
+        pdfLocalUri = localFile.path;
+      }
+    }
+
+    if (!pdfLocalUri) {
+      // If the guia was not found, let's check if we have a pdf in the local files for that folio
+      const localFile = localFiles.find(
+        (f) =>
+          f.name === `GuiaFolio${guia?.identificacion.folio}.pdf` ||
+          f.name === `GD_${guia?.identificacion.folio}.pdf`
+      );
+      if (localFile) {
+        pdfLocalUri = localFile.path;
+      }
+    }
+
+    return pdfLocalUri;
   }
 }

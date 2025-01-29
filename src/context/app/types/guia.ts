@@ -43,7 +43,7 @@ interface ProductoGuia extends Producto {
     | null;
 }
 
-interface MetaDataUsuario {
+export interface MetaDataUsuario {
   usuario_id: string;
   usuario_email: string;
   version_app: string;
@@ -53,6 +53,7 @@ interface MetaDataUsuario {
 }
 
 export interface GuiaDespachoFirestore {
+  id: string;
   emisor: Emisor;
   identificacion: Identificacion;
   proveedor: Proveedor;
@@ -74,4 +75,5 @@ export interface GuiaDespachoFirestore {
   estado: string;
   _caf_id: string;
   usuario_metadata: MetaDataUsuario;
+  pdf_url: string;
 }

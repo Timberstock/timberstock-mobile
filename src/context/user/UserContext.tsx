@@ -22,8 +22,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     let userDataUnsubscribe: (() => void) | undefined;
 
     const unsubscribe = auth().onAuthStateChanged((firebaseUser) => {
-      console.log('🔍 [Auth State Changed]', firebaseUser?.uid);
-
       if (firebaseUser) {
         // This is triggered two times which is normal behavior, 1. initial check -> 2. refresh of auth token
         console.log('👤 [User signed in]', firebaseUser.uid);
@@ -53,7 +51,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
               if (doc.exists) {
                 const syncedUserData = doc.data() as UserFirestore;
                 syncedUserData.id = firebaseUser.uid;
-                console.log('User folios: ', syncedUserData.folios_reservados);
                 await UserService.updateUserSyncStatusAndLastLogin(syncedUserData);
                 dispatch({
                   type: 'SET_USER',
@@ -77,7 +74,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             }
           );
       } else {
-        console.log('👋 [User signed out]');
         if (userDataUnsubscribe) {
           userDataUnsubscribe();
           userDataUnsubscribe = undefined;

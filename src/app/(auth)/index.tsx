@@ -1,92 +1,161 @@
 import Loading from '@/components/Loading';
 import colors from '@/constants/colors';
 import { useUser } from '@/context/user/UserContext';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  Animated,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import { Button, Text, TextInput, useTheme } from 'react-native-paper';
 
 export default function Login() {
   const { state, login } = useUser();
+  const theme = useTheme();
+  // const [email, setEmail] = useState('mateo@timberstock.cl');
+  const [email, setEmail] = useState('');
+  // const [password, setPassword] = useState('Lumber157');
+  const [password, setPassword] = useState('');
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
 
-  // const [email, setEmail] = useState('');
-  const [email, setEmail] = useState('mateo@timberstock.cl');
-  // const [password, setPassword] = useState('');
-  const [password, setPassword] = useState('Lumber157');
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleLogin = async () => {
+    Keyboard.dismiss();
     await login(email, password);
   };
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>TimberStock</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        onChangeText={(text) => setEmail(text.toLowerCase())}
-        value={email}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        secureTextEntry={true}
-        onChangeText={(text) => setPassword(text)}
-        value={password}
-      />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={state.loading}
-      >
-        <Text style={styles.buttonText}>Iniciar Sesión</Text>
-      </TouchableOpacity>
-      {state.error && <Text style={styles.errorMessage}>{state.error}</Text>}
-      <View style={styles.loadingContainer}>
-        {state.loading && <Loading errorMessage="Intentando iniciar sesión..." />}
-      </View>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.screen}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <Animated.View
+            style={[
+              styles.formContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <Text
+              variant="displaySmall"
+              style={[styles.title, { color: theme.colors.primary }]}
+            >
+              TimberStock
+            </Text>
+
+            <TextInput
+              mode="outlined"
+              label="Email"
+              value={email}
+              onChangeText={(text) => setEmail(text.toLowerCase())}
+              style={styles.input}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              disabled={state.loading}
+              left={<TextInput.Icon icon="email" />}
+            />
+
+            <TextInput
+              mode="outlined"
+              label="Contraseña"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={styles.input}
+              disabled={state.loading}
+              left={<TextInput.Icon icon="lock" />}
+            />
+
+            <Button
+              mode="contained"
+              onPress={handleLogin}
+              disabled={state.loading}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              loading={state.loading}
+            >
+              Iniciar Sesión
+            </Button>
+
+            {state.error && (
+              <Animated.View style={{ opacity: fadeAnim }}>
+                <Text style={styles.errorMessage}>{state.error}</Text>
+              </Animated.View>
+            )}
+
+            {state.loading && (
+              <View style={styles.loadingContainer}>
+                <Loading errorMessage="Intentando iniciar sesión..." />
+              </View>
+            )}
+          </Animated.View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: 'white',
-    alignItems: 'center',
+    backgroundColor: colors.white,
+  },
+  container: {
+    flex: 1,
     justifyContent: 'center',
+    padding: 20,
+  },
+  formContainer: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   title: {
-    fontSize: 50,
+    textAlign: 'center',
+    marginBottom: 32,
     fontWeight: 'bold',
-    color: colors.primary,
-    marginBottom: '10%',
   },
   input: {
-    height: '5%',
-    width: '80%',
-    margin: '3%',
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 12,
-  },
-
-  errorMessage: {
-    color: 'red',
-    marginTop: '5%',
+    marginBottom: 16,
+    backgroundColor: colors.white,
   },
   button: {
-    backgroundColor: colors.secondary,
-    padding: '2%',
-    borderRadius: 12,
-    width: '60%',
-    alignItems: 'center',
-    marginTop: '5%',
+    marginTop: 8,
+    borderRadius: 8,
   },
-  buttonText: {
-    color: colors.white,
-    fontSize: 20,
+  buttonContent: {
+    height: 48,
+  },
+  errorMessage: {
+    color: colors.error,
+    textAlign: 'center',
+    marginTop: 16,
   },
   loadingContainer: {
-    position: 'absolute',
-    top: '75%',
+    marginTop: 24,
+    alignItems: 'center',
   },
 });

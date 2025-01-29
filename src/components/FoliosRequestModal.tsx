@@ -1,17 +1,23 @@
-import colors from '@/constants/colors';
 import { useFolio } from '@/context/folio/FolioContext';
 import { useNetwork } from '@/context/network/NetworkContext';
-import { useState } from 'react';
+import * as Haptics from 'expo-haptics';
+import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
+  Animated,
+  Keyboard,
   Modal,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import {
+  Button,
+  IconButton,
+  Text,
+  TextInput,
+  useTheme,
+} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface Props {
@@ -20,19 +26,65 @@ interface Props {
 }
 
 const FoliosRequestModal = ({ modalVisible, setModalVisible }: Props) => {
+  const theme = useTheme();
   const {
     state: { loading },
     reserveFolios,
   } = useFolio();
   const [numFolios, setNumFolios] = useState('');
-
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(100));
   const { networkStatus } = useNetwork();
 
+  React.useEffect(() => {
+    if (modalVisible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      setNumFolios('');
+    }
+  }, [modalVisible]);
+
+  const handleClose = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 100,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setModalVisible(false);
+    });
+  };
+
   const handleRequest = async () => {
+    Keyboard.dismiss();
     const num = parseInt(numFolios, 10);
-    if (isNaN(num) || num <= 0) return;
+    
+    if (isNaN(num) || num <= 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Por favor ingrese un número válido');
+      return;
+    }
 
     if (!networkStatus?.isConnected) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         'Sin conexión',
         'Se requiere conexión a internet para reservar folios'
@@ -40,121 +92,165 @@ const FoliosRequestModal = ({ modalVisible, setModalVisible }: Props) => {
       return;
     }
 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const result = await reserveFolios(num);
-    if (result.success && result.foliosReservados?.length === num) {
-      Alert.alert(
-        'Folios reservados',
-        `Se han reservado los ${num} folios solicitados`
-      );
-    } else if (result.success && result.foliosReservados?.length !== num) {
-      Alert.alert(
-        `Folios reservados (${result.foliosReservados?.length}/${num})`,
-        `Se han reservado ${result.foliosReservados?.length} folios de los ${num} solicitados. Folios agotados de la empresa, revisar los CAFs y los folios reservados sin ocupar.`
-      );
+    
+    if (result.success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (result.foliosReservados?.length === num) {
+        Alert.alert(
+          'Folios reservados',
+          `Se han reservado los ${num} folios solicitados`
+        );
+      } else {
+        Alert.alert(
+          `Folios reservados (${result.foliosReservados?.length}/${num})`,
+          `Se han reservado ${result.foliosReservados?.length} folios de los ${num} solicitados. Folios agotados de la empresa, revisar los CAFs y los folios reservados sin ocupar.`
+        );
+      }
     } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'No se pudieron reservar los folios');
     }
-    setModalVisible(false);
+    handleClose();
   };
 
   return (
-    <View>
-      <Modal visible={modalVisible} animationType="slide" transparent>
+    <Modal
+      visible={modalVisible}
+      transparent
+      statusBarTranslucent
+      animationType="fade"
+    >
+      <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.closeIconContainer}
-              onPress={() => setModalVisible(false)}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <Animated.View
+              style={[
+                styles.modalContent,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                  backgroundColor: theme.colors.surface,
+                },
+              ]}
             >
-              <Icon name="close-circle" size={25} color="grey" />
-            </TouchableOpacity>
+              <View style={styles.header}>
+                <Text variant="titleLarge" style={styles.modalTitle}>
+                  Reservar Folios
+                </Text>
+                <IconButton
+                  icon="close"
+                  size={24}
+                  onPress={handleClose}
+                  style={styles.closeButton}
+                />
+              </View>
 
-            <Text style={styles.modalTitle}>Ingrese número de folios a reservar</Text>
+              <Text variant="bodyMedium" style={styles.subtitle}>
+                Ingrese la cantidad de folios que desea reservar
+              </Text>
 
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={numFolios}
-              onChangeText={setNumFolios}
-              placeholder="Número de folios"
-            />
+              <TextInput
+                mode="outlined"
+                keyboardType="numeric"
+                value={numFolios}
+                onChangeText={setNumFolios}
+                style={styles.input}
+                placeholder="Ej: 10"
+                right={<TextInput.Icon icon="file-document-outline" />}
+                disabled={loading}
+              />
 
-            <TouchableOpacity
-              style={[styles.acceptButton, loading && styles.disabledButton]}
-              disabled={loading}
-              onPress={handleRequest}
-            >
-              <Text style={styles.acceptButtonText}>Solicitar</Text>
-            </TouchableOpacity>
+              <View style={styles.buttonContainer}>
+                <Button
+                  mode="contained"
+                  onPress={handleRequest}
+                  loading={loading}
+                  disabled={loading || !numFolios}
+                  style={styles.button}
+                  icon="check"
+                >
+                  Solicitar
+                </Button>
+              </View>
 
-            {loading && <ActivityIndicator size="large" color="#4E4E4E" />}
-          </View>
+              {!networkStatus?.isConnected && (
+                <View style={styles.networkWarning}>
+                  <Icon name="wifi-off" size={20} color={theme.colors.error} />
+                  <Text
+                    variant="bodySmall"
+                    style={[styles.warningText, { color: theme.colors.error }]}
+                  >
+                    Sin conexión a internet
+                  </Text>
+                </View>
+              )}
+            </Animated.View>
+          </TouchableWithoutFeedback>
         </View>
-      </Modal>
-    </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  openModalButton: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-  },
-  openModalButtonText: {
-    color: 'white',
-    textAlign: 'center',
-  },
   modalContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    paddingTop: 40,
-    borderRadius: 10,
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 28,
+    padding: 24,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: '600',
+  },
+  closeButton: {
+    margin: -8,
+  },
+  subtitle: {
+    marginBottom: 24,
+    opacity: 0.7,
   },
   input: {
-    borderWidth: 1,
-    borderColor: 'gray',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-    width: 100,
+    marginBottom: 24,
   },
-  acceptButton: {
-    backgroundColor: colors.secondary,
-    borderRadius: 15,
-    padding: 15,
-    margin: 5,
+  buttonContainer: {
+    alignItems: 'stretch',
+  },
+  button: {
+    borderRadius: 12,
+    height: 48,
+  },
+  networkWarning: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    gap: 8,
   },
-  acceptButtonText: {
-    color: 'white',
+  warningText: {
     textAlign: 'center',
-  },
-  closeIconContainer: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
-  disabledButton: {
-    backgroundColor: colors.gray,
   },
 });
 

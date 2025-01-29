@@ -2,11 +2,11 @@ import { GuiaFormData, GuiaFormOptions } from './types';
 
 // Direct dependencies based on contract structure
 const fieldDependencies: Record<keyof GuiaFormData, (keyof GuiaFormData)[]> = {
-  proveedor: ['predio_origen'],
-  predio_origen: ['receptor', 'contrato_compra_id'],
+  proveedor: ['faena'],
+  faena: ['cliente', 'contrato_compra_id'],
   contrato_compra_id: ['servicios_carguio_empresa', 'servicios_cosecha_empresa'],
-  receptor: ['destino', 'contrato_venta_id'],
-  destino: [
+  cliente: ['destino_contrato', 'contrato_venta_id'],
+  destino_contrato: [
     'transporte_empresa',
     'contrato_venta_id',
     'codigo_fsc',
@@ -52,15 +52,15 @@ export function getAllDependentFields(
 export const guiaFormOptionsInitialState: GuiaFormOptions = {
   identificacion_folios: [],
   proveedores: [],
-  predios: [],
+  faenas: [],
   clientes: [],
-  destinos: [],
+  destinos_contrato: [],
   transporte_empresas: [],
   transporte_empresa_choferes: [],
   transporte_empresa_camiones: [],
   transporte_empresa_carros: [],
-  servicio_carguio_empresas: [],
-  servicio_cosecha_empresas: [],
+  servicios_carguio_empresas: [],
+  servicios_cosecha_empresas: [],
   identificacion_tipos_despacho: [
     { value: 'Por cuenta del receptor', label: 'Cuenta Receptor' },
     {
@@ -88,9 +88,9 @@ export const guiaFormInitialState: GuiaFormData = {
   identificacion_tipo_traslado: 'Constituye venta',
   folio_guia_proveedor: null,
   proveedor: null,
-  predio_origen: null,
-  receptor: null,
-  destino: null,
+  faena: null,
+  cliente: null,
+  destino_contrato: null,
   transporte_empresa: null,
   transporte_empresa_chofer: null,
   transporte_empresa_camion: null,

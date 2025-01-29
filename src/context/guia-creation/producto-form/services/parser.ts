@@ -9,27 +9,30 @@ import {
 import { Alert } from 'react-native';
 import { GuiaFormData } from '../../guia-form/types';
 import { INITIAL_BANCOS, productoFormDataInitialState } from '../initialState';
-import { ProductoFormData, SelectorOption } from '../types';
+import { ProductoFormData, ProductoFormOptions } from '../types';
 
 export class ParserService {
   static parseTiposOptions(
-    productos: SelectorOption<ProductoFormData>[]
-  ): SelectorOption<'Aserrable' | 'Pulpable'>[] {
-    const tipos = productos.map((producto) => producto.optionObject?.tipo);
-    const uniqueTipos = [...new Set(tipos)];
-    return uniqueTipos.map((tipo) => ({
-      value: tipo!,
-      label: tipo!,
-      optionObject: tipo!,
-    }));
+    productosOptions: ProductoFormOptions['productos']
+  ): ProductoFormOptions['tipos'] {
+    const tipos = [];
+
+    if (productosOptions.some((producto) => producto.tipo === 'Aserrable')) {
+      tipos.push({ label: 'Aserrable', object: 'Aserrable' });
+    }
+
+    if (productosOptions.some((producto) => producto.tipo === 'Pulpable')) {
+      tipos.push({ label: 'Pulpable', object: 'Pulpable' });
+    }
+
+    return tipos;
   }
 
   static parseProductosOptions(
     guiaForm: GuiaFormData,
     contratosCompra: ContratoCompra[],
     contratosVenta: ContratoVenta[]
-  ): SelectorOption<ProductoFormData>[] {
-    console.log('🔄 Parsing productos options');
+  ): ProductoFormOptions['productos'] {
     const contratoVenta = contratosVenta.find(
       (contrato) => contrato.firestoreID === guiaForm.contrato_venta_id
     );
@@ -43,10 +46,8 @@ export class ParserService {
     }
 
     const productosContratoVenta = contratoVenta?.cliente.destinos_contrato
-      .find((destino) => destino.nombre === guiaForm.destino?.nombre)
-      ?.faenas.find(
-        (faena) => faena.rol === guiaForm.predio_origen?.rol
-      )?.productos_destino_contrato;
+      .find((d) => d.nombre === guiaForm.destino_contrato?.nombre)
+      ?.faenas.find((f) => f.rol === guiaForm.faena?.rol)?.productos_destino_contrato;
 
     if (!productosContratoVenta?.length) {
       console.warn('No productos found in contrato venta');
@@ -54,9 +55,9 @@ export class ParserService {
     }
 
     const productosContratoCompra = contratoCompra?.clientes
-      .find((cliente) => cliente.rut === guiaForm.receptor?.rut)
+      .find((c) => c.rut === guiaForm.cliente?.rut)
       ?.destinos_contrato.find(
-        (destino) => destino.nombre === guiaForm.destino?.nombre
+        (d) => d.nombre === guiaForm.destino_contrato?.nombre
       )?.productos;
 
     // Find productos in common, map to option format and add precio compra
@@ -74,6 +75,7 @@ export class ParserService {
         const newProductoFormDataOption: ProductoFormData = {
           ...productoFormDataInitialState,
           tipo: productoVenta.tipo,
+          label: `${productoVenta.especie} ${productoVenta.calidad} ${productoVenta.largo}`,
           info: {
             codigo: productoVenta.codigo,
             especie: productoVenta.especie,
@@ -100,11 +102,7 @@ export class ParserService {
             break;
         }
 
-        return {
-          value: productoVenta.codigo,
-          label: `${productoVenta.codigo} - ${productoVenta.especie} - ${productoVenta.calidad} - ${productoVenta.largo}`,
-          optionObject: newProductoFormDataOption,
-        };
+        return newProductoFormDataOption;
       });
 
     if (!productos) {

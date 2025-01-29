@@ -70,3 +70,9 @@ kill-simulator-and-delete-derived-data:
 .PHONY: android-build-local-and-run-metro
 android-build-local-and-run-metro:
 	npx expo run:android
+
+
+# Print local folder structure
+.PHONY: print-local-folder-structure
+print-local-folder-structure:
+	ls -R

@@ -1,7 +1,5 @@
 import auth from '@react-native-firebase/auth';
-import firestore, {
-  Timestamp
-} from '@react-native-firebase/firestore';
+import firestore, { Timestamp } from '@react-native-firebase/firestore';
 import { UserFirestore } from './types';
 
 export class UserService {
@@ -10,7 +8,6 @@ export class UserService {
       await auth().signInWithEmailAndPassword(email, password);
       return 'success';
     } catch (e: any) {
-      console.log('[UserService] Error al iniciar sesión');
       const errorMap: Record<string, string> = {
         'auth/invalid-email': 'Formato incorrecto de email',
         'auth/invalid-password': 'Contraseña incorrecta',
@@ -28,7 +25,6 @@ export class UserService {
       await firestore().clearPersistence();
       // Maybe restart the app here with expo
     } catch (error) {
-      console.log('[UserService] Error al cerrar sesión');
       console.error(error);
       throw new Error('Error al cerrar sesión');
     }
@@ -42,8 +38,6 @@ export class UserService {
       today.setHours(0, 0, 0, 0);
       const compareDate = new Date(date);
       compareDate.setHours(0, 0, 0, 0);
-      console.log('Is from previous day?');
-      console.log(compareDate < today);
       return compareDate < today;
     };
 

@@ -21,7 +21,7 @@ export interface Producto {
   especie: string;
   calidad: string;
   largo: number;
-  unidad: 'MR' | 'M3' | '';
+  unidad: 'MR' | 'M3';
 }
 
 export interface Destino

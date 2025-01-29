@@ -17,7 +17,6 @@ export default function GuiaCreationStackLayout() {
               gestureDirection: 'horizontal',
               presentation: 'card',
             }}
-            initialRouteName="index"
           >
             <Stack.Screen name="index" />
             <Stack.Screen name="guia-form" />

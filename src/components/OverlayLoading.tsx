@@ -1,21 +1,21 @@
+import colors from '@/constants/colors';
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Surface } from 'react-native-paper';
 
 interface Props {
   loading: boolean;
 }
 
 const OverlayLoading: React.FC<Props> = ({ loading }) => {
+  if (!loading) return null;
+
   return (
-    <>
-      {loading && (
-        <View style={styles.overlay}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FFFFFF" />
-          </View>
-        </View>
-      )}
-    </>
+    <View style={styles.overlay}>
+      <Surface style={styles.loadingContainer} elevation={5}>
+        <ActivityIndicator size="large" color={colors.white} />
+      </Surface>
+    </View>
   );
 };
 
@@ -28,9 +28,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 10,
-    padding: 25,
+    backgroundColor: 'rgba(33, 33, 33, 0.9)',
+    borderRadius: 12,
+    padding: 24,
   },
 });
 
