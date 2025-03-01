@@ -8,7 +8,7 @@ import {
 } from '@/context/app/types/contratoVenta';
 import { Alert } from 'react-native';
 import { GuiaFormData } from '../../guia-form/types';
-import { INITIAL_BANCOS, productoFormDataInitialState } from '../initialState';
+import { initialize_bancos, productoFormDataInitialState } from '../initialState';
 import { ProductoFormData, ProductoFormOptions } from '../types';
 
 export class ParserService {
@@ -87,13 +87,17 @@ export class ParserService {
 
         switch (productoVenta.tipo) {
           case 'Pulpable':
+            console.log(productoVenta);
+            console.log('Pulpable');
             newProductoFormDataOption.precio_unitario_venta_mr =
               productoVenta.precio_unitario_venta_mr;
             newProductoFormDataOption.precio_unitario_compra_mr =
               productoCompra!.precio_unitario_compra_mr!;
-            newProductoFormDataOption.bancos = [...INITIAL_BANCOS];
+            newProductoFormDataOption.bancos = initialize_bancos();
             break;
           case 'Aserrable':
+            console.log('Aserrable');
+            console.log(productoVenta);
             newProductoFormDataOption.clases_diametricas_guia =
               ParserService._parsePreciosIntoClasesDiametricas(
                 productoCompra!.clases_diametricas!,
@@ -110,6 +114,7 @@ export class ParserService {
       return [];
     }
 
+    console.log('productos', productos);
     return productos;
   }
 

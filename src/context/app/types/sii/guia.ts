@@ -56,7 +56,7 @@ export interface Transporte {
   };
   chofer: Chofer;
   camion: Camion;
-  carro: { patente: string } | string;
+  carro: { patente: string };
 }
 
 export interface Totales {

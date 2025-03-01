@@ -1,4 +1,3 @@
-import { globals } from '@/utils/globals';
 import { getAllDependentFields } from './initialState';
 import { GuiaFormAction, GuiaFormData, GuiaFormState } from './types';
 
@@ -8,8 +7,6 @@ export function guiaFormReducer(
 ): GuiaFormState {
   switch (action.type) {
     case 'UPDATE_FIELD': {
-      globals.logTimeDelta('Reducer-Start');
-
       const { field, value, selectionResult } = action.payload;
       const dependentFields = getAllDependentFields(field);
       const newGuia = { ...state.guia };
@@ -27,7 +24,7 @@ export function guiaFormReducer(
       // Clear dependent fields that weren't set by selection logic
       dependentFields.forEach((depField) => {
         if (!(depField in (selectionResult?.newData || {}))) {
-          newGuia[depField as keyof GuiaFormData] = null;
+          newGuia[depField as keyof Omit<GuiaFormData, 'observaciones'>] = null;
         }
       });
 
@@ -39,7 +36,6 @@ export function guiaFormReducer(
           : state.options,
       };
 
-      globals.logTimeDelta('Reducer-End');
       return result;
     }
 

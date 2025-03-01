@@ -1,5 +1,4 @@
-import { useApp } from '@/context/app/AppContext';
-import { GuiaDespachoState } from '@/context/app/types';
+import { LocalFilesService } from '@/services/LocalFilesService';
 import { theme } from '@/theme';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -8,18 +7,24 @@ import Pdf from 'react-native-pdf';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface PDFViewerProps {
-  item: GuiaDespachoState;
+  item: PDFViewerItem | null;
   onClose: () => void;
   preview?: boolean;
 }
 
+export interface PDFViewerItem {
+  folio: number;
+  empresaId: string;
+  pdfLocalUri: string | null;
+}
+
 export default function PDFViewer({ item, onClose, preview = false }: PDFViewerProps) {
-  const { shareGuiaPDF } = useApp();
-  const source = { uri: item.pdf_local_checked_uri, cache: true };
+  const source = { uri: item?.pdfLocalUri ?? '' };
+  console.log('🔍 [PDFViewer] source:', source);
 
   const handleShare = async () => {
     if (item) {
-      await shareGuiaPDF(item);
+      await LocalFilesService.shareGuiaPDF(item.folio.toString(), item.empresaId);
     }
   };
 
@@ -27,7 +32,7 @@ export default function PDFViewer({ item, onClose, preview = false }: PDFViewerP
     <View style={styles.container}>
       <View style={styles.header}>
         <Text variant="titleMedium" style={styles.headerText}>
-          Guía #{item.identificacion.folio}
+          Guía #{item?.folio ?? ''}
         </Text>
       </View>
 

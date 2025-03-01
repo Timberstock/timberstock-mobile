@@ -1,6 +1,6 @@
 import Loading from '@/components/Loading';
-import colors from '@/constants/colors';
 import { useUser } from '@/context/user/UserContext';
+import colors from '@/theme/colors';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
@@ -63,7 +63,7 @@ export default function Login() {
               variant="displaySmall"
               style={[styles.title, { color: theme.colors.primary }]}
             >
-              TimberStock
+              TimberBiz
             </Text>
 
             <TextInput

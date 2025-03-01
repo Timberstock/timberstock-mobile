@@ -1,3 +1,4 @@
+import { initialState } from './initialState';
 import { AppAction, AppState } from './types';
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -20,12 +21,6 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         lastSync: new Date(),
         error: null,
         loading: false,
-      };
-
-    case 'SET_LOCAL_FILES':
-      return {
-        ...state,
-        localFiles: action.payload,
       };
 
     case 'SET_LOADING':
@@ -64,6 +59,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         lastSync: action.payload,
       };
+
+    case 'RESET_STATE':
+      return initialState;
 
     default:
       console.warn(`Unknown action, check reducer.ts file and look for: ${action}.`);

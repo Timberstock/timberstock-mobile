@@ -7,7 +7,8 @@ import { IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const HEADER_HEIGHT = 85;
+// Base height without insets
+const BASE_HEADER_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
 
 export default function Header() {
   const insets = useSafeAreaInsets();
@@ -16,6 +17,11 @@ export default function Header() {
   const [fadeAnim] = React.useState(new Animated.Value(1));
   const [slideAnim] = React.useState(new Animated.Value(0));
 
+  // Calculate total header height including safe area
+  const headerHeight =
+    BASE_HEADER_HEIGHT +
+    (Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0);
+
   const shouldShowBackButton =
     pathname.includes('guia-form') || pathname.includes('producto-form');
 
@@ -23,7 +29,7 @@ export default function Header() {
     '/guia-form': 'Datos de la Guía',
     '/producto-form': 'Producto de la Guía',
     '/user': 'Usuario',
-    '/': 'TimberStock',
+    '/': 'TimberBiz',
   };
 
   React.useEffect(() => {
@@ -55,25 +61,19 @@ export default function Header() {
           {
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }],
-            height: HEADER_HEIGHT,
+            height: headerHeight,
+            paddingTop: Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight,
           },
         ]}
       >
-        <View
-          style={[
-            headerStyles.innerContainer,
-            {
-              paddingTop: Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight,
-            },
-          ]}
-        >
+        <View style={headerStyles.innerContainer}>
           <View style={headerStyles.contentContainer}>
             <View style={headerStyles.backButtonContainer}>
               {shouldShowBackButton && (
                 <IconButton
                   icon="arrow-left"
                   iconColor={theme.colors.onPrimary}
-                  size={24}
+                  size={28}
                   onPress={() => router.back()}
                   style={headerStyles.backButton}
                   animated={true}
@@ -143,7 +143,7 @@ function NetworkIndicator() {
 
   return (
     <Animated.View style={{ opacity: pulseAnim }}>
-      <Icon name={config.icon} size={24} color={config.color} />
+      <Icon name={config.icon} size={28} color={config.color} />
     </Animated.View>
   );
 }
@@ -163,13 +163,13 @@ const headerStyles = StyleSheet.create({
   },
   innerContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: 10,
+    justifyContent: 'center',
   },
   contentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
+    height: BASE_HEADER_HEIGHT,
   },
   backButtonContainer: {
     width: 40,

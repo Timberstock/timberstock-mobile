@@ -1,4 +1,3 @@
-// Arreglo de renderkeys para que se actualicen los selects desde https://github.com/MobileReality/react-native-select-pro/issues/237
 import CustomDropdown from '@/components/CustomDropdown';
 import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
 import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
@@ -351,22 +350,26 @@ export default function GuiaForm() {
           </View>
           <Divider style={styles.divider} />
           <View style={styles.sectionContent}>
-            {guiaFormData.observaciones?.map((obs, index) => (
-              <View key={index} style={styles.observationRow}>
-                <TextInput
-                  mode="outlined"
-                  value={obs}
-                  onChangeText={(text) => updateObservacionField('update', index, text)}
-                  style={styles.flex1}
-                  outlineStyle={styles.inputOutline}
-                />
-                <IconButton
-                  icon="close-circle"
-                  mode="contained-tonal"
-                  onPress={() => updateObservacionField('remove', index)}
-                />
-              </View>
-            ))}
+            {guiaFormData.observaciones &&
+              guiaFormData.observaciones.length > 0 &&
+              guiaFormData.observaciones.map((obs, index) => (
+                <View key={index} style={styles.observationRow}>
+                  <TextInput
+                    mode="outlined"
+                    value={guiaFormData.observaciones[index]}
+                    onChangeText={(text) =>
+                      updateObservacionField('update', index, text)
+                    }
+                    style={styles.flex1}
+                    outlineStyle={styles.inputOutline}
+                  />
+                  <IconButton
+                    icon="close-circle"
+                    mode="contained-tonal"
+                    onPress={() => updateObservacionField('remove', index)}
+                  />
+                </View>
+              ))}
           </View>
         </Surface>
 

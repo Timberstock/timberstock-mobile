@@ -1,7 +1,7 @@
 import { useFolio } from '@/context/folio/FolioContext';
 import { useNetwork } from '@/context/network/NetworkContext';
 import * as Haptics from 'expo-haptics';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -11,13 +11,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import {
-  Button,
-  IconButton,
-  Text,
-  TextInput,
-  useTheme,
-} from 'react-native-paper';
+import { Button, IconButton, Text, TextInput, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface Props {
@@ -36,7 +30,7 @@ const FoliosRequestModal = ({ modalVisible, setModalVisible }: Props) => {
   const [slideAnim] = useState(new Animated.Value(100));
   const { networkStatus } = useNetwork();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (modalVisible) {
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -76,7 +70,7 @@ const FoliosRequestModal = ({ modalVisible, setModalVisible }: Props) => {
   const handleRequest = async () => {
     Keyboard.dismiss();
     const num = parseInt(numFolios, 10);
-    
+
     if (isNaN(num) || num <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'Por favor ingrese un número válido');
@@ -94,12 +88,13 @@ const FoliosRequestModal = ({ modalVisible, setModalVisible }: Props) => {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const result = await reserveFolios(num);
-    
+
     if (result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
       if (result.foliosReservados?.length === num) {
         Alert.alert(
-          'Folios reservados',
+          `Folios reservados (${num})`,
           `Se han reservado los ${num} folios solicitados`
         );
       } else {
@@ -116,12 +111,7 @@ const FoliosRequestModal = ({ modalVisible, setModalVisible }: Props) => {
   };
 
   return (
-    <Modal
-      visible={modalVisible}
-      transparent
-      statusBarTranslucent
-      animationType="fade"
-    >
+    <Modal visible={modalVisible} transparent statusBarTranslucent animationType="fade">
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.modalContainer}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

@@ -1,7 +1,7 @@
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { router } from 'expo-router';
-import React, { createContext, useContext, useEffect, useReducer } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { userReducer } from './reducer';
 import { UserService } from './service';
 import { UserContextType, UserFirestore } from './types';
@@ -18,26 +18,30 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     lastSync: null,
   });
 
-  useEffect(() => {
-    let userDataUnsubscribe: (() => void) | undefined;
+  // Move userDataUnsubscribe to ref so it's accessible across the component
+  const userDataUnsubscribeRef = useRef<(() => void) | undefined>();
 
+  useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
         // This is triggered two times which is normal behavior, 1. initial check -> 2. refresh of auth token
         console.log('👤 [User signed in]', firebaseUser.uid);
 
         // Clean up previous listener if it exists
-        if (userDataUnsubscribe) {
+        if (userDataUnsubscribeRef.current) {
           console.log('🧹 [Cleaning up previous listener]');
-          // Hence, due to the two listeners being created, we need to clean up the previous one
-          userDataUnsubscribe();
+          userDataUnsubscribeRef.current();
         }
 
         // Set up real-time listener for user data
-        userDataUnsubscribe = firestore()
+        userDataUnsubscribeRef.current = firestore()
           .collection('usuarios')
           .doc(firebaseUser.uid)
           .onSnapshot(
+            {
+              // Include metadata changes to detect offline/online state
+              includeMetadataChanges: true,
+            },
             async (doc) => {
               console.log('📥 [Snapshot Update]', {
                 exists: doc.exists,
@@ -51,7 +55,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
               if (doc.exists) {
                 const syncedUserData = doc.data() as UserFirestore;
                 syncedUserData.id = firebaseUser.uid;
-                await UserService.updateUserSyncStatusAndLastLogin(syncedUserData);
+
+                // If we're offline and this is from cache, don't update sync status
+                if (!doc.metadata.fromCache) {
+                  await UserService.updateUserSyncStatusAndLastLogin(syncedUserData);
+                }
+
                 dispatch({
                   type: 'SET_USER',
                   payload: {
@@ -59,9 +68,29 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     firebaseAuth: firebaseUser,
                   },
                 });
+              } else if (doc.metadata.fromCache) {
+                // If document doesn't exist and we're offline, create a minimal user object
+                // TODO: NOT SURE ABOUT THIS
+                console.log('📱 Offline mode - Using minimal user object');
+                dispatch({
+                  type: 'SET_USER',
+                  payload: {
+                    id: firebaseUser.uid,
+                    admin: false,
+                    cafs: [],
+                    email: firebaseUser.email || '',
+                    empresa_id: '',
+                    folios_reservados: [],
+                    last_login: new Date() as any,
+                    nombre: firebaseUser.displayName || '',
+                    rut: '',
+                    superadmin: false,
+                    firebaseAuth: firebaseUser,
+                  },
+                });
               }
               dispatch({ type: 'SET_LOADING', payload: false });
-              router.replace('/(tabs)');
+              // router.replace('/(tabs)');
             },
             (error) => {
               console.error('❌ [Snapshot Error]:', error);
@@ -74,9 +103,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             }
           );
       } else {
-        if (userDataUnsubscribe) {
-          userDataUnsubscribe();
-          userDataUnsubscribe = undefined;
+        if (userDataUnsubscribeRef.current) {
+          userDataUnsubscribeRef.current();
+          userDataUnsubscribeRef.current = undefined;
         }
         router.replace('/(auth)');
         dispatch({ type: 'SET_USER', payload: null });
@@ -85,13 +114,25 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => {
-      console.log('♻️ [Cleanup Effect]');
+      console.log('🧹 [UserContext - Cleanup Effect]');
       unsubscribe();
-      if (userDataUnsubscribe) {
-        userDataUnsubscribe();
+      if (userDataUnsubscribeRef.current) {
+        userDataUnsubscribeRef.current();
       }
     };
   }, []);
+
+  const resetState = () => {
+    // Unsubscribe from user document listener if it exists
+    if (userDataUnsubscribeRef.current) {
+      userDataUnsubscribeRef.current();
+      userDataUnsubscribeRef.current = undefined;
+    }
+
+    // Reset state but preserve the user auth state
+    const currentUser = state.user?.firebaseAuth || null;
+    dispatch({ type: 'RESET_STATE', payload: currentUser });
+  };
 
   const login = async (email: string, password: string) => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -99,7 +140,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       // Login with email and password
       const loginResult = await UserService.login(email, password);
       if (loginResult !== 'success') {
-        throw new Error(loginResult);
+        dispatch({ type: 'SET_ERROR', payload: loginResult });
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
       }
       // If login is successful, we will wait for the user data to be fetched in the listener
       // hence we don't want to set loading to false prematurely here
@@ -125,6 +168,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     state,
     login,
     logout,
+    resetState,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

@@ -1,11 +1,8 @@
-import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
-import * as FileSystem from 'expo-file-system';
-import { shareAsync } from 'expo-sharing';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import * as Updates from 'expo-updates';
 import { Alert } from 'react-native';
 import { User } from '../user/types';
-import { Empresa, GuiaDespachoState, LocalFile } from './types';
+import { Empresa } from './types';
 import { ContratoCompra } from './types/contratoCompra';
 import { ContratoVenta } from './types/contratoVenta';
 import { GuiaDespachoFirestore } from './types/guia';
@@ -20,47 +17,62 @@ export class AppService {
 
   static listenToGuias(
     currentUser: User,
-    localFiles: LocalFile[],
-    callback: (guias: GuiaDespachoState[]) => void,
-    limit: number = 30 // Default initial load
+    callback: (guias: GuiaDespachoFirestore[]) => void,
+    limit: number = 20 // Default initial load
   ) {
     // Keep realtime listener for recent guias
     const realtimeQuery = firestore()
       .collection(`empresas/${currentUser.empresa_id}/guias`)
+      .where('usuario_metadata.usuario_id', '==', currentUser.id)
       .orderBy('identificacion.fecha', 'desc')
       .limit(limit);
 
-    return realtimeQuery.onSnapshot((querySnapshot) => {
-      const newGuias: GuiaDespachoState[] = [];
-      querySnapshot.forEach((doc) => {
-        if (doc.exists) {
-          const guiaData = doc.data() as GuiaDespachoFirestore;
-          const guiaState: GuiaDespachoState = {
-            ...guiaData,
-            id: doc.id,
-            pdf_local_checked_uri: this._checkForPdfURILocal(
-              guiaData as GuiaDespachoFirestore,
-              localFiles,
-              currentUser.id
-            ),
-          };
-
-          newGuias.push(guiaState);
+    const unsubscribe = realtimeQuery.onSnapshot(
+      {
+        includeMetadataChanges: true,
+      },
+      (querySnapshot: FirebaseFirestoreTypes.QuerySnapshot | null) => {
+        console.log('🔄 [AppContext - Realtime listener]', {
+          querySnapshot,
+        });
+        if (querySnapshot === null) {
+          console.error('QuerySnapshot is null. This is unexpected behavior.');
+          console.log('Current user:', currentUser);
+          return;
         }
-      });
-      callback(newGuias);
-    });
+        const newGuias: GuiaDespachoFirestore[] = [];
+        querySnapshot.docs.forEach(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+            const guiaData = doc.data() as GuiaDespachoFirestore;
+            guiaData.id = this._handleGuiaId(guiaData, doc.id);
+            newGuias.push(guiaData);
+          }
+        );
+        callback(newGuias);
+      },
+      (error) => {
+        console.error('Error in Firestore listener:', error);
+        callback([]);
+      }
+    );
+
+    const unsubscribeFunction = () => {
+      console.log('🔄 [AppContext - Unsubscribing from realtime listener]');
+      unsubscribe();
+    };
+
+    return unsubscribeFunction;
   }
 
   // New method for pagination
   static async fetchMoreGuias(
     currentUser: User,
-    localFiles: LocalFile[],
-    lastGuia: GuiaDespachoState,
+    lastGuia: GuiaDespachoFirestore,
     limit: number = 20
-  ): Promise<GuiaDespachoState[]> {
+  ): Promise<GuiaDespachoFirestore[]> {
     const snapshot = await firestore()
       .collection(`empresas/${currentUser.empresa_id}/guias`)
+      .where('usuario_metadata.usuario_id', '==', currentUser.id)
       .orderBy('identificacion.fecha', 'desc')
       .startAfter(lastGuia.identificacion.fecha)
       .limit(limit)
@@ -68,28 +80,16 @@ export class AppService {
 
     return snapshot.docs.map((doc) => {
       const guiaData = doc.data() as GuiaDespachoFirestore;
-      const guiaState: GuiaDespachoState = {
-        ...guiaData,
-        id: doc.id,
-        pdf_local_checked_uri: this._checkForPdfURILocal(
-          guiaData as GuiaDespachoState,
-          localFiles,
-          currentUser.id
-        ),
-      };
-      return guiaState;
+      guiaData.id = this._handleGuiaId(guiaData, doc.id);
+      return guiaData;
     });
   }
 
-  static async fetchAllData(
-    empresaId: string,
-    localFiles: LocalFile[],
-    currentUser: User
-  ) {
+  static async fetchAllData(empresaId: string, currentUser: User) {
     try {
       const [empresa, guias, contratosCompra, contratosVenta] = await Promise.all([
         this.fetchEmpresa(empresaId),
-        this.fetchGuias(empresaId, localFiles, currentUser),
+        this.fetchGuias(empresaId, currentUser),
         this.fetchContratosCompra(empresaId),
         this.fetchContratosVenta(empresaId),
       ]);
@@ -128,27 +128,19 @@ export class AppService {
 
   static async fetchGuias(
     empresaId: string,
-    localFiles: LocalFile[],
     currentUser: User
-  ): Promise<GuiaDespachoState[]> {
+  ): Promise<GuiaDespachoFirestore[]> {
     try {
       const snapshot = await firestore()
         .collection(`empresas/${empresaId}/guias`)
+        .where('usuario_metadata.usuario_id', '==', currentUser.id)
         .orderBy('identificacion.fecha', 'desc')
         .get();
 
       return snapshot.docs.map((doc) => {
         const guiaData = doc.data() as GuiaDespachoFirestore;
-        const guiaState: GuiaDespachoState = {
-          ...guiaData,
-          id: doc.id,
-          pdf_local_checked_uri: this._checkForPdfURILocal(
-            guiaData as GuiaDespachoFirestore,
-            localFiles,
-            currentUser.id
-          ),
-        };
-        return guiaState;
+        guiaData.id = this._handleGuiaId(guiaData, doc.id);
+        return guiaData;
       });
     } catch (error) {
       console.error('Error fetching guias:', error);
@@ -190,151 +182,45 @@ export class AppService {
     }
   }
 
-  static async loadLocalFiles(empresaId: string): Promise<LocalFile[]> {
-    const localFiles: LocalFile[] = [];
+  static handleUpdateFound() {
+    Updates.fetchUpdateAsync();
+    Alert.alert('Actualización disponible', 'Se descargarán las actualizaciones.', [
+      {
+        text: 'Ok',
+        // onPress: async () => {
+        //   await Updates.fetchUpdateAsync();
+        // },
+      },
+    ]);
+  }
 
-    const appFolderContent = await FileSystem.readDirectoryAsync(
-      FileSystem.documentDirectory as string
+  static handleUpdateDownloaded() {
+    Alert.alert(
+      'Actualización descargada',
+      'La aplicación se reiniciará para aplicar los cambios.',
+      [
+        {
+          text: 'Ok',
+          onPress: async () => {
+            await Updates.reloadAsync();
+          },
+        },
+      ]
     );
-    appFolderContent.forEach((fileName) => {
-      const fileURI = FileSystem.documentDirectory + fileName;
+  }
 
-      if (fileName.includes('.pdf')) {
-        localFiles.push({
-          name: fileName,
-          path: fileURI,
-          type: 'pdf',
-        });
-      }
-    });
-
-    const empresaFolder = FileSystem.documentDirectory + empresaId;
-
-    if (!appFolderContent.includes(empresaId)) {
-      await FileSystem.makeDirectoryAsync(empresaFolder);
-    }
-    const empresaFolderContent = await FileSystem.readDirectoryAsync(empresaFolder);
-
-    empresaFolderContent.forEach(async (fileName: string) => {
-      const fileURI = empresaFolder + '/' + fileName;
-
-      // TODO: this can be used if implemented something related to cover more files with the same folio
-      // const fileInfo = await FileSystem.getInfoAsync(fileURI);
-
-      localFiles.push({
-        name: fileName,
-        path: fileURI,
-        type: fileName.includes('.pdf')
-          ? 'pdf'
-          : fileName.includes('.png')
-            ? 'image'
-            : 'other',
-      });
-    });
-
-    if (!empresaFolderContent.includes('logo.png')) {
-      try {
-        const logoUrl = await storage()
-          .ref(`empresas/${empresaId}/logo.png`)
-          .getDownloadURL();
-
-        const fileUri = `${FileSystem.documentDirectory}${empresaId}/logo.png`;
-
-        const downloadResult = await FileSystem.downloadAsync(logoUrl, fileUri);
-
-        if (downloadResult.status === 200) {
-          localFiles.push({
-            name: 'logo.png',
-            path: fileUri,
-            type: 'image',
-          });
-        } else {
-          console.error('❌ [Error] Download failed:', downloadResult.status);
-          throw new Error(`Download failed: ${downloadResult.status}`);
-        }
-      } catch (error: any) {
-        console.error('🚨 [Error] Storage operation failed:', {
-          code: error.code,
-          message: error.message,
-        });
-        if (error.code === 'storage/object-not-found') {
-        }
-      }
+  static _handleGuiaId(guiaData: GuiaDespachoFirestore, docId: string): string {
+    let IdToReturn = '';
+    // Handle
+    if (guiaData.id) {
+      IdToReturn = guiaData.id;
     } else {
-      localFiles.push({
-        name: 'logo.png',
-        path: `${FileSystem.documentDirectory}${empresaId}/logo.png`,
-        type: 'image',
-      });
+      IdToReturn = docId;
+    }
+    if (guiaData.version) {
+      IdToReturn = `${IdToReturn}_${guiaData.version}`;
     }
 
-    return localFiles;
-  }
-
-  static async shareGuiaPDF(folio: string, localFiles: LocalFile[]): Promise<void> {
-    try {
-      const pdfFile = localFiles.find(
-        (file) =>
-          file.name === `GuiaFolio${folio}.pdf` || file.name === `GD_${folio}.pdf`
-      );
-
-      if (pdfFile) {
-        await shareAsync(pdfFile.path, {
-          UTI: '.pdf',
-          mimeType: 'application/pdf',
-        });
-      } else {
-        Alert.alert('PDF no encontrado', 'No se encontró el PDF local para esta guía');
-      }
-    } catch (error) {
-      console.error('Error sharing PDF:', error);
-      Alert.alert('Error', 'No se pudo compartir el PDF');
-    }
-  }
-
-  static async checkForUpdates(): Promise<void> {
-    try {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
-    } catch (error) {
-      console.error('Error checking for updates:', error);
-      throw new Error('Failed to check for updates');
-    }
-  }
-
-  static _checkForPdfURILocal(
-    guia: GuiaDespachoFirestore,
-    localFiles: LocalFile[],
-    currentUserID: string
-  ): string {
-    // First look for the direct uri stored in the guia if it was created by the current user
-    let pdfLocalUri = '';
-    if (
-      guia?.usuario_metadata &&
-      guia.usuario_metadata.usuario_id &&
-      guia.usuario_metadata.usuario_id === currentUserID &&
-      guia.usuario_metadata.pdf_local_uri
-    ) {
-      const localFile = localFiles.find((f) => {
-        f.path === guia.usuario_metadata.pdf_local_uri;
-      });
-      if (localFile) {
-        pdfLocalUri = localFile.path;
-      }
-    }
-
-    if (!pdfLocalUri) {
-      // If the guia was not found, let's check if we have a pdf in the local files for that folio
-      const localFile = localFiles.find(
-        (f) =>
-          f.name === `GuiaFolio${guia?.identificacion.folio}.pdf` ||
-          f.name === `GD_${guia?.identificacion.folio}.pdf`
-      );
-      if (localFile) {
-        pdfLocalUri = localFile.path;
-      }
-    }
-
-    return pdfLocalUri;
+    return IdToReturn;
   }
 }

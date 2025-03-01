@@ -30,6 +30,7 @@ export interface FolioContextType {
   state: FolioState;
   reserveFolios: (cantidad: number) => Promise<ReserveFoliosResult>;
   liberarFolios: () => Promise<boolean>;
+  utilizarFolio: (folio: number) => Promise<boolean>;
 }
 
 export type FolioAction =

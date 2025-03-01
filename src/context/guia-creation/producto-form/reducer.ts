@@ -1,4 +1,4 @@
-import { productoFormInitialState } from './initialState';
+import { initialize_bancos, productoFormInitialState } from './initialState';
 import { ProductoFormAction, ProductoFormState } from './types';
 
 export const productoFormReducer = (
@@ -26,6 +26,7 @@ export const productoFormReducer = (
         productoForm: {
           ...productoFormInitialState.productoForm,
           tipo: action.payload.newTipo,
+          bancos: action.payload.newTipo === 'Pulpable' ? initialize_bancos() : null,
         },
         options: {
           ...state.options,
@@ -41,6 +42,7 @@ export const productoFormReducer = (
             ...productoFormInitialState.productoForm,
             info: null,
             tipo: state.productoForm.tipo,
+            bancos: state.productoForm.tipo === 'Pulpable' ? initialize_bancos() : null,
           },
           // Options remain the same
         };
@@ -50,6 +52,7 @@ export const productoFormReducer = (
         ...state,
         productoForm: {
           ...action.payload,
+          bancos: state.productoForm.tipo === 'Pulpable' ? initialize_bancos() : null,
         },
         // Options remain the same
       };
@@ -124,6 +127,7 @@ export const productoFormReducer = (
       return {
         productoForm: {
           ...productoFormInitialState.productoForm,
+          bancos: null,
         },
         options: {
           ...productoFormInitialState.options,

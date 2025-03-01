@@ -34,6 +34,9 @@ export class FolioService {
           response.status === '420' ||
           response.status === '400')
       ) {
+        const newFolios = response.folios_reservados.filter(
+          (folio) => !user.folios_reservados.includes(folio)
+        );
         // Update Firestore with new folios
         await firestore().collection('usuarios').doc(user.firebaseAuth?.uid).update({
           // We don't need to merge the new folios with the existing ones, as the cloud function will return the new folios with the existing ones already merged
@@ -45,7 +48,7 @@ export class FolioService {
 
         return {
           success: true,
-          foliosReservados: response.folios_reservados,
+          foliosReservados: newFolios,
           cafs: response.cafs,
         };
       }
@@ -76,6 +79,28 @@ export class FolioService {
       return true;
     } catch (error) {
       console.error('Error releasing folios:', error);
+      return false;
+    }
+  }
+
+  static utilizarFolio(folio: number, user: User): boolean {
+    if (!folio || !user.firebaseAuth?.uid) return false;
+
+    try {
+      const userRef = firestore().collection('usuarios').doc(user.firebaseAuth.uid);
+      // Filter out the folio from the user's folios_reservados
+      const folios_reservados = user.folios_reservados.filter((f) => f !== folio);
+      userRef.update({
+        folios_reservados: folios_reservados,
+      });
+
+      // await OfflineWritingFirestoreService.updateAndWaitForLocalPersistence(userRef, {
+      //   folios_reservados: folios_reservados,
+      // });
+
+      return true;
+    } catch (error) {
+      console.error('Error utilizando folio:', error);
       return false;
     }
   }

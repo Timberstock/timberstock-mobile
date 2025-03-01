@@ -1,7 +1,9 @@
 import { useApp } from '@/context/app/AppContext';
+import { useFolio } from '@/context/folio/FolioContext';
 import { useUser } from '@/context/user/UserContext';
 import { router } from 'expo-router';
 import React, { createContext, useContext, useReducer } from 'react';
+import { Alert } from 'react-native';
 import { GuiaFormData } from '../guia-form/types';
 import { ProductoFormData } from '../producto-form/types';
 import { CreationService, GuiaDespachoIncomplete } from './services/creation';
@@ -9,6 +11,7 @@ import {
   GuiaCreationAction,
   GuiaCreationContextType,
   GuiaCreationState,
+  StatusCallback,
 } from './types';
 
 const initialState: GuiaCreationState = {
@@ -49,12 +52,14 @@ export function GuiaCreationProvider({ children }: { children: React.ReactNode }
   const [state, dispatch] = useReducer(guiaCreationReducer, initialState);
 
   const {
-    state: { empresa, localFiles },
+    state: { empresa },
   } = useApp();
 
   const {
     state: { user },
   } = useUser();
+
+  const { utilizarFolio } = useFolio();
 
   const combineGuiaProductoForms = (
     precioUnitarioGuia: number,
@@ -72,24 +77,35 @@ export function GuiaCreationProvider({ children }: { children: React.ReactNode }
   };
 
   const submitGuia = async (
-    guiaDespachoIncomplete: GuiaDespachoIncomplete
+    guiaDespachoIncomplete: GuiaDespachoIncomplete,
+    onStatusChange?: StatusCallback
   ): Promise<void> => {
     try {
       dispatch({ type: 'SET_SUBMITTING', payload: true });
 
-      // Format that fucken' guia
-      const guiaCreated = await CreationService.createGuia(
+      await CreationService.createGuia(
         guiaDespachoIncomplete,
         empresa,
         user!,
-        localFiles
+        onStatusChange
       );
 
-      if (guiaCreated) {
-        dispatch({ type: 'SET_SUBMITTING', payload: false });
-        router.replace('/');
-      }
+      onStatusChange?.('Actualizando folio utilizado...');
+      await utilizarFolio(guiaDespachoIncomplete.identificacion.folio);
+
+      onStatusChange?.('Finalizando proceso...');
+      router.replace('/');
+
+      Alert.alert(
+        `PDF creado correctamente para Guía con folio: ${guiaDespachoIncomplete.identificacion.folio}`,
+        `Para compartirla o guardarla en Documentos, presione el botón de PDF de la guía respectiva en la pantalla de guías.`
+      );
     } catch (error) {
+      console.error('Error al crear la guía:', error);
+      Alert.alert(
+        'Error al crear la guía',
+        error instanceof Error ? error.message : 'Unknown error occurred'
+      );
       dispatch({
         type: 'SET_ERROR',
         payload: error instanceof Error ? error.message : 'Unknown error occurred',

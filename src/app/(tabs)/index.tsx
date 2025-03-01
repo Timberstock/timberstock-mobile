@@ -17,5 +17,9 @@ export default function TabsIndex() {
     }
   }, [loading, segments]);
 
-  return <Loading errorMessage="Cargando datos de la empresa..." />;
+  return (
+    <Loading
+      errorMessage={`Cargando datos de la empresa... si no tiene conexión, puede tardar hasta 60 segundos en cargar el caché...`}
+    />
+  );
 }

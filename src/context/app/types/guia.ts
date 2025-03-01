@@ -66,7 +66,7 @@ export interface GuiaDespachoFirestore {
   codigo_fsc: string | null;
   codigo_contrato_externo: string | null;
   servicios: ServiciosGuia;
-  observaciones: string[] | null;
+  observaciones: string[];
   contrato_compra_id: string;
   contrato_venta_id: string;
   volumen_total_emitido: number;
@@ -74,6 +74,7 @@ export interface GuiaDespachoFirestore {
   monto_total_guia: number;
   estado: string;
   _caf_id: string;
+  version?: number;
   usuario_metadata: MetaDataUsuario;
   pdf_url: string;
 }

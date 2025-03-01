@@ -1,8 +1,8 @@
 import { useApp } from '@/context/app/AppContext';
-import { GuiaDespachoState } from '@/context/app/types';
+import { GuiaDespachoFirestore } from '@/context/app/types/guia';
 import { useUser } from '@/context/user/UserContext';
 import { globals } from '@/utils/globals';
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import { Alert } from 'react-native';
 import { guiaFormInitialState, guiaFormOptionsInitialState } from './initialState';
 import { guiaFormReducer } from './reducer';
@@ -28,26 +28,26 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
     options: guiaFormOptionsInitialState,
   });
 
+  useEffect(() => {
+    console.log('🔍 GuiaFormProvider state:', state.guia.observaciones);
+  }, [state.guia.observaciones]);
+
   const updateField = (
     field: keyof GuiaFormData,
     value: GuiaFormData[keyof GuiaFormData]
   ) => {
     globals.startTime = Date.now();
     globals.lastTime = globals.startTime;
-    globals.logTimeDelta('GuiaFormContext-Start');
 
     let selectionResult;
     // Handle special field selections
     switch (field) {
       case 'proveedor': {
-        globals.logTimeDelta('Before-ProveedorSelection');
-
         selectionResult = SelectorService.handleProveedorSelection(
           value as GuiaFormOptions['proveedores'][number] | null,
           contratosCompra
         );
 
-        globals.logTimeDelta('After-ProveedorSelection');
         break;
       }
 
@@ -86,8 +86,6 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
         selectionResult = { newData: { [field]: value }, newOptions: {} };
     }
 
-    globals.logTimeDelta('Before-Dispatch');
-
     dispatch({
       type: 'UPDATE_FIELD',
       payload: {
@@ -96,8 +94,6 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
         selectionResult,
       },
     });
-
-    globals.logTimeDelta('After-Dispatch');
   };
 
   const updateObservacionField = (
@@ -116,8 +112,8 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
         });
         break;
       case 'update':
-        observacion_index &&
-          observacion &&
+        observacion_index !== undefined &&
+          observacion !== undefined &&
           dispatch({
             type: 'UPDATE_FIELD',
             payload: {
@@ -133,7 +129,7 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
           });
         break;
       case 'remove':
-        observacion_index &&
+        observacion_index !== undefined &&
           dispatch({
             type: 'UPDATE_FIELD',
             payload: {
@@ -219,7 +215,7 @@ export function GuiaFormProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const repetirGuia = (guia: GuiaDespachoState): boolean => {
+  const repetirGuia = (guia: GuiaDespachoFirestore): boolean => {
     const validation = SelectorService.validateRepetirGuia(
       guia,
       contratosCompra,

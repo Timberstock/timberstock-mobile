@@ -1,4 +1,4 @@
-import { User, UserAction, UserState } from './types';
+import { UserAction, UserState } from './types';
 
 export function userReducer(state: UserState, action: UserAction): UserState {
   switch (action.type) {
@@ -11,11 +11,12 @@ export function userReducer(state: UserState, action: UserAction): UserState {
       };
 
     case 'SYNC_USER_DATA':
+      if (!state.user) return state;
       return {
         ...state,
         user: {
-          ...(state.user as User),
           ...action.payload,
+          firebaseAuth: state.user.firebaseAuth,
         },
         error: null,
         lastSync: Date.now(),
@@ -38,6 +39,26 @@ export function userReducer(state: UserState, action: UserAction): UserState {
       return {
         ...state,
         error: null,
+      };
+
+    case 'RESET_STATE':
+      return {
+        user: action.payload ? {
+          id: '',
+          admin: false,
+          cafs: [],
+          email: action.payload.email || '',
+          empresa_id: '',
+          folios_reservados: [],
+          last_login: new Date() as any,
+          nombre: '',
+          rut: '',
+          superadmin: false,
+          firebaseAuth: action.payload,
+        } : null,
+        loading: true,
+        error: null,
+        lastSync: null,
       };
 
     default:

@@ -1,21 +1,28 @@
+import { useNetwork } from '@/context/network/NetworkContext';
 import { useUser } from '@/context/user/UserContext';
+import { LocalFilesService } from '@/services/LocalFilesService';
+import firestore from '@react-native-firebase/firestore';
+import * as Updates from 'expo-updates';
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { Alert } from 'react-native';
 import { initialState } from './initialState';
 import { appReducer } from './reducer';
 import { AppService } from './service';
-import { AppContextType, GuiaDespachoState } from './types';
-
+import { AppContextType } from './types';
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const { isUpdatePending, isUpdateAvailable } = Updates.useUpdates();
+  const { isConnected } = useNetwork();
+
   const {
     state: { user },
+    resetState,
   } = useUser();
 
   // Lift this up to component level so it's accessible everywhere
-  const guiasUnsubscribeRef = useRef<(() => void) | undefined>();
+  const guiasUnsubscribeRef = useRef<() => void>();
 
   // Initial data load and guias listener setup
   useEffect(() => {
@@ -23,21 +30,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Using an IIFE to handle async operations
       (async () => {
         try {
-          // 1. Load local files
-          const localFiles = await loadLocalFiles(false);
-
-          // 2. Fetch empresa data
-          await fetchAllEmpresaData(false);
-
-          // 3. Set up guias listener
-          guiasUnsubscribeRef.current = AppService.listenToGuias(
-            user,
-            localFiles,
-            (guias) => {
-              dispatch({ type: 'SET_GUIAS', payload: guias });
-              dispatch({ type: 'SET_LOADING', payload: false });
-            }
-          );
+          // Fetch empresa data
+          await LocalFilesService.ensureLogoExists(user.empresa_id);
+          await fetchAllEmpresaData();
         } catch (error) {
           console.error('Error in initial data load:', error);
           dispatch({ type: 'SET_ERROR', payload: 'Error loading initial data' });
@@ -46,13 +41,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     return () => {
+      console.log('🧹 [AppContext - Cleanup Effect]');
       if (guiasUnsubscribeRef.current) {
         guiasUnsubscribeRef.current();
       }
     };
   }, [user?.empresa_id]);
 
-  const fetchAllEmpresaData = async (withLoading = true) => {
+  useEffect(() => {
+    if (isUpdateAvailable) {
+      AppService.handleUpdateFound();
+    }
+  }, [isUpdateAvailable]);
+
+  useEffect(() => {
+    if (isUpdatePending) {
+      resetFirestoreAndReloadApp();
+    }
+  }, [isUpdatePending]);
+
+  const fetchAllEmpresaData = async (withLoading = true): Promise<void> => {
     if (!user?.empresa_id) return;
 
     withLoading && dispatch({ type: 'SET_LOADING', payload: true });
@@ -66,64 +74,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_HAS_MORE', payload: true });
 
       // 3. Fetch empresa data
-      const [empresa, contratosCompra, contratosVenta, localFiles] = await Promise.all([
+      const [empresa, contratosCompra, contratosVenta] = await Promise.all([
         AppService.fetchEmpresa(user.empresa_id),
         AppService.fetchContratosCompra(user.empresa_id),
         AppService.fetchContratosVenta(user.empresa_id),
-        loadLocalFiles(false),
       ]);
 
-      // 4. Set up new guias listener
-      guiasUnsubscribeRef.current = AppService.listenToGuias(
-        user,
-        localFiles,
-        (guias) => {
+      // 4. Set up new guias listener and wait for first data
+      // We wrap the listener setup in a Promise to ensure we wait for the first data load
+      // This is necessary because the listener callback can fire multiple times,
+      // but we only want to consider the refresh complete after we get the first data
+      // (which is why we add the resolve() after the first load)
+      await new Promise<void>((resolve) => {
+        let isFirstLoad = true; // Flag to track first load
+
+        // Set up the real-time listener that will fire on every data change
+        const unsubscribe = AppService.listenToGuias(user, (guias) => {
+          // This callback will be called every time the data changes in Firestore
           dispatch({ type: 'SET_GUIAS', payload: guias });
-          dispatch({ type: 'SET_LOADING', payload: false });
-        }
-      );
 
-      // 5. Update empresa data
-      dispatch({
-        type: 'SET_EMPRESA_DATA',
-        payload: {
-          empresa,
-          contratosCompra,
-          contratosVenta,
-        },
+          if (isFirstLoad) {
+            // These operations should only happen once, on the first load
+            dispatch({
+              type: 'SET_EMPRESA_DATA',
+              payload: { empresa, contratosCompra, contratosVenta },
+            });
+            dispatch({ type: 'SET_LAST_SYNC', payload: new Date() });
+            dispatch({ type: 'SET_LOADING', payload: false });
+
+            isFirstLoad = false; // Mark first load as complete
+            resolve(); // Resolve the promise only on first load
+          }
+        });
+
+        // Store the unsubscribe function immediately so we can clean up the listener later
+        guiasUnsubscribeRef.current = unsubscribe;
       });
-
-      dispatch({ type: 'SET_LAST_SYNC', payload: new Date() });
+      // At this point, we've received the first data load and updated the UI
+      // The listener remains active for future updates
     } catch (error) {
       console.error('Error loading data:', error);
       Alert.alert('Error', 'No se pudo cargar los datos de la empresa');
     } finally {
-      withLoading && dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
-
-  const loadLocalFiles = async (withLoading = true) => {
-    if (!user?.empresa_id) return [];
-    withLoading && dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const files = await AppService.loadLocalFiles(user.empresa_id);
-      dispatch({ type: 'SET_LOCAL_FILES', payload: files });
-      return files;
-    } catch (error) {
-      console.error('Error loading local files:', error);
-      Alert.alert('Error', 'No se pudo cargar los archivos locales');
-      dispatch({ type: 'SET_ERROR', payload: 'Error loading local files' });
-    } finally {
-      withLoading && dispatch({ type: 'SET_LOADING', payload: false });
-    }
-    return [];
-  };
-
-  const shareGuiaPDF = async (guia: GuiaDespachoState): Promise<void> => {
-    await AppService.shareGuiaPDF(
-      guia.identificacion.folio.toString(),
-      state.localFiles
-    );
   };
 
   const loadMoreGuias = async () => {
@@ -140,11 +134,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_LOADING_MORE', payload: true });
 
       const lastGuia = state.guias[state.guias.length - 1];
-      const moreGuias = await AppService.fetchMoreGuias(
-        user,
-        state.localFiles,
-        lastGuia
-      );
+      const moreGuias = await AppService.fetchMoreGuias(user, lastGuia);
 
       if (moreGuias.length < 20) {
         dispatch({ type: 'SET_HAS_MORE', payload: false });
@@ -161,12 +151,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetFirestoreAndReloadApp = async () => {
+    try {
+      // 1. Unsubscribe from all listeners and reset states
+      if (guiasUnsubscribeRef.current) {
+        guiasUnsubscribeRef.current();
+        guiasUnsubscribeRef.current = undefined;
+      }
+
+      // Reset both app and user states (user state preserves auth)
+      dispatch({ type: 'RESET_STATE' });
+      resetState();
+
+      // 2. Clean up Firestore - but handle offline case
+      if (isConnected) {
+        await firestore().terminate();
+        await firestore().clearPersistence();
+      } else {
+        console.log('📱 Offline mode detected - skipping clearPersistence');
+        Alert.alert(
+          'Sin conexión',
+          'Al no estar conectado a internet, se conservarán los datos en cache'
+        );
+      }
+
+      // 3. Set loading states before reload
+      dispatch({ type: 'SET_LOADING', payload: true });
+
+      // 4. Force a clean reload
+      await Updates.reloadAsync();
+    } catch (error) {
+      console.error('Error resetting app:', error);
+      Alert.alert('Error', 'No se pudo reiniciar la aplicación');
+      // Ensure loading is false even on error
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
   const value: AppContextType = {
     state,
     fetchAllEmpresaData,
-    shareGuiaPDF,
     loadMoreGuias,
-    handleUpdateAvailable: AppService.checkForUpdates,
+    resetFirestoreAndReloadApp,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -2,77 +2,77 @@
 # (To use android emulator, after starting the metro server, open the development build manually in the emulator)
 .PHONY: start-local-metro
 start-local-metro:
-	npx expo start --dev-client -c
+	npx expo start --clear
 
 # Start client server offline
 .PHONY: start-local-metro-offline
 start-local-metro-offline:
-	npx expo start --dev-client -c --offline
+	npx expo start --clear --offline
 
-# Update expo branch production
+# Update expo branch production (OUT OF DATE)
 .PHONY: update-expo-branch
 update-expo-branch:
-# First ask the user if they made all the changes to go from dev to production
+	# First ask the user if they made all the changes to go from dev to production
 	@echo "¿Hiciste todas las modificaciones necesarias para pasar de dev a production?"
 	@echo "App.tsx: eliminar use emulator"
 	@echo "functions/firebase/cloud_functions.ts: ruta a cloud functions prod"
 	@echo "screens/emision/createLogic.ts: parseFoliosOptions filtro de guiasSummary"
 	@echo "screens/emision/productosLogic.ts: cerrar modal, loading y push a Home"
 	@echo "functions/firebase/firestore/guias.ts: createGuiaDoc set(guia) y snapshotPromise(newGuiaDocRef)"
-	@read -p "(y/n)" confirm
-	@if [ "$confirm" != "y" ]; then
-		@echo "No se actualizará la rama"
-		@exit 1
-	@fi
+	@read -p "(y/n)" confirm; \
+	if [ "$$confirm" != "y" ]; then \
+		echo "No se actualizará la rama"; \
+		exit 1; \
+	fi
 	eas update --branch production --message "Update from makefile"
 
-
-# Reset node_modules
-.PHONY: reset-node_modules
-reset-node_modules:
-	rm -rf node_modules/ && npm cache clean --force && npm install
-
-
-# BUILDS FOR LOCAL DEVELOPMENT
-
-# TO MAKE A NEW BUILD FOR LOCAL DEVELOPMENT, FIRST PREBUILD, THEN A MESSAGE TO THE USER TELLING
-# TO MAKE CHANGES TO THE PODFILE TO FIX THE BORINGSSL-GRPC ISSUE
-.PHONY: prebuild
-prebuild:
-	npx expo prebuild --clean
-	@echo "AFTER PREBUILDING, REMEMBER TO CHANGE THE PODFILE BEFORE BUILDING FOR IOS (Podfile_fix_49_0_23 for SDK 49.0.23)"
-
-# Add this to before the command to wipe out the caches
-# killall Simulator
-# rm -rf ~/Library/Developer/Xcode/DerivedData/*
-.PHONY: reset-ios-build
-reset-ios-build:
+# GENERAL
+# Wipe out npm caches and prebuild again
+.PHONY: reset-environment-prebuild
+reset-environment-prebuild:
 	rm -rf node_modules/
+	npm cache clean --force
 	npm install
-	npx expo prebuild --clean
-	npx expo run ios
-
-# IOS
-# Build for iOS simulator and run the metro server
-.PHONY: ios-build-local-and-run-metro
-ios-build-local-and-run-metro:
-	@echo "REMEMBER TO CHANGE THE PODFILE BEFORE BUILDING FOR IOS (Podfile_fix_49_0_23 for SDK 49.0.23)"
-	cd ios && rm -rf build/ && rm -rf Pods/ && rm Podfile.lock && pod cache clean --all && pod deintegrate && pod setup && pod install && cd .. && npx expo run:ios
-
-# If error 115 when running for ios, run this command and retry:
-.PHONY: kill-simulator-and-delete-derived-data
-kill-simulator-and-delete-derived-data:
 	killall Simulator
 	rm -rf ~/Library/Developer/Xcode/DerivedData/*
-
-
-# Build for android emulator and run the metro server
-.PHONY: android-build-local-and-run-metro
-android-build-local-and-run-metro:
-	npx expo run:android
-
+	npx expo prebuild --clean
 
 # Print local folder structure
 .PHONY: print-local-folder-structure
 print-local-folder-structure:
 	ls -R
+
+# IOS
+# Select device, install, and run dev build
+.PHONY: install-and-run-dev-build-ios
+install-and-run-dev-build-ios:
+	npx expo run ios --device
+
+# Important reset of ios simulators. Ex: error 115.
+.PHONY: kill-simulator-and-delete-derived-data
+kill-simulator-and-delete-derived-data:
+	killall Simulator
+	rm -rf ~/Library/Developer/Xcode/DerivedData/*
+
+# For device testing, it must be signed and uploaded to Testflight (refer to Notion in Mobile App -> Crear Nueva Build)
+
+# ANDROID
+# Select device, install, and run dev build
+.PHONY: install-and-run-dev-build-android
+install-and-run-dev-build-android:
+	npx expo run android --device
+
+# Create production-ready app bundle (uploadable to the store)
+.PHONY: create-production-app-bundle
+create-production-app-bundle:
+	eas build --platform android --profile production --local
+
+# Create production-ready apk (shareable with users)
+.PHONY: create-production-apk
+create-production-apk:
+	eas build --platform android --profile production-apk --local
+
+# Create internal-testing apk (shareable with internal testers)
+.PHONY: create-staging-internal-apk
+create-staging-internal-apk:
+	eas build --platform android --profile staging-internal --local

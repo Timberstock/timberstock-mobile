@@ -95,11 +95,11 @@ function CustomDropdown<T>({
           setIsFocus(true);
         }
       }}
-      android_ripple={{
-        color: disabled ? 'transparent' : `${theme.colors.primary}20`,
-        borderless: false,
-        foreground: true,
-      }}
+      // android_ripple={{
+      //   color: disabled ? 'transparent' : `${theme.colors.primary}`,
+      //   borderless: false,
+      //   foreground: true,
+      // }}
       style={({ pressed }) => [
         styles.pressableContainer,
         pressed && !disabled && { opacity: 0.9 },
@@ -209,14 +209,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     margin: 6,
-    borderRadius: 16,
+    borderRadius: 28,
   },
   dropdown: {
     height: 56,
     borderRadius: 28,
     paddingHorizontal: 16,
     backgroundColor: theme.colors.surfaceContainerLow,
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
   },
   dropdownFocus: {
     borderColor: theme.colors.primary,
@@ -235,10 +236,12 @@ const styles = StyleSheet.create({
   placeholderStyle: {
     fontSize: 16,
     color: theme.colors.onSurfaceVariant,
+    opacity: 0.8,
   },
   selectedTextStyle: {
     fontSize: 16,
     color: theme.colors.onSurface,
+    fontWeight: '500',
   },
   inputSearchStyle: {
     height: 48,
@@ -276,8 +279,8 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   dropdownEmpty: {
-    borderColor: theme.colors.outline,
-    borderWidth: 1,
+    // Remove specific border styles for empty state
+    // It will inherit from dropdown
   },
   disabledContainer: {
     opacity: 0.6,

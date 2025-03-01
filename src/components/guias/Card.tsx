@@ -1,15 +1,14 @@
-import colors from '@/constants/colors';
-import { useApp } from '@/context/app/AppContext';
-import { GuiaDespachoState } from '@/context/app/types';
-import { PDFService } from '@/context/guia-creation/creation/services/pdf';
+import { GuiaDespachoFirestore } from '@/context/app/types/guia';
 import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
+import { useUser } from '@/context/user/UserContext';
+import { LocalFilesService } from '@/services/LocalFilesService';
 import { theme } from '@/theme';
+import colors from '@/theme/colors';
 import { Timestamp } from '@react-native-firebase/firestore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import {
   Button,
@@ -20,235 +19,297 @@ import {
   Text,
   useTheme,
 } from 'react-native-paper';
+import { PDFActionModalItem } from './PDFActionModal';
+
 interface GuiaDespachoCardItemProps {
-  item: GuiaDespachoState;
-  setPdfItem: (item: GuiaDespachoState) => void;
+  cardItem: GuiaDespachoFirestore;
+  setPdfItem: (pdfActionItem: PDFActionModalItem) => void;
   preview?: boolean;
 }
 
-export function GuiaDespachoCardItem({
-  item,
-  setPdfItem,
-  preview = false,
-}: GuiaDespachoCardItemProps) {
-  const theme = useTheme();
-  const router = useRouter();
+export const GuiaDespachoCardItem = memo(
+  function GuiaDespachoCardItem({
+    cardItem,
+    setPdfItem,
+    preview = false,
+  }: GuiaDespachoCardItemProps) {
+    const theme = useTheme();
+    const router = useRouter();
+    const {
+      state: { user },
+    } = useUser();
+    const { repetirGuia } = useGuiaForm();
 
-  const {
-    state: { empresa },
-  } = useApp();
+    const [localPDF, setLocalPDF] = useState<string | null>(null);
 
-  const { repetirGuia } = useGuiaForm();
+    useEffect(() => {
+      if (!user?.empresa_id || !cardItem.identificacion.folio || preview) return;
 
-  const isPdfAvailable = () => {
-    return item.pdf_local_checked_uri || item.pdf_url;
-  };
+      console.log('PDF check effect running for guia:', cardItem.identificacion.folio);
+      let mounted = true;
+      const checkLocalPdf = async () => {
+        const filePath = await LocalFilesService.fileExistsPath(
+          user.empresa_id!,
+          `GD_${cardItem.identificacion.folio}.pdf`
+        );
+        if (mounted) {
+          setLocalPDF(filePath);
+        }
+      };
 
-  const getStatusColor = () => {
-    const estado = item.estado.toLowerCase();
-    if (estado === 'pendiente') {
-      return theme.colors.tertiary; // Local only status
-    }
-    if (estado === 'emitida' || estado.includes('sobre_dte_emitido')) {
-      // @ts-ignore
-      return theme.colors.warning; // In process
-    }
-    if (estado === 'rechazado' || estado === 'error' || estado.includes('error')) {
-      return theme.colors.error; // Error states
-    }
-    if (estado === 'aceptado' || estado === 'aceptado-reparo') {
-      // @ts-ignore
-      return theme.colors.success; // Success states
-    }
-    return theme.colors.secondary; // Default fallback
-  };
+      checkLocalPdf();
+      return () => {
+        mounted = false;
+      };
+    }, [
+      user?.empresa_id,
+      cardItem.identificacion.folio,
+      cardItem.estado, // Keep this for safety
+      cardItem.usuario_metadata.pdf_local_uri, // Keep this for safety
+    ]);
 
-  const getPdfStatusStyle = () => {
-    if (!item.pdf_local_checked_uri && !item.pdf_url) {
-      return { backgroundColor: colors.lightGray };
-    }
-    if (item.pdf_local_checked_uri && item.pdf_url) {
-      return { backgroundColor: theme.colors.primary };
-    }
-    if (item.pdf_local_checked_uri) {
-      return { backgroundColor: theme.colors.secondary };
-    }
-    return { backgroundColor: theme.colors.tertiary };
-  };
+    const getStatusColor = () => {
+      if (preview) return;
 
-  const getPdfStatusLabel = () => {
-    if (item.pdf_local_checked_uri && !item.pdf_url) {
-      return 'Local';
-    }
-    if (!item.pdf_local_checked_uri && item.pdf_url) {
-      return 'Web';
-    }
-    if (item.pdf_local_checked_uri && item.pdf_url) {
-      return 'Local+Web';
-    }
-    return '';
-  };
+      const estado = cardItem.estado.toLowerCase();
+      if (estado === 'pendiente') return theme.colors.tertiary;
+      if (estado === 'emitida' || estado.includes('sobre_dte_emitido'))
+        return colors.warning;
+      if (estado === 'rechazado' || estado === 'error' || estado.includes('error'))
+        return theme.colors.error;
+      if (estado === 'aceptado' || estado === 'aceptado-reparo') return colors.success;
+      return theme.colors.secondary;
+    };
 
-  const formatDate = (date: Date) => {
-    return format(date, "d 'de' MMMM, yyyy", { locale: es });
-  };
+    const getPdfStatusStyle = () => {
+      if (!localPDF && !cardItem.pdf_url) return { backgroundColor: colors.lightGray };
+      if (localPDF && cardItem.pdf_url)
+        return { backgroundColor: theme.colors.primary };
+      if (localPDF) return { backgroundColor: theme.colors.secondary };
+      return { backgroundColor: theme.colors.tertiary };
+    };
 
-  const formatVolume = (volume: number, unit: string) => {
-    return `${volume.toLocaleString('es-CL')} ${unit}`;
-  };
+    const getPdfStatusLabel = () => {
+      if (localPDF && !cardItem.pdf_url) return 'Local';
+      if (!localPDF && cardItem.pdf_url) return 'Web';
+      if (localPDF && cardItem.pdf_url) return 'Local+Web';
+      return '';
+    };
 
-  const handlePdfPress = async () => {
-    if (!isPdfAvailable()) {
-      Alert.alert('Error', 'No se encontró ningún PDF asociado a esta guía');
-      return;
-    }
+    const formatDate = (date: Date) => {
+      return format(date, "d 'de' MMMM, yyyy", { locale: es });
+    };
 
-    const html = await PDFService.createPDFHTMLString(
-      empresa,
-      item,
-      formatDate((item.identificacion.fecha as Timestamp).toDate()),
-      { uri: '', width: 100, height: 100 }
-    );
-    const { uri } = await Print.printToFileAsync({ html });
-    item.pdf_local_checked_uri = uri;
+    const formatVolume = (volume: number, unit: string) => {
+      return `${volume.toLocaleString('es-CL')} ${unit}`;
+    };
 
-    setPdfItem(item);
-  };
+    const handlePdfPress = async () => {
+      if (!localPDF && !cardItem.pdf_url) {
+        Alert.alert('Error', 'No se encontró ningún PDF asociado a esta guía');
+        return;
+      }
+      // const html = await PDFService.createPDFHTMLString(
+      //   empresa,
+      //   cardItem,
+      //   formatDate((cardItem.identificacion.fecha as Timestamp).toDate()),
+      //   { uri: '', width: 100, height: 100 }
+      // );
+      // console.log(html);
+      // const { uri } = await Print.printToFileAsync({ html });
+      // cardItem.pdf_local_checked_uri = uri;
+      setPdfItem({
+        id: cardItem.id,
+        folio: cardItem.identificacion.folio,
+        empresaId: user?.empresa_id!,
+        pdfLocalUri: localPDF,
+        pdf_url: cardItem.pdf_url,
+      });
+    };
 
-  const handleCopyPress = async () => {
-    const success = repetirGuia(item);
-    if (success) {
-      router.push('/(tabs)/(guia-creation-stack)/guia-form');
-    }
-  };
+    const handleCopyPress = async () => {
+      const success = repetirGuia(cardItem);
+      if (success) {
+        router.push('/(tabs)/(guia-creation-stack)/guia-form');
+      }
+    };
 
-  return (
-    <View style={styles.cardWrapper}>
-      <Surface style={styles.card} mode="elevated" elevation={1}>
-        <Card.Content>
-          <View style={styles.headerContainer}>
-            <View style={styles.headerLeft}>
-              <Text variant="titleLarge" style={styles.folioText}>
-                #{item.identificacion.folio}
-              </Text>
-              <Chip
-                mode="flat"
-                style={[styles.statusChip, { backgroundColor: getStatusColor() }]}
-                textStyle={styles.statusChipText}
-              >
-                {item.estado}
-              </Chip>
-            </View>
-            {!preview && (
-              <Button
-                icon="content-copy"
-                mode="contained-tonal"
-                onPress={handleCopyPress}
-                style={styles.copyButton}
-                labelStyle={styles.copyButtonLabel}
-                compact
-                elevation={2}
-              >
-                Repetir datos
-              </Button>
-            )}
-          </View>
-          <View style={styles.bodyContainer}>
-            <View style={styles.detailsContainer}>
-              <View style={styles.detailRow}>
-                <IconButton
-                  icon="calendar"
-                  size={20}
-                  iconColor={theme.colors.primary}
-                  style={styles.detailIcon}
-                />
-                <Text variant="bodyMedium">
-                  {preview
-                    ? formatDate(item.identificacion.fecha as Date)
-                    : formatDate((item.identificacion.fecha as Timestamp).toDate())}
+    return (
+      <View style={styles.cardWrapper}>
+        <Surface
+          style={[styles.card, preview && styles.previewCard]}
+          mode="elevated"
+          elevation={1}
+        >
+          <Card.Content style={styles.cardContent}>
+            <View style={styles.headerContainer}>
+              <View style={styles.headerLeft}>
+                <Text variant="titleLarge" style={styles.folioText}>
+                  #{cardItem.identificacion.folio}
                 </Text>
+                <Chip
+                  mode="flat"
+                  style={[styles.statusChip, { backgroundColor: getStatusColor() }]}
+                  textStyle={styles.statusChipText}
+                >
+                  {preview ? '' : cardItem.estado}
+                </Chip>
               </View>
-
-              <View style={styles.detailRow}>
-                <IconButton
-                  icon="account"
-                  size={20}
-                  iconColor={theme.colors.primary}
-                  style={styles.detailIcon}
-                />
-                <Text variant="bodyMedium" style={styles.receptorText}>
-                  {item.receptor.razon_social}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <IconButton
-                  icon="map-marker-path"
-                  size={20}
-                  iconColor={theme.colors.primary}
-                  style={styles.detailIcon}
-                />
-                <Text variant="bodyMedium" style={styles.routeText}>
-                  {item.predio_origen?.nombre || ''}
-                  <Text style={styles.arrowText}> → </Text>
-                  {item.destino?.nombre || ''}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <IconButton
-                  icon="pine-tree"
-                  size={20}
-                  iconColor={theme.colors.primary}
-                  style={styles.detailIcon}
-                />
-                <Text variant="bodyMedium">
-                  {formatVolume(item.volumen_total_emitido, item.producto.unidad)}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.pdfContainer}>
-              <Surface
-                style={[styles.iconContainer, getPdfStatusStyle()]}
-                elevation={3}
-              >
-                <IconButton
-                  icon="file-pdf-box"
-                  size={32}
-                  iconColor={isPdfAvailable() ? colors.white : colors.gray}
-                  onPress={handlePdfPress}
-                  disabled={!isPdfAvailable()}
-                />
-              </Surface>
-              {isPdfAvailable() && (
-                <Text variant="labelSmall" style={styles.pdfStatusLabel}>
-                  {getPdfStatusLabel()}
-                </Text>
+              {!preview && (
+                <Button
+                  icon="content-copy"
+                  mode="contained-tonal"
+                  onPress={handleCopyPress}
+                  style={styles.copyButton}
+                  labelStyle={styles.copyButtonLabel}
+                  compact
+                  elevation={2}
+                >
+                  Repetir datos
+                </Button>
               )}
             </View>
-          </View>
-        </Card.Content>
-      </Surface>
-    </View>
-  );
-}
+            <View
+              style={[styles.bodyContainer, preview && styles.previewBodyContainer]}
+            >
+              <View style={styles.detailsContainer}>
+                <View style={styles.detailRow}>
+                  <IconButton
+                    icon="calendar"
+                    size={20}
+                    iconColor={theme.colors.primary}
+                    style={styles.detailIcon}
+                  />
+                  <Text variant="bodyMedium">
+                    {preview
+                      ? formatDate(cardItem.identificacion.fecha as Date)
+                      : formatDate(
+                          (cardItem.identificacion.fecha as Timestamp).toDate()
+                        )}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <IconButton
+                    icon="account"
+                    size={20}
+                    iconColor={theme.colors.primary}
+                    style={styles.detailIcon}
+                  />
+                  <Text variant="bodyMedium" style={styles.receptorText}>
+                    {cardItem.receptor.razon_social}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <IconButton
+                    icon="map-marker-path"
+                    size={20}
+                    iconColor={theme.colors.primary}
+                    style={styles.detailIcon}
+                  />
+                  <Text variant="bodyMedium" style={styles.routeText}>
+                    {cardItem.predio_origen?.nombre || ''}
+                    <Text style={styles.arrowText}> → </Text>
+                    {cardItem.destino?.nombre || ''}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <IconButton
+                    icon="pine-tree"
+                    size={20}
+                    iconColor={theme.colors.primary}
+                    style={styles.detailIcon}
+                  />
+                  <Text variant="bodyMedium">
+                    {formatVolume(
+                      cardItem.volumen_total_emitido,
+                      cardItem.producto.unidad
+                    )}
+                  </Text>
+                </View>
+              </View>
+              {preview ? null : (
+                <View style={styles.pdfContainer}>
+                  <Surface
+                    style={[styles.iconContainer, getPdfStatusStyle()]}
+                    elevation={3}
+                  >
+                    <IconButton
+                      icon="file-pdf-box"
+                      size={32}
+                      iconColor={
+                        localPDF || cardItem.pdf_url ? colors.white : colors.gray
+                      }
+                      onPress={handlePdfPress}
+                      disabled={!(localPDF || cardItem.pdf_url)}
+                    />
+                  </Surface>
+                  {(localPDF || cardItem.pdf_url) && (
+                    <Text variant="labelSmall" style={styles.pdfStatusLabel}>
+                      {getPdfStatusLabel()}
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
+          </Card.Content>
+        </Surface>
+      </View>
+    );
+  },
+  (prevProps, nextProps) => {
+    const itemChanged =
+      prevProps.cardItem.id !== nextProps.cardItem.id ||
+      prevProps.cardItem.estado !== nextProps.cardItem.estado ||
+      prevProps.cardItem.usuario_metadata.pdf_local_uri !==
+        nextProps.cardItem.usuario_metadata.pdf_local_uri ||
+      prevProps.cardItem.pdf_url !== nextProps.cardItem.pdf_url ||
+      prevProps.preview !== nextProps.preview;
+
+    if (itemChanged) {
+      console.log('Card re-rendering due to changes:', {
+        id: prevProps.cardItem.id,
+        newEstado: nextProps.cardItem.estado,
+        oldEstado: prevProps.cardItem.estado,
+        // ... log other changes
+      });
+    }
+
+    return !itemChanged;
+  }
+);
 
 const styles = StyleSheet.create({
   cardWrapper: {
     marginVertical: 8,
-    borderRadius: 16, // Same as card
+    borderRadius: 16,
   },
   card: {
     borderRadius: 16,
     backgroundColor: theme.colors.surface,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  previewCard: {
+    minHeight: 140,
+  },
+  cardContent: {
+    padding: 16,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    marginTop: 5,
-    marginBottom: 8,
+    paddingBottom: 12,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -270,10 +331,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   bodyContainer: {
-    flex: 5,
-    justifyContent: 'space-between',
-    display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  previewBodyContainer: {
+    minHeight: 100,
+    paddingTop: 8,
   },
   detailsContainer: {
     marginLeft: 2,

@@ -21,11 +21,16 @@ export const productoFormInitialState: ProductoFormState = {
   options: { ...productoFormOptionsInitialState },
 };
 
-export const INITIAL_BANCOS = [
-  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
-  { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
-];
+export const initialize_bancos = () => {
+  const bancos = [];
+  for (let i = 0; i < 7; i++) {
+    bancos.push({ altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 });
+  }
+  return bancos;
+};
+// { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+// { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+// { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+// { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+// { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },
+// { altura1: 0, altura2: 0, ancho: 250, volumen_banco: 0 },

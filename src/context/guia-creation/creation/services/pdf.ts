@@ -1,89 +1,122 @@
 import { Empresa } from '@/context/app/types';
-import { DetallePDF } from '@/context/app/types/sii/detalles';
+import { LocalFilesService } from '@/services/LocalFilesService';
 import { toDataURL } from '@bwip-js/react-native';
-import firestore from '@react-native-firebase/firestore';
-import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 import { GuiaDespachoIncomplete } from './creation';
 import { TimbreService } from './timbre';
 
+const MAX_RETRIES = 3;
+const TIMEOUT_MS = 5000; // 5 seconds timeout
+
 export class PDFService {
+  private static async printToFileWithTimeout(html: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('PDF generation timed out'));
+      }, TIMEOUT_MS);
+
+      Print.printToFileAsync({ html })
+        .then(({ uri }) => {
+          clearTimeout(timeoutId);
+          resolve(uri);
+        })
+        .catch((error) => {
+          clearTimeout(timeoutId);
+          reject(error);
+        });
+    });
+  }
+
+  private static async retryPrintToFile(
+    html: string,
+    onStatusChange?: (message: string) => void
+  ): Promise<string> {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        if (attempt > 1) {
+          onStatusChange?.(`Intento ${attempt}/${MAX_RETRIES} de generar PDF...`);
+        }
+        const uri = await this.printToFileWithTimeout(html);
+        return uri;
+      } catch (error: any) {
+        if (attempt === MAX_RETRIES) {
+          throw new Error(`Failed after ${MAX_RETRIES} attempts: ${error.message}`);
+        }
+        // Wait for a short time before retrying (increasing delay with each attempt)
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+      }
+    }
+    throw new Error('Unexpected error in retry logic');
+  }
+
   static async generatePDF(
     guiaDate: Date,
     guia: GuiaDespachoIncomplete,
     CAF: string,
     empresa: Empresa,
-    logoUri?: string
+    onStatusChange?: (message: string) => void
   ) {
     try {
+      onStatusChange?.('Cargando logo de empresa...');
+      const logoBase64 = await LocalFilesService.getLogoFileBase64(empresa.id);
+
+      onStatusChange?.('Generando timbre electrónico...');
       const TED = await TimbreService.getTED(CAF, guia);
 
+      onStatusChange?.('Generando código de barras...');
       const barcode = await toDataURL({
         bcid: 'pdf417',
         text: TED,
       });
+
+      onStatusChange?.('Preparando documento PDF...');
       const html = await PDFService.createPDFHTMLString(
         empresa,
         guia,
         guiaDate.toISOString(),
         barcode,
-        logoUri
-      );
-      const tempURI = (await Print.printToFileAsync({ html: html })).uri;
-
-      // If we are on android, we need don't need to add / to the documentDirectory
-      const documentDirectory =
-        Platform.OS === 'android'
-          ? FileSystem.documentDirectory
-          : `${FileSystem.documentDirectory}/`;
-      const permaURI = `${documentDirectory}${empresa.id}/GD_${guia.identificacion.folio}.pdf`;
-      await FileSystem.moveAsync({ from: tempURI, to: permaURI });
-
-      // PDF creado correctamente
-      Alert.alert(
-        `PDF creado correctamente para Guía con folio: ${guia.identificacion.folio}`,
-        `Para compartirla o guardarla en Documentos, presione el botón de PDF de la guía respectiva en la pantalla de guías.`
+        logoBase64 || undefined
       );
 
-      return permaURI;
+      onStatusChange?.('Guardando PDF temporal...');
+      const tempURI = await this.retryPrintToFile(html, onStatusChange);
+
+      onStatusChange?.('PDF generado exitosamente');
+      return tempURI;
     } catch (error) {
-      await PDFService.updateGuiaDocWithErrorMsg(
-        guia.emisor.rut.replace(/-/g, ''),
-        guia.identificacion.folio,
-        (error as Error).message || 'error.message no encontrado',
-        '_error_generatePDF'
-      );
-      Alert.alert('Error', 'Error al crear PDF');
+      Alert.alert('Error al crear PDF', (error as Error).message);
+      throw error;
     }
   }
 
-  static async updateGuiaDocWithErrorMsg(
-    empresaID: string,
-    folioGuia: number,
-    errorMsg: string,
-    errorField: string
-  ): Promise<void> {
+  static async generatePreviewPDF(
+    empresa: Empresa,
+    guia: GuiaDespachoIncomplete,
+    date: string,
+    onStatusChange?: (message: string) => void
+  ): Promise<string> {
     try {
-      const guiaDocumentId = 'DTE_GD_f' + folioGuia.toString();
+      onStatusChange?.('Cargando logo de empresa...');
+      const logoBase64 = await LocalFilesService.getLogoFileBase64(empresa.id);
 
-      await firestore()
-        .collection(`empresas/${empresaID}/guias`)
-        .doc(guiaDocumentId)
-        .set(
-          {
-            folio: folioGuia,
-            estado: 'error_local',
-            // Use errorField to use as name of the function where the error is coming from
-            [errorField]: errorMsg,
-          },
-          { merge: true }
-        );
-      console.error(errorMsg);
-      console.error('Guía actualizada con error: ', guiaDocumentId);
-    } catch (e) {
-      console.error('Error updating document: ', e);
-      throw new Error(' Error al actualizar guía ');
+      onStatusChange?.('Preparando documento PDF...');
+      const html = await this.createPDFHTMLString(
+        empresa,
+        guia,
+        date,
+        { uri: '', width: 0, height: 0 }, // Empty barcode for preview
+        logoBase64 ?? undefined
+      );
+
+      onStatusChange?.('Guardando PDF temporal...');
+      const tempURI = await this.retryPrintToFile(html, onStatusChange);
+
+      onStatusChange?.('PDF generado exitosamente');
+      return tempURI;
+    } catch (error) {
+      console.error('Error generating preview PDF:', error);
+      throw error;
     }
   }
 
@@ -92,7 +125,7 @@ export class PDFService {
     guia: GuiaDespachoIncomplete,
     guiaDate: string,
     barcode: { uri: string; width: number; height: number },
-    logoUri?: string
+    logoBase64?: string
   ) {
     const htmlHead = `
   <head>
@@ -103,490 +136,334 @@ export class PDFService {
         margin: 0;
         padding: 0;
         text-indent: 0;
-        -webkit-print-color-adjust: exact !important;   /* Chrome, Safari */
-        color-adjust: exact !important;                 /* Firefox */
-        print-color-adjust: exact !important;          /* Future standard */
+        -webkit-print-color-adjust: exact !important; /* Chrome, Safari */
+        color-adjust: exact !important; /* Firefox */
+        print-color-adjust: exact !important; /* Future standard */
       }
-      .s1 {
-        font-family: Arial, sans-serif;
-        font-style: normal;
-        font-weight: bold;
-        text-decoration: none;
-        font-size: 8pt;
-        color: black;
-        padding-top: 1pt;
-        padding-left: 1pt;
-        text-indent: 0pt;
-        line-height: 9pt;
-        text-align: left;
-        background-color: #d3ccd3 !important;         /* Force background color */
-        -webkit-print-color-adjust: exact !important;  /* iOS specific */
+      .global-div {
+        width: 740px;
+        margin: 0 auto;
       }
-      .s2 {
-        font-family: 'Courier New', monospace;
-        font-style: normal;
-        font-weight: normal;
-        text-decoration: none;
-        font-size: 8pt;
-        color: black;
-        padding-top: 1pt;
-        padding-left: 1pt;
-        text-indent: 0pt;
-        line-height: 9pt;
-        text-align: left;
+      .table-logo-emisor-sii {
+        height: 100px;
+        border-collapse: collapse;
+        border-style: hidden;
+        table-layout: fixed;
       }
-      table,
-      tbody {
-        vertical-align: top;
-        overflow: visible;
+      .td-logo-emisor-sii {
+        text-align: center;
+        vertical-align: middle;
+        border-style: hidden;
       }
-      .cellwithborders {
-        border-top-style: solid;
-        border-top-width: 1pt;
-        border-top-color: #b3b3b3;
-        border-right-style: solid;
-        border-right-width: 1pt;
-        border-right-color: #b3b3b3;
-        border-bottom-style: solid;
-        border-bottom-width: 1pt;
-        border-bottom-color: #b3b3b3;
-        border-left-style: solid;
-        border-left-width: 1pt;
-        border-left-color: #b3b3b3;
+      .div-sii {
+        display: inline-block;
+        border: 2px solid red;
+        padding: 10px;
+        text-align: center;
       }
-      .emisor {
-        font-family: 'Arial Arabic', sans-serif;
+      .p-emisor {
+        font-family: "Arial Arabic", sans-serif;
         font-weight: bold;
         font-size: 11px;
       }
-      .centered {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        flex-direction: column;
-        margin-top: 20px;
-        padding-right: 20px;
+      table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+      }
+      td {
+        border: solid 1px #b3b3b3;
+        border-style: none solid solid none;
+      }
+      .td1 {
+        font-family: Arial, sans-serif;
+        font-size: 9pt;
+        padding: 1pt 1pt;
+        font-weight: 600;
+        font-style: normal;
+        text-decoration: none;
+        color: black;
+        text-indent: 0pt;
+        line-height: 9pt;
+        text-align: left;
+        background-color: #d3ccd3 !important; /* Force background color */
+        -webkit-print-color-adjust: exact !important; /* iOS specific */
+      }
+      .td1.table-header {
+        text-align: center;
+      }
+      .td2 {
+        font-family: "Courier New", monospace;
+        font-size: 9pt;
+        padding: 1pt 1pt;
+        font-weight: 500;
+        font-style: normal;
+        text-decoration: none;
+        color: black;
+        text-indent: 0pt;
+        line-height: 9pt;
+        text-align: left;
+      }
+      .td2.numeric {
+        text-align: right;
+      }
+      .td2.no-border {
+        border-bottom-style: hidden;
+      }
+      .td2.no-border.center {
+        text-align: center;
+      }
+      .td2.no-border.right {
+        text-align: right;
+      }
+      tr:first-child td:first-child {
+        border-top-left-radius: 8px;
+      }
+      tr:first-child td:last-child {
+        border-top-right-radius: 8px;
+      }
+      tr:last-child td:first-child {
+        border-bottom-left-radius: 8px;
+      }
+      tr:last-child td:last-child {
+        border-bottom-right-radius: 8px;
+      }
+      tr:first-child td {
+        border-top-style: solid;
+      }
+      tr td:first-child {
+        border-left-style: solid;
+      }
+      .table-totales {
+        width: 250px;
+        margin-left: auto;
+      }
+      .timbre-placement-div {
+        text-align: right;
+      }
+      .timbre-div {
+        display: inline-block;
+        width: 275px;
+        text-align: center;
+      }
+      .p-timbre {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+      }
+      .p-timbre.cedible {
+        font-weight: bold;
+        text-align: right;
+        margin-top: 1px;
       }
     </style>
   </head>
 `;
 
     const empresaInfo = `
-<table style="width: 725px; height: 100px; border-collapse: collapse">
-  <tr>
-    <td style=" width: calc(650px / 3); text-align: center; vertical-align: middle;">
-      ${logoUri ? `<img src="${logoUri}" alt="logo" style="max-width: 150px; max-height: 100px;" />` : ''}
-    </td>
-    <td style="width: calc(650px / 3);text-align: center;vertical-align: middle;">
-      <p class="emisor">${guia.emisor.razon_social}</p>
-      <p class="emisor">${guia.emisor.giro}</p>
-      <p class="emisor">${guia.emisor.direccion}</p>
-      <p class="emisor">${guia.emisor.comuna}</p>
-    </td>
-    <td style=" width: calc(650px / 3); text-align: center; vertical-align: middle;">
-      <div style=" display: inline-block; border: 2px solid red; padding: 10px; text-align: center;">
-        <p class="emisor">RUT ${guia.emisor.rut}</p>
-        <p class="emisor">GUIA DE DESPACHO ELECTRÓNICA</p>
-        <p class="emisor">N° ${guia.identificacion.folio}</p>
-      </div>
-    </td>
-  </tr>
-</table>
-<p><br /></p>
-`;
-
-    const identificacionAndDespacho = `
-  <table style="border-collapse: collapse; width: 725px" cellspacing="0">
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Señor(es)</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.receptor.razon_social}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">RUT</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.receptor.rut}</p>
-      </td>
-    </tr>
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Giro</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.receptor.giro}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">Fecha Emisión</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guiaDate.split('T')[0]}</p>
-      </td>
-    </tr>
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Dirección</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.receptor.direccion}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">Comuna</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.receptor.comuna}</p>
-      </td>
-    </tr>
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Tipo de Despacho</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.identificacion.tipo_despacho}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">Tipo de Traslado</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.identificacion.tipo_traslado}</p>
-      </td>
-    </tr>
-  </table>
-  <p><br /></p>
-  <table style="border-collapse: collapse; width: 725px" cellspacing="0">
-    <tr>
-      <td class="cellwithborders" colspan="4">
-        <p class="s1" style="text-align: center">DATOS DE DESPACHO</p>
-      </td>
-    </tr>
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Chofer</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.transporte.chofer.nombre}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">RUT Chofer</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.transporte.chofer.rut}</p>
-      </td>
-    </tr>
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Patente</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.transporte.camion.patente}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">RUT Transportista</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.transporte.empresa.rut}</p>
-      </td>
-    </tr>
-  </table>
-  <p><br /></p>
-  <table style="border-collapse: collapse; width: 725px" cellspacing="0">
-    <tr>
-      <td class="cellwithborders" colspan="4">
-        <p class="s1" style="text-align: center">DATOS DEL DESTINO</p>
-      </td>
-    </tr>
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Nombre Destino</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.destino.nombre}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">Rol</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.destino.rol}</p>
-      </td>
-    </tr>
-    <tr>
-      <td class="cellwithborders">
-        <p class="s1">Comuna</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">${guia.destino.comuna}</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s1">Georreferencia</p>
-      </td>
-      <td class="cellwithborders">
-        <p class="s2">(${guia.destino.georreferencia.latitude},${guia.destino.georreferencia.longitude})</p>
-      </td>
-    </tr>
-    <tr>
-  </table>
-  <p><br /></p>
-`;
-
-    const productoAsDetalle: DetallePDF = {
-      nombre: `${guia.producto.tipo} ${guia.producto.especie} ${guia.producto.calidad} ${guia.producto.largo}`,
-      cantidad: guia.volumen_total_emitido,
-      precio: guia.precio_unitario_guia,
-      montoItem: guia.monto_total_guia,
-    };
-
-    const codigoFSCAsDetalle: DetallePDF = {
-      nombre: guia.codigo_fsc ? `Codigo FSC: ${guia.codigo_fsc}` : '',
-    };
-
-    const carroAsDetalle: DetallePDF = {
-      nombre: `${guia.transporte.carro}`,
-    };
-
-    const predioAsDetalles: DetallePDF[] = [
-      {
-        nombre: `Rol: ${guia.predio_origen.rol}`,
-      },
-      { nombre: `Nombre: ${guia.predio_origen.nombre}` },
-      { nombre: `Comuna: ${guia.predio_origen.comuna}` },
-      {
-        nombre: `(${guia.predio_origen.georreferencia.latitude},${guia.predio_origen.georreferencia.longitude})`,
-      },
-      {
-        nombre: `Plan de Manejo o Uso Suelo: ${guia.predio_origen.plan_de_manejo}`,
-      },
-    ];
-
-    const codigoContratoExternoAsDetalle: DetallePDF = {
-      nombre: guia.codigo_contrato_externo
-        ? `Codigo: ${guia.codigo_contrato_externo}`
-        : '',
-    };
-
-    const observacionesAsDetalles: DetallePDF[] = [];
-    if (guia.observaciones) {
-      for (const observacion of guia.observaciones) {
-        observacionesAsDetalles.push({
-          nombre: observacion,
-        });
-      }
-    }
-
-    const clasesDiametricasAsDetalles: DetallePDF[] = [];
-    if (guia.producto.tipo === 'Aserrable' && guia.producto.clases_diametricas) {
-      for (const claseDiametrica of guia.producto.clases_diametricas) {
-        if (claseDiametrica.cantidad_emitida && claseDiametrica.cantidad_emitida > 0) {
-          clasesDiametricasAsDetalles.push({
-            nombre: `${claseDiametrica.clase}: ${claseDiametrica.cantidad_emitida} = ${parseFloat((claseDiametrica.volumen_emitido || 0).toFixed(4) || '0').toLocaleString('es-CL')}`,
-            cantidad: claseDiametrica.volumen_emitido,
-            // precio: guia.precio_unitario_guia,
-            // montoItem: Math.floor(
-            //   claseDiametrica.volumen * guia.precio_unitario_guia
-            // ),
-          });
-        }
-      }
-    }
-
-    const detallesTable = `
-      <table style="border-collapse: collapse; width: 725px" cellspacing="0">
+      <table class="table-logo-emisor-sii" colspan="3">
         <tr>
-          <td class="cellwithborders" colspan="6">
-            <p class="s1" style="text-align: center">DETALLES</p>
+          <td class="td-logo-emisor-sii">
+            ${logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" alt="logo" style="max-width: 150px; max-height: 100px;" />` : ''}
           </td>
-        </tr>
-        <tr>
-          <td class="cellwithborders">
-            <p class="s1" style="text-align: center">Descripción</p>
+          <td class="td-logo-emisor-sii">
+            <p class="p-emisor">${guia.emisor.razon_social}</p>
+            <p class="p-emisor">${guia.emisor.giro}</p>
+            <p class="p-emisor">${guia.emisor.direccion}</p>
+            <p class="p-emisor">${guia.emisor.comuna}</p>
           </td>
-          <td class="cellwithborders">
-            <p class="s1" style="text-align: center">Cantidad</p>
-          </td>
-          <td class="cellwithborders">
-            <p class="s1" style="text-align: center">Unid</p>
-          </td>
-          <td class="cellwithborders">
-            <p class="s1">Precio Unitario</p>
-          </td>
-          <td class="cellwithborders">
-            <p class="s1">Ind</p>
-          </td>
-          <td class="cellwithborders">
-            <p class="s1" style="text-align: center">Total</p>
-          </td>
-        </tr>
-        <tr>
-          <td class="cellwithborders">
-            <p class="s2"> ${/* Producto */ productoAsDetalle.nombre}</p>
-            <p class="s2"><br></p>
-            <p class="s2">${codigoFSCAsDetalle.nombre}</p>
-            <p class="s2">Patente carro: ${/* Carro */ carroAsDetalle.nombre}</p>
-            <p class="s2">${/* [Predio] 1st part */ predioAsDetalles[0].nombre}</p>
-            <p class="s2">${/* [Predio] 2st part */ predioAsDetalles[1].nombre}</p>
-            <p class="s2">${/* [Predio] 3rd part */ predioAsDetalles[2].nombre}</p>
-            <p class="s2">${/* [Predio] 4th part */ predioAsDetalles[3].nombre}</p>
-            <p class="s2">${/* [Predio] 5th part */ predioAsDetalles[4].nombre}</p>
-            <p class="s2">${codigoContratoExternoAsDetalle.nombre}</p>
-            ${observacionesAsDetalles
-              .map((observacion) => `<p class="s2">${observacion.nombre}</p>`)
-              .join('')}
-            ${
-              guia.producto.tipo === 'Aserrable'
-                ? '<p class="s2">Detalle trozos por clase:</p>'
-                : ''
-            }
-            ${
-              guia.producto.tipo === 'Aserrable'
-                ? clasesDiametricasAsDetalles
-                    .map((clase) => `<p class="s2">${clase.nombre}</p>`)
-                    .join('')
-                : ''
-            }
-          </td>
-          <td class="cellwithborders">
-            <p class="s2">${/* representative */ parseFloat(productoAsDetalle.cantidad?.toFixed(4) || '0').toLocaleString('es-CL')}</p>
-            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
-            ${
-              /* Skip observaciones space*/
-              observacionesAsDetalles.map(() => `<p class="s2"><br></p>`).join('')
-            }
-            ${
-              /* In case of Aserrable */
-              clasesDiametricasAsDetalles
-                .map(
-                  // (clase) => `<p class="s2">${clase.cantidad}</p>`
-                  () => `<p class="s2"><br></p>`
-                )
-                .join('')
-            }
-          </td>
-          <td class="cellwithborders">
-            <p class="s2">${/* representative */ guia.producto.unidad}
-            </p>
-            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
-            ${
-              /* Skip observaciones space*/
-              observacionesAsDetalles.map(() => `<p class="s2"><br></p>`).join('')
-            }
-            ${
-              /* In case of Aserrable */
-              clasesDiametricasAsDetalles
-                .map(
-                  // () => `<p class="s2">${guia.producto.unidad}</p>`
-                  () => `<p class="s2"><br></p>`
-                )
-                .join('')
-            }
-            </td>
-            <td class="cellwithborders">
-            <p class="s2">${/* representative */ productoAsDetalle.precio?.toLocaleString('es-CL')}</p>
-            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
-            ${
-              /* Skip observaciones space*/
-              observacionesAsDetalles.map(() => `<p class="s2"><br></p>`).join('')
-            }
-            ${
-              /* In case of Aserrable */
-              clasesDiametricasAsDetalles
-                .map(
-                  // () => `<p class="s2">${guia.precio_unitario_guia}</p>`
-                  () => `<p class="s2"><br></p>`
-                )
-                .join('')
-            }
-          </td>
-          <td class="cellwithborders">
-            <p class="s2">
-              ${guia.producto.tipo === 'Aserrable' ? 'AF' : 'P'}
-            </p>
-          </td>
-          <td class="cellwithborders">
-            <p class="s2">${/* representative */ productoAsDetalle.montoItem?.toLocaleString(
-              'es-CL'
-            )}</p>
-            ${/* Skip Predio parts + 2*/ '<p class="s2"><br></p>'.repeat(10)}
-            ${
-              /* Skip observaciones space*/
-              observacionesAsDetalles.map(() => `<p class="s2"><br></p>`).join('')
-            }
-            ${
-              /* In case of Aserrable */
-              clasesDiametricasAsDetalles
-                .map(
-                  // (clase) => `<p class="s2">${clase.montoItem}</p>`
-                  () => `<p class="s2"><br></p>`
-                )
-                .join('')
-            }
+          <td class="td-logo-emisor-sii">
+            <div class="div-sii">
+              <p class="p-emisor">RUT ${guia.emisor.rut}</p>
+              <p class="p-emisor">GUIA DE DESPACHO ELECTRÓNICA</p>
+              <p class="p-emisor">N° ${guia.identificacion.folio}</p>
+            </div>
           </td>
         </tr>
       </table>
+`;
+
+    const identificacionTable = `
+      <table>
+        <tr>
+          <td class="td1">Señor(es)</td>
+          <td class="td2">${guia.receptor.razon_social}</td>
+          <td class="td1">RUT</td>
+          <td class="td2">${guia.receptor.rut}</td>
+        </tr>
+        <tr>
+          <td class="td1">Giro</td>
+          <td class="td2">${guia.receptor.giro}</td>
+          <td class="td1">Fecha Emisión</td>
+          <td class="td2">${guiaDate.split('T')[0]}</td>
+        </tr>
+        <tr>
+          <td class="td1">Dirección</td>
+          <td class="td2">${guia.receptor.direccion}</td>
+          <td class="td1">Comuna</td>
+          <td class="td2">${guia.receptor.comuna}</td>
+        </tr>
+        <tr>
+          <td class="td1">Tipo de Despacho</td>
+          <td class="td2">${guia.identificacion.tipo_despacho}</td>
+          <td class="td1">Tipo de Traslado</td>
+          <td class="td2">${guia.identificacion.tipo_traslado}</td>
+        </tr>
+      </table>
+`;
+    const despachoTable = `
+      <table>
+        <tr>
+          <td class="td1 table-header" colspan="4">DATOS DE DESPACHO</td>
+        </tr>
+        <tr>
+          <td class="td1">Chofer</td>
+          <td class="td2">${guia.transporte.chofer.nombre}</td>
+          <td class="td1">RUT Chofer</td>
+          <td class="td2">${guia.transporte.chofer.rut}</td>
+        </tr>
+        <tr>
+          <td class="td1">Patente</td>
+          <td class="td2">${guia.transporte.camion.patente}</td>
+          <td class="td1">RUT Transportista</td>
+          <td class="td2">${guia.transporte.empresa.rut}</td>
+        </tr>
+      </table>
+`;
+    const destinoTable = `
+      <table>
+        <tr>
+          <td class="td1 table-header" colspan="4">DATOS DEL DESTINO</td>
+        </tr>
+        <tr>
+          <td class="td1">Nombre Destino</td>
+          <td class="td2">${guia.destino.nombre}</td>
+          <td class="td1">Rol</td>
+          <td class="td2">${guia.destino.rol}</td>
+        </tr>
+        <tr>
+          <td class="td1">Comuna</td>
+          <td class="td2">${guia.destino.comuna}</td>
+          <td class="td1">Georreferencia</td>
+          <td class="td2">
+            (${guia.destino.georreferencia.latitude},${guia.destino.georreferencia.longitude})
+          </td>
+        </tr>
+      </table>
+`;
+    const trDetallesTableOnlyDescripcion = (
+      descripcion: string | null,
+      border: boolean = false
+    ) =>
+      descripcion
+        ? `
+      <tr>
+        <td class="td2${border ? '' : ' no-border'}">${descripcion}</td>
+        <td class="td2${border ? '' : ' no-border'}"></td>
+        <td class="td2${border ? '' : ' no-border'}"></td>
+        <td class="td2${border ? '' : ' no-border'}"></td>
+        <td class="td2${border ? '' : ' no-border'}"></td>
+        <td class="td2${border ? '' : ' no-border'}"></td>
+      </tr>
+    `
+        : '';
+    const detallesTable = `
+      <table cellspacing="0">
+        <tr>
+          <td class="td1 table-header" colspan="6">DETALLES</td>
+        </tr>
+        <tr>
+          <td class="td1 table-header">Descripción</td>
+          <td class="td1 table-header">Cantidad</td>
+          <td class="td1 table-header">Unid</td>
+          <td class="td1 table-header">Precio Unitario</td>
+          <td class="td1 table-header">Ind</td>
+          <td class="td1 table-header">Total</td>
+        </tr>
+        <tr>
+          <td class="td2 no-border">${guia.producto.tipo} ${guia.producto.especie} ${guia.producto.calidad} ${guia.producto.largo}</td>
+          <td class="td2 no-border numeric">${Number(guia.volumen_total_emitido.toFixed(4)).toLocaleString('es-CL')}</td>
+          <td class="td2 no-border center">${guia.producto.unidad}</td>
+          <td class="td2 no-border numeric">$ ${guia.precio_unitario_guia.toLocaleString('es-CL')}</td>
+          <td class="td2 no-border center">${'AF' /*Confirmar que es esto*/}</td>
+          <td class="td2 no-border numeric">$ ${Number(guia.monto_total_guia.toFixed()).toLocaleString('es-CL')}</td>
+        </tr>
+        ${trDetallesTableOnlyDescripcion('<br/>')}
+        ${trDetallesTableOnlyDescripcion(guia.codigo_fsc ? `Codigo FSC: ${guia.codigo_fsc}` : null)}
+        ${trDetallesTableOnlyDescripcion(`Patente Carro: ${guia.transporte.carro.patente}`)}
+        ${trDetallesTableOnlyDescripcion(`Rol: ${guia.predio_origen.rol}`)}
+        ${trDetallesTableOnlyDescripcion(`Origen: ${guia.predio_origen.nombre}`)}
+        ${trDetallesTableOnlyDescripcion(`Comuna: ${guia.predio_origen.comuna}`)}
+        ${trDetallesTableOnlyDescripcion(`Coordenadas: (${guia.predio_origen.georreferencia.latitude},${guia.predio_origen.georreferencia.longitude})`)}
+        ${trDetallesTableOnlyDescripcion(`Plan de Manejo o Uso Suelo: ${guia.predio_origen.plan_de_manejo}`)}
+        ${trDetallesTableOnlyDescripcion(guia.codigo_contrato_externo ? `Codigo: ${guia.codigo_contrato_externo}` : null)}
+        ${guia.observaciones ? guia.observaciones.reduce((acc, observacion) => acc + trDetallesTableOnlyDescripcion(observacion), '') : ''}
+        ${
+          // If the product is Aserrable, we need to add the clases diametricas to the table
+          guia.producto.tipo === 'Aserrable'
+            ? `${trDetallesTableOnlyDescripcion('<br/>')}
+            ${trDetallesTableOnlyDescripcion('Detalle trozos por clase:')}
+             ${guia.producto.clases_diametricas?.reduce((acc, cd) => {
+               if (!cd.cantidad_emitida || cd.cantidad_emitida === 0) return acc;
+               const descripcion = `${cd.clase}: ${cd.cantidad_emitida} = ${parseFloat((cd.volumen_emitido || 0).toFixed(4) || '0').toLocaleString('es-CL')}`;
+               return acc + trDetallesTableOnlyDescripcion(descripcion);
+             }, '')}
+             ${trDetallesTableOnlyDescripcion(`TOTAL: ${guia.producto.clases_diametricas?.reduce((acc, p) => acc + (p.cantidad_emitida || 0), 0).toLocaleString('es-CL')} = ${Number(guia.volumen_total_emitido.toFixed(4)).toLocaleString('es-CL')}`)}
+            `
+            : ''
+        }
+        ${trDetallesTableOnlyDescripcion('<br/>', true)}
+      </table>
       `;
-
-    const Totales = {
-      MontoNeto: guia.monto_total_guia,
-      IVA: Math.floor(0.19 * guia.monto_total_guia),
-      Total:
-        parseInt(guia.monto_total_guia.toString()) +
-        parseInt(Math.floor(0.19 * guia.monto_total_guia).toString()),
-    };
-
-    const totales = `
-    <p><br /></p>
-    <table style="width: 250px; border-collapse: collapse; margin-left: auto;">
-      <tr>
-        <td class="cellwithborders" colspan="2">
-          <p class="s1" style="text-align: center">TOTALES</p>
-        </td>
-      </tr>
-      <tr>
-        <td class="cellwithborders">
-          <p class="s1">Monto Neto</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s2">${Totales.MontoNeto}</p>
-        </td>
-      </tr>
-      <tr>
-        <td class="cellwithborders">
-          <p class="s1">19% IVA</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s2">${Totales.IVA}</p>
-        </td>
-      </tr>
-      <tr>
-        <td class="cellwithborders">
-          <p class="s1">Total</p>
-        </td>
-        <td class="cellwithborders">
-          <p class="s2">${Totales.Total}</p>
-        </td>
-      </tr>
-    </table>
+    const totalesTable = `
+      <table class="table-totales">
+        <tr>
+          <td class="td1 table-header" colspan="2">TOTALES</td>
+        </tr>
+        <tr>
+          <td class="td1">Monto Neto</td>
+          <td class="td2 numeric">$ ${Number(guia.monto_total_guia.toFixed()).toLocaleString('es-CL')}</td>
+        </tr>
+        <tr>
+          <td class="td1">19% IVA</td>
+          <td class="td2 numeric">$ ${Math.floor(0.19 * guia.monto_total_guia).toLocaleString('es-CL')}</td>
+        </tr>
+        <tr>
+          <td class="td1">Total</td>
+          <td class="td2 numeric">$ ${Number((guia.monto_total_guia + 0.19 * guia.monto_total_guia).toFixed()).toLocaleString('es-CL')}</td>
+        </tr>
+      </table>
   `;
+    const timbre = `
+        <div class="timbre-placement-div">
+        <div class="timbre-div">
+          <img src="${barcode.uri}" style="width: 275px; height: 132px" />
+          <p class="p-timbre">Timbre Electrónico SII</p>
+          <p class="p-timbre">
+            Res. ${empresa.numero_resolucion_sii} de ${empresa.fecha_resolucion_sii.toDate().getFullYear()} - Verifique documento: www.sii.cl
+          </p>
+          <p class="p-timbre cedible">CEDIBLE CON SU FACTURA</p>
+        </div>
+      </div>
+      `;
 
     // change pdf417 for its recommended size if it can't be read easily from device '<img src="${barcode.uri}" style="width: ${barcode.width}px; height: ${barcode.height}px" />'
     const htmlBody = `
     <body>
-      <div style="width: 725px; margin: 0 auto;">
+      <div class="global-div">
         ${empresaInfo}
-        ${identificacionAndDespacho}
+        <br />
+        ${identificacionTable}
+        <br />
+        ${despachoTable}
+        <br />
+        ${destinoTable}
+        <br />
         ${detallesTable}
-        ${totales}
-        <p><br /></p>
-        <div style="text-align: right;">
-          <div style="display: inline-block; width: 275px; text-align: center;">
-            <img src="${barcode.uri}" style="width: 275px; height: 132px" />
-            <p style="margin: 0; font-family: Arial, sans-serif; font-size: 12px;">Timbre Electrónico SII</p>
-            <p style="margin: 0; font-family: Arial, sans-serif; font-size: 12px;">
-              Res. ${empresa.numero_resolucion_sii} de ${new Date(empresa.fecha_resolucion_sii.seconds * 1000).getFullYear()} - Verifique documento: www.sii.cl
-            </p>
-            <p style="margin: 0; font-family: Arial, sans-serif; font-weight: bold; font-size: 12px; margin-left: auto">CEDIBLE CON SU FACTURA</p>
-          </div>
-        </div>
+        <br />
+        ${totalesTable}
+        <br />
+        ${timbre}
       </div>
     </body>
   `;

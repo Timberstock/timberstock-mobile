@@ -33,6 +33,7 @@ export function FolioProvider({ children }: { children: React.ReactNode }) {
         throw new Error(result.error || 'Error al reservar folios');
       }
     } catch (error: any) {
+      console.error('Error reservando folios:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message });
       return { success: false, error: error.message };
     } finally {
@@ -55,10 +56,26 @@ export function FolioProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const utilizarFolio = async (folio: number) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      if (!user) {
+        throw new Error('Usuario no autenticado');
+      }
+      return FolioService.utilizarFolio(folio, user);
+    } catch (error: any) {
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+      return false;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
   const value: FolioContextType = {
     state,
     reserveFolios,
     liberarFolios,
+    utilizarFolio,
   };
 
   return <FolioContext.Provider value={value}>{children}</FolioContext.Provider>;

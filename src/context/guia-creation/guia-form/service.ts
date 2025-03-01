@@ -1,7 +1,6 @@
-import { GuiaDespachoState } from '@/context/app/types';
 import { ContratoCompra } from '@/context/app/types/contratoCompra';
 import { ContratoVenta } from '@/context/app/types/contratoVenta';
-import { globals } from '@/utils/globals';
+import { GuiaDespachoFirestore } from '@/context/app/types/guia';
 import { GuiaFormData, GuiaFormOptions, GuiaFormState } from './types';
 
 interface SelectionResult {
@@ -15,8 +14,6 @@ export class SelectorService {
     proveedor: GuiaFormOptions['proveedores'][number] | null,
     contratosCompra: ContratoCompra[]
   ): SelectionResult {
-    globals.logTimeDelta('ProveedorSelection-Start');
-
     if (!proveedor) {
       return {
         newData: { proveedor: null },
@@ -24,17 +21,11 @@ export class SelectorService {
       };
     }
 
-    globals.logTimeDelta('Before-FaenasFilter');
-    
     const faenas = contratosCompra
       .filter((contrato) => contrato.proveedor.rut === proveedor.rut)
       .map((contrato) => contrato.faena);
 
-    globals.logTimeDelta('After-FaenasFilter');
-
     const sortedFaenas = faenas.sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-    globals.logTimeDelta('After-FaenasSort');
 
     return {
       newData: { proveedor },
@@ -236,7 +227,7 @@ export class SelectorService {
   }
 
   static initFromGuiaTemplate(
-    guiaTemplate: GuiaDespachoState,
+    guiaTemplate: GuiaDespachoFirestore,
     contratosCompra: ContratoCompra[],
     contratosVenta: ContratoVenta[],
     resetState: GuiaFormState
@@ -300,7 +291,7 @@ export class SelectorService {
   }
 
   static validateRepetirGuia(
-    guia: GuiaDespachoState,
+    guia: GuiaDespachoFirestore,
     contratosCompra: ContratoCompra[],
     contratosVenta: ContratoVenta[]
   ): {

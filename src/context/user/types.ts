@@ -31,6 +31,7 @@ export interface UserContextType {
   state: UserState;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  resetState: () => void;
 }
 
 export type UserAction =
@@ -38,4 +39,5 @@ export type UserAction =
   | { type: 'SYNC_USER_DATA'; payload: UserFirestore }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'RESET_STATE'; payload: FirebaseAuthTypes.User | null };

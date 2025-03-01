@@ -1,4 +1,3 @@
-import { GuiaDespachoState } from '@/context/app/types';
 import { ContratoCompra } from '@/context/app/types/contratoCompra';
 import { GuiaDespachoFirestore } from '@/context/app/types/guia';
 
@@ -25,7 +24,7 @@ export type GuiaFormData = {
     | GuiaFormOptions['servicios_cosecha_empresas'][number]
     | null;
   folio_guia_proveedor: number | null; // NOT A SELECTOR
-  observaciones: GuiaDespachoFirestore['observaciones'] | null; // NOT A SELECTOR
+  observaciones: GuiaDespachoFirestore['observaciones']; // NOT A SELECTOR
   contrato_compra_id: GuiaDespachoFirestore['contrato_compra_id'] | null; // NOT A SELECTOR
   contrato_venta_id: GuiaDespachoFirestore['contrato_venta_id'] | null; // NOT A SELECTOR
   codigo_fsc: GuiaDespachoFirestore['codigo_fsc'] | null; // NOT A SELECTOR
@@ -82,5 +81,5 @@ export interface GuiaFormContextType {
   ) => void;
   isFormValid: () => boolean;
   resetForm: () => void;
-  repetirGuia: (guiaTemplate: GuiaDespachoState) => boolean;
+  repetirGuia: (guiaTemplate: GuiaDespachoFirestore) => boolean;
 }

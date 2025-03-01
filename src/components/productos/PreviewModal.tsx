@@ -3,25 +3,37 @@ import { useApp } from '@/context/app/AppContext';
 import { MetaDataUsuario } from '@/context/app/types/guia';
 import { useGuiaCreation } from '@/context/guia-creation/creation/CreationContext';
 import { PDFService } from '@/context/guia-creation/creation/services/pdf';
-import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
-import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
+import { GuiaFormData } from '@/context/guia-creation/guia-form/types';
+import { ProductoFormData } from '@/context/guia-creation/producto-form/types';
 import { theme } from '@/theme';
 import * as FileSystem from 'expo-file-system';
-import * as Print from 'expo-print';
 import { useState } from 'react';
-import { Alert, Modal, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { Button, FAB, Surface, Text, TextInput } from 'react-native-paper';
 import { GuiaDespachoCardItem } from '../guias/Card';
 
 const PrecioModal = ({
+  guiaForm,
+  productoForm,
   modalVisible,
   setModalVisible,
 }: {
+  guiaForm: GuiaFormData;
+  productoForm: ProductoFormData;
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
 }) => {
   const {
-    state: { empresa, localFiles },
+    state: { empresa },
   } = useApp();
   const {
     state: { isSubmitting },
@@ -29,153 +41,188 @@ const PrecioModal = ({
     combineGuiaProductoForms,
   } = useGuiaCreation();
 
-  const {
-    state: { guia: guiaForm },
-  } = useGuiaForm();
-
-  const {
-    state: { productoForm },
-  } = useProductoForm();
-
-  const guiaIncomplete = combineGuiaProductoForms(Number(0), guiaForm, productoForm);
-  const guiaItem = {
-    ...guiaIncomplete,
-    estado: 'pendiente',
-    pdf_local_checked_uri: '',
-    pdf_url: '',
-    _caf_id: '',
-    usuario_metadata: {} as MetaDataUsuario,
-  };
-
   const [precio, setPrecio] = useState('');
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [pdfUri, setPdfUri] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [submissionStatus, setSubmissionStatus] = useState('');
 
   const handlePreviewPDF = async () => {
     if (!precio) return;
 
+    setIsLoading(true);
     try {
-      // Find logo file
-      const logoFile = localFiles.find((file) => file.name === 'logo.png');
-      let logoBase64: string | undefined;
-
-      if (logoFile) {
-        // Read the file and convert to base64
-        const base64 = await FileSystem.readAsStringAsync(logoFile.path, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        logoBase64 = `data:image/png;base64,${base64}`;
-      }
-
-      // Create temporary guia with precio
+      setLoadingMessage('Preparando datos de la guía...');
       const tempGuia = combineGuiaProductoForms(Number(precio), guiaForm, productoForm);
 
-      // Generate PDF HTML with logo
-      const html = await PDFService.createPDFHTMLString(
-        empresa,
-        tempGuia,
-        new Date().toISOString(),
-        { uri: '', width: 0, height: 0 }, // Empty barcode
-        logoBase64 // Pass the base64 logo
-      );
-
-      // Create temporary PDF
-      const { uri } = await Print.printToFileAsync({ html });
-      setPdfUri(uri);
-      setShowPDFPreview(true);
+      try {
+        const uri = await PDFService.generatePreviewPDF(
+          empresa,
+          tempGuia,
+          new Date().toISOString(),
+          setLoadingMessage
+        );
+        setPdfUri(uri);
+        setShowPDFPreview(true);
+      } catch (printError) {
+        console.error('Error in PDF generation:', printError);
+        Alert.alert(
+          'Error',
+          'No se pudo generar el PDF después de varios intentos. Por favor, inténtelo de nuevo.'
+        );
+      }
     } catch (error) {
       console.error('Error generating preview PDF:', error);
       Alert.alert('Error', 'No se pudo generar la vista previa del PDF');
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage('');
     }
   };
 
+  const handleSubmitGuia = async () => {
+    try {
+      setSubmissionStatus('Preparando guía para envío...');
+      const guiaToSubmit = combineGuiaProductoForms(
+        Number(precio),
+        guiaForm,
+        productoForm
+      );
+      await submitGuia(guiaToSubmit, (status: string) => {
+        setSubmissionStatus(status);
+      });
+    } catch (error) {
+      console.error('Error submitting guia:', error);
+      setSubmissionStatus('');
+    }
+  };
+
+  const previewGuia = combineGuiaProductoForms(Number(0), guiaForm, productoForm);
+
   return (
-    <Modal visible={modalVisible} animationType="fade" transparent>
-      {!showPDFPreview ? (
-        <View style={styles.overlay}>
-          <Surface style={styles.container} elevation={5}>
-            <Text variant="headlineSmall" style={styles.title}>
-              Resumen Guía Despacho
-            </Text>
+    <Modal visible={modalVisible} animationType="fade" transparent statusBarTranslucent>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.overlay}>
+            <View style={styles.modalView}>
+              <Surface style={styles.container} elevation={5}>
+                <Text variant="headlineSmall" style={styles.title}>
+                  Resumen Guía Despacho
+                </Text>
 
-            {modalVisible && (
-              <View style={styles.previewContainer}>
-                <GuiaDespachoCardItem
-                  item={guiaItem}
-                  setPdfItem={() => {}}
-                  preview={true}
-                />
-              </View>
-            )}
+                <View style={styles.previewContainer}>
+                  <View style={styles.cardContainer}>
+                    <GuiaDespachoCardItem
+                      cardItem={{
+                        ...previewGuia,
+                        id: 'PREVIEW_GUIA',
+                        estado: 'pendiente',
+                        _caf_id: '',
+                        usuario_metadata: {} as MetaDataUsuario,
+                        pdf_url: '',
+                      }}
+                      setPdfItem={() => {}}
+                      preview={true}
+                    />
+                  </View>
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text variant="titleMedium" style={styles.inputLabel}>
-                Precio Unitario
-              </Text>
-              <TextInput
-                mode="outlined"
-                keyboardType="numeric"
-                value={precio}
-                onChangeText={setPrecio}
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
-                right={<TextInput.Affix text="CLP" />}
-              />
+                <View style={styles.inputContainer}>
+                  <Text variant="titleMedium" style={styles.inputLabel}>
+                    Precio Unitario Guía
+                  </Text>
+                  <TextInput
+                    mode="outlined"
+                    keyboardType="numeric"
+                    value={precio}
+                    onChangeText={setPrecio}
+                    style={styles.input}
+                    outlineStyle={styles.inputOutline}
+                    right={<TextInput.Affix text="CLP" />}
+                    onSubmitEditing={Keyboard.dismiss}
+                    blurOnSubmit={true}
+                  />
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <Button
+                    mode="outlined"
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setModalVisible(false);
+                    }}
+                    style={styles.button}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    mode="contained"
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      handlePreviewPDF();
+                    }}
+                    disabled={!precio}
+                    style={styles.button}
+                    loading={isLoading}
+                  >
+                    Ver PDF
+                  </Button>
+                </View>
+                {isLoading && loadingMessage && (
+                  <Text variant="bodyMedium" style={styles.loadingMessage}>
+                    {loadingMessage}
+                  </Text>
+                )}
+                <Text variant="bodySmall" style={styles.disclaimer}>
+                  * La vista previa del PDF se mostrará sin código de barras
+                </Text>
+              </Surface>
             </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
 
-            <View style={styles.buttonContainer}>
-              <Button
-                mode="outlined"
-                onPress={() => setModalVisible(false)}
-                style={styles.button}
-              >
-                Cancelar
-              </Button>
-              <Button
-                mode="contained"
-                onPress={handlePreviewPDF}
-                disabled={!precio}
-                style={styles.button}
-              >
-                Ver PDF
-              </Button>
-            </View>
-            <Text variant="bodySmall" style={styles.disclaimer}>
-              * La vista previa del PDF se mostrará sin código de barras
-            </Text>
-          </Surface>
-        </View>
-      ) : (
-        <View style={styles.pdfPreviewContainer}>
-          {pdfUri && (
-            <PDFViewer
-              item={{
-                ...guiaItem,
-                pdf_local_checked_uri: pdfUri,
-              }}
-              onClose={() => {
-                setShowPDFPreview(false);
-                // Clean up temporary PDF
+      <Modal
+        animationType="fade"
+        statusBarTranslucent={true}
+        transparent={true}
+        visible={showPDFPreview}
+      >
+        <View style={styles.pdfModalContainer}>
+          <PDFViewer
+            item={{
+              folio: guiaForm.identificacion_folio!,
+              empresaId: empresa.id,
+              pdfLocalUri: pdfUri || '',
+            }}
+            onClose={() => {
+              setShowPDFPreview(false);
+              if (pdfUri) {
                 FileSystem.deleteAsync(pdfUri, { idempotent: true });
-              }}
-              preview={true}
-            />
-          )}
-          <FAB
-            icon="check"
-            label="CONFIRMAR"
-            style={styles.confirmButton}
-            color={theme.colors.onPrimary}
-            onPress={() =>
-              submitGuia(
-                combineGuiaProductoForms(Number(precio), guiaForm, productoForm)
-              )
-            }
-            disabled={isSubmitting}
-            loading={isSubmitting}
+              }
+            }}
+            preview={true}
           />
         </View>
-      )}
+        <View style={styles.confirmationContainer}>
+          {submissionStatus ? (
+            <Text style={styles.submissionStatus}>{submissionStatus}</Text>
+          ) : null}
+          <FAB
+            icon="check"
+            label={isSubmitting ? 'PROCESANDO...' : 'CONFIRMAR CREACIÓN'}
+            style={[styles.confirmButton, isSubmitting && styles.confirmButtonDisabled]}
+            color={theme.colors.onPrimary}
+            onPress={handleSubmitGuia}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          />
+        </View>
+      </Modal>
     </Modal>
   );
 };
@@ -185,13 +232,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
-    padding: 16,
+    alignItems: 'center',
+  },
+  modalView: {
+    width: '90%',
+    maxWidth: 400,
   },
   container: {
     backgroundColor: theme.colors.surface,
     borderRadius: 28,
     padding: 24,
-    gap: 24,
+    gap: 20,
   },
   title: {
     color: theme.colors.onSurface,
@@ -200,6 +251,11 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     marginHorizontal: -16,
+    backgroundColor: theme.colors.surface,
+  },
+  cardContainer: {
+    minHeight: 160,
+    padding: 16,
   },
   inputContainer: {
     gap: 8,
@@ -224,27 +280,50 @@ const styles = StyleSheet.create({
     height: 48,
     padding: 0,
   },
-  pdfPreviewContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
   confirmButton: {
-    position: 'absolute',
-    bottom: '25%',
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
     backgroundColor: theme.colors.primary,
-    color: theme.colors.onPrimary,
+    borderColor: 'black',
+    borderWidth: 2,
   },
-  confirmButtonLabel: {
-    color: theme.colors.onPrimary,
+  confirmButtonDisabled: {
+    opacity: 0.7,
   },
   disclaimer: {
     textAlign: 'center',
     color: theme.colors.onSurfaceVariant,
     marginTop: 8,
     fontStyle: 'italic',
+  },
+  pdfModalContainer: {
+    flex: 1,
+    margin: 0,
+    padding: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  loadingMessage: {
+    textAlign: 'center',
+    color: theme.colors.primary,
+    marginTop: 8,
+  },
+  confirmationContainer: {
+    position: 'absolute',
+    bottom: '25%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    gap: 8,
+  },
+  submissionStatus: {
+    color: theme.colors.onPrimary,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
   },
 });
 

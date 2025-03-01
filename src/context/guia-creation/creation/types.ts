@@ -2,13 +2,15 @@ import { GuiaFormData } from '../guia-form/types';
 import { ProductoFormData } from '../producto-form/types';
 import { GuiaDespachoIncomplete } from './services/creation';
 
-export type GuiaCreationStep = 'index' | 'guia-form' | 'producto-form' | 'preview';
+export type GuiaCreationStep = 'index' | 'guia-form' | 'producto-form';
 
 export interface GuiaCreationState {
   currentStep: GuiaCreationStep;
-  error: string | null;
   isSubmitting: boolean;
+  error: string | null;
 }
+
+export type StatusCallback = (message: string) => void;
 
 export type GuiaCreationAction =
   | { type: 'SET_STEP'; payload: GuiaCreationStep }
@@ -18,11 +20,14 @@ export type GuiaCreationAction =
 
 export interface GuiaCreationContextType {
   state: GuiaCreationState;
-  submitGuia: (guiaDespachoIncomplete: GuiaDespachoIncomplete) => Promise<void>;
-  resetCreation: () => void;
+  submitGuia: (
+    guia: GuiaDespachoIncomplete,
+    onStatusChange?: StatusCallback
+  ) => Promise<void>;
   combineGuiaProductoForms: (
     precioUnitarioGuia: number,
     guiaForm: GuiaFormData,
     productoForm: ProductoFormData
   ) => GuiaDespachoIncomplete;
+  resetCreation: () => void;
 }

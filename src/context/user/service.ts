@@ -1,13 +1,22 @@
 import auth from '@react-native-firebase/auth';
 import firestore, { Timestamp } from '@react-native-firebase/firestore';
+import * as Updates from 'expo-updates';
 import { UserFirestore } from './types';
 
 export class UserService {
   static async login(email: string, password: string): Promise<string> {
+    if (!email || !password) {
+      return 'Debe llenar ambos campos';
+    }
+
     try {
       await auth().signInWithEmailAndPassword(email, password);
       return 'success';
     } catch (e: any) {
+      console.error('💥 Error al iniciar sesión:', {
+        code: e.code,
+        message: e.message,
+      });
       const errorMap: Record<string, string> = {
         'auth/invalid-email': 'Formato incorrecto de email',
         'auth/invalid-password': 'Contraseña incorrecta',
@@ -20,12 +29,17 @@ export class UserService {
 
   static async logout(): Promise<void> {
     try {
+      // 1. Sign out from Firebase Auth
       await auth().signOut();
+      
+      // 2. Clean up Firestore
       await firestore().terminate();
       await firestore().clearPersistence();
-      // Maybe restart the app here with expo
+      
+      // 3. Force a clean reload of the app
+      await Updates.reloadAsync();
     } catch (error) {
-      console.error(error);
+      console.error('Error during logout:', error);
       throw new Error('Error al cerrar sesión');
     }
   }

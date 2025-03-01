@@ -3,16 +3,26 @@ import { theme } from '@/theme';
 import FontAwesome from '@expo/vector-icons/FontAwesome6';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <>
       <Header />
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: styles.tabBar,
+          tabBarStyle: [
+            styles.tabBar,
+            {
+              height: 50 + (Platform.OS === 'ios' ? insets.bottom : 2),
+              paddingBottom: Platform.OS === 'ios' ? insets.bottom : 8,
+              paddingTop: Platform.OS === 'ios' ? 'auto' : 8,
+            },
+          ],
           tabBarActiveTintColor: theme.colors.primary,
           tabBarInactiveTintColor: theme.colors.outline,
           tabBarButton: (props) => (
@@ -35,7 +45,7 @@ export default function TabLayout() {
           options={{
             title: 'Guías',
             tabBarIcon: ({ color }) => (
-              <FontAwesome size={28} name="clipboard-list" color={color} />
+              <FontAwesome size={26} name="clipboard-list" color={color} />
             ),
           }}
         />
@@ -44,7 +54,7 @@ export default function TabLayout() {
           options={{
             title: 'Usuario',
             tabBarIcon: ({ color }) => (
-              <FontAwesome size={28} name="circle-user" color={color} />
+              <FontAwesome size={26} name="circle-user" color={color} />
             ),
           }}
         />
@@ -55,7 +65,6 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 60,
     backgroundColor: theme.colors.surfaceContainer,
     borderTopWidth: 0.5,
     borderTopColor: theme.colors.surfaceVariant,
@@ -72,6 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 4,
   },
   pressed: {
     opacity: 0.7,
@@ -80,5 +90,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'System',
     fontWeight: '500',
+    marginTop: 2,
   },
 });

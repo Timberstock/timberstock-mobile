@@ -97,7 +97,7 @@ export const guiaFormInitialState: GuiaFormData = {
   transporte_empresa_carro: null,
   servicios_carguio_empresa: null,
   servicios_cosecha_empresa: null,
-  observaciones: null,
+  observaciones: [],
   contrato_compra_id: null,
   contrato_venta_id: null,
   codigo_fsc: null,

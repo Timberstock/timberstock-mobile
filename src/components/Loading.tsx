@@ -1,4 +1,4 @@
-import colors from '@/constants/colors';
+import colors from '@/theme/colors';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ActivityIndicator, Surface, Text } from 'react-native-paper';

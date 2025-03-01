@@ -1,20 +1,22 @@
 import FoliosRequestModal from '@/components/FoliosRequestModal';
-import colors from '@/constants/colors';
 import { useApp } from '@/context/app/AppContext';
 import { useFolio } from '@/context/folio/FolioContext';
 import { useUser } from '@/context/user/UserContext';
+import { LocalFilesService } from '@/services/LocalFilesService';
+import colors from '@/theme/colors';
 import * as Updates from 'expo-updates';
-import React, { useState } from 'react';
-import { Alert, Animated, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Animated, Image, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Card, Text, useTheme } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function User() {
   const theme = useTheme();
-  const { handleUpdateAvailable } = useApp();
   const { liberarFolios } = useFolio();
+  const { resetFirestoreAndReloadApp } = useApp();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  const [logoBase64, setLogoBase64] = useState<string | null>(null);
 
   const {
     state: { user },
@@ -23,7 +25,7 @@ export default function User() {
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -37,6 +39,20 @@ export default function User() {
       }),
     ]).start();
   }, []);
+
+  useEffect(() => {
+    const loadLogo = async () => {
+      if (user?.empresa_id) {
+        try {
+          const base64 = await LocalFilesService.getLogoFileBase64(user.empresa_id);
+          setLogoBase64(base64);
+        } catch (error) {
+          console.error('Error loading logo:', error);
+        }
+      }
+    };
+    loadLogo();
+  }, [user?.empresa_id]);
 
   const handleDevolverFolios = () => {
     Alert.alert('Devolver folios', '¿Estás seguro de devolver todos los folios?', [
@@ -58,17 +74,28 @@ export default function User() {
     ]);
   };
 
-  const handleCheckForUpdates = async () => {
+  const handleReiniciarApp = async () => {
     try {
-      const update = await Updates.checkForUpdateAsync();
-      if (update.isAvailable) {
-        handleUpdateAvailable();
-      } else {
-        Alert.alert('No hay actualizaciones', 'La aplicación ya está actualizada');
-      }
+      // Confirmar reinicar la app y reiniciar la app
+      Alert.alert(
+        'Reiniciando datos de la aplicación.',
+        '¿Estás seguro de reiniciar la aplicación?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Reiniciar',
+            onPress: async () => {
+              // Reiniciar la app
+              await resetFirestoreAndReloadApp();
+            },
+          },
+        ]
+      );
     } catch (error) {
-      Alert.alert('Error', 'No se pudo comprobar si hay actualizaciones disponibles');
-      console.error(error);
+      console.error('Error checking for update:', error);
     }
   };
 
@@ -85,12 +112,20 @@ export default function User() {
       >
         <Card style={styles.profileCard}>
           <Card.Content style={styles.profileContent}>
-            <Avatar.Icon
-              size={80}
-              icon="account"
-              style={{ backgroundColor: theme.colors.primaryContainer }}
-              color={theme.colors.primary}
-            />
+            {logoBase64 ? (
+              <Image
+                source={{ uri: `data:image/png;base64,${logoBase64}` }}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            ) : (
+              <Avatar.Icon
+                size={80}
+                icon="account"
+                style={{ backgroundColor: theme.colors.primaryContainer }}
+                color={theme.colors.primary}
+              />
+            )}
             <Text variant="headlineSmall" style={styles.name}>
               {user?.nombre}
             </Text>
@@ -133,11 +168,11 @@ export default function User() {
 
           <Button
             mode="outlined"
-            onPress={handleCheckForUpdates}
+            onPress={handleReiniciarApp}
             icon="update"
             style={styles.actionButton}
           >
-            Buscar Actualizaciones
+            Reiniciar Aplicación (Conservando Usuario)
           </Button>
         </View>
 
@@ -151,10 +186,17 @@ export default function User() {
         </Button>
 
         <Text variant="labelSmall" style={styles.version}>
-          Última actualización:{' '}
+          Última actualización app:{' '}
           {Updates.createdAt
-            ? `${Updates.createdAt?.getUTCDate()}/${Updates.createdAt?.getUTCMonth() + 1}/${Updates.createdAt?.getUTCFullYear()}`
-            : '07/01/2025'}
+            ? `${Updates.createdAt?.toLocaleDateString('es-CL', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })} ${Updates.createdAt?.toLocaleTimeString('es-CL', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}`
+            : '05/02/2025 10:08'}
         </Text>
       </Animated.View>
 
@@ -221,5 +263,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     opacity: 0.5,
+  },
+  logo: {
+    width: 120,
+    height: 80,
+    marginBottom: 8,
   },
 });

@@ -2,13 +2,11 @@ import CustomDropdown from '@/components/CustomDropdown';
 import Aserrable from '@/components/productos/Aserrable';
 import PreviewModal from '@/components/productos/PreviewModal';
 import Pulpable from '@/components/productos/Pulpable';
-import { useGuiaCreation } from '@/context/guia-creation/creation/CreationContext';
 import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
 import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
 import { theme } from '@/theme';
-import { SelectStyles } from '@mobile-reality/react-native-select-pro';
-import { useEffect, useState } from 'react';
-import { Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Divider, Surface, Text } from 'react-native-paper';
 
 export default function ProductoForm() {
@@ -23,27 +21,7 @@ export default function ProductoForm() {
     updateProductoInfo,
   } = useProductoForm();
 
-  const {
-    state: { isSubmitting },
-    submitGuia,
-  } = useGuiaCreation();
-
   const [modalVisible, setModalVisible] = useState(false);
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardVisible(true);
-    });
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardVisible(false);
-    });
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, []);
 
   const onOpenModalButtonPress = () => {
     const allowOpen = isFormValid();
@@ -137,7 +115,12 @@ export default function ProductoForm() {
         Crear Guía Despacho
       </Button>
       {modalVisible && (
-        <PreviewModal modalVisible={modalVisible} setModalVisible={setModalVisible} />
+        <PreviewModal
+          guiaForm={guia}
+          productoForm={productoFormData}
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+        />
       )}
     </View>
   );
@@ -197,44 +180,3 @@ const styles = StyleSheet.create({
     height: 56,
   },
 });
-
-const selectStyles: SelectStyles = {
-  select: {
-    container: {
-      // flex: 1,
-      borderWidth: 2,
-      marginTop: '2%',
-      borderColor: '#cccccc',
-      borderRadius: 13,
-      alignSelf: 'center',
-      width: '90%',
-      // claseDiametrica: {
-      //   flex: 0.5,
-      //   marginRight: '4.5%',
-      // },
-    },
-    // input: {
-    //   borderWidth: 2,
-    //   borderColor: '#cccccc',
-    //   borderRadius: 13,
-    //   alignSelf: 'center',
-    //   width: '90%',
-    //   folio: {
-    //     width: '45%',
-    //     alignSelf: 'center',
-    //     marginLeft: '2.5%',
-    //   },
-    // },
-    // buttonsContainer: {
-    //   tintColor: colors.secondary,
-    //   width: 10,
-    //   alignSelf: 'center',
-    //   alignContent: 'flex-end',
-    //   alignItems: 'center',
-    // },
-  },
-  optionsList: {
-    borderColor: '#cccccc',
-    marginTop: Platform.OS === 'ios' ? 0 : 51,
-  },
-};

@@ -14,10 +14,14 @@ export default function AppIndex() {
     // @ts-ignore the segments array docs are wrong
     if (!state.user) {
       router.replace('/(auth)');
-    } else if (state.user) {
+    } else if (state.user && segments[0] !== '(tabs)') {
       router.replace('/(tabs)');
     }
   }, [state.user, state.loading, segments]);
 
-  return <Loading errorMessage="Verificando usuario..." />;
+  return (
+    <Loading
+      errorMessage={`Verificando usuario... si no tiene conexión, puede tardar hasta 60 segundos en cargar el caché...`}
+    />
+  );
 }

@@ -16,7 +16,6 @@ export const initialState: AppState = {
   },
   contratosCompra: [],
   contratosVenta: [],
-  localFiles: [],
   loading: true,
   error: null,
   lastSync: null,

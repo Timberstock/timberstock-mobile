@@ -23,23 +23,12 @@ export interface EmpresaSubCollectionsData {
   proveedores: Proveedor[];
 }
 
-export interface LocalFile {
-  name: string;
-  path: string;
-  type: 'image' | 'pdf' | 'other';
-}
-
-export interface GuiaDespachoState extends GuiaDespachoFirestore {
-  pdf_local_checked_uri: string;
-}
-
 // State type
 export interface AppState {
-  guias: GuiaDespachoState[];
+  guias: GuiaDespachoFirestore[];
   empresa: Empresa;
   contratosCompra: ContratoCompra[];
   contratosVenta: ContratoVenta[];
-  localFiles: LocalFile[];
   loading: boolean;
   error: string | null;
   lastSync: Date | null;
@@ -49,7 +38,7 @@ export interface AppState {
 
 // Action types
 export type AppAction =
-  | { type: 'SET_GUIAS'; payload: GuiaDespachoState[] }
+  | { type: 'SET_GUIAS'; payload: GuiaDespachoFirestore[] }
   | {
       type: 'SET_EMPRESA_DATA';
       payload: {
@@ -58,19 +47,18 @@ export type AppAction =
         contratosVenta: ContratoVenta[];
       };
     }
-  | { type: 'SET_LOCAL_FILES'; payload: LocalFile[] }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string }
+  | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_LOADING_MORE'; payload: boolean }
   | { type: 'SET_HAS_MORE'; payload: boolean }
-  | { type: 'APPEND_GUIAS'; payload: GuiaDespachoState[] }
-  | { type: 'SET_LAST_SYNC'; payload: Date };
+  | { type: 'APPEND_GUIAS'; payload: GuiaDespachoFirestore[] }
+  | { type: 'SET_LAST_SYNC'; payload: Date }
+  | { type: 'RESET_STATE' };
 
 // Context type
 export interface AppContextType {
   state: AppState;
-  fetchAllEmpresaData: () => Promise<void>;
-  handleUpdateAvailable: () => Promise<void>;
-  shareGuiaPDF: (guia: GuiaDespachoState) => Promise<void>;
+  fetchAllEmpresaData: (withLoading?: boolean) => Promise<void>;
   loadMoreGuias: () => Promise<void>;
+  resetFirestoreAndReloadApp: () => Promise<void>;
 }

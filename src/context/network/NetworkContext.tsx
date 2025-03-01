@@ -1,4 +1,5 @@
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import firestore from '@react-native-firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type NetworkContextType = {
@@ -13,7 +14,7 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
+    const unsubscribe = NetInfo.addEventListener(async (state) => {
       console.log('🌐 [Network Status Changed]', {
         isConnected: state.isConnected,
         isInternetReachable: state.isInternetReachable,
@@ -21,6 +22,11 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
       });
       setNetworkStatus(state);
       setIsConnected(!!state.isConnected && !!state.isInternetReachable);
+      if (state.isConnected && state.isInternetReachable) {
+        await firestore().enableNetwork();
+      } else {
+        await firestore().disableNetwork();
+      }
     });
 
     return () => unsubscribe();

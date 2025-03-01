@@ -1,5 +1,4 @@
-import { GuiaDespachoState } from '@/context/app/types';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Animated, Linking, Modal, StyleSheet, View } from 'react-native';
 import {
   Button,
@@ -9,11 +8,15 @@ import {
   useTheme,
 } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import PDFViewer from './PDFViewer';
-
+import PDFViewer, { PDFViewerItem } from './PDFViewer';
 interface PDFActionModalProps {
-  item: GuiaDespachoState | null;
-  setItem: (item: GuiaDespachoState | null) => void;
+  item: PDFActionModalItem | null;
+  setItem: (item: PDFActionModalItem | null) => void;
+}
+
+export interface PDFActionModalItem extends PDFViewerItem {
+  id: string;
+  pdf_url: string;
 }
 
 export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
@@ -22,7 +25,7 @@ export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
   const [slideAnim] = useState(new Animated.Value(50));
   const theme = useTheme();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (item) {
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -43,7 +46,7 @@ export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
   }, [item]);
 
   const handleView = () => {
-    if (!item?.pdf_local_checked_uri) {
+    if (!item?.pdfLocalUri) {
       _handleAlertNoPDF('local');
       return;
     }
@@ -111,7 +114,7 @@ export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
                 variant="labelLarge"
                 style={{ color: theme.colors.onSurfaceVariant }}
               >
-                Guía #{item?.identificacion.folio}
+                Guía #{item?.folio}
               </Text>
             </View>
             <IconButton
@@ -126,14 +129,14 @@ export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
           <Button
             mode="contained"
             onPress={handleView}
-            disabled={!item?.pdf_local_checked_uri}
+            disabled={!item?.pdfLocalUri}
             icon={({ size, color }) => (
               <Icon name="file-pdf-o" size={size} color={color} />
             )}
             style={[
               styles.actionButton,
               {
-                backgroundColor: !item?.pdf_local_checked_uri
+                backgroundColor: !item?.pdfLocalUri
                   ? theme.colors.onSurfaceDisabled
                   : theme.colors.primary,
               },
@@ -170,7 +173,7 @@ export default function PDFActionModal({ item, setItem }: PDFActionModalProps) {
         visible={isViewing}
       >
         <View style={styles.pdfModalContainer}>
-          <PDFViewer item={item!} onClose={handleClosePDFViewer} />
+          <PDFViewer item={item} onClose={handleClosePDFViewer} />
         </View>
       </Modal>
     </Modal>
