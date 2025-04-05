@@ -8,6 +8,8 @@ export interface ContratoVenta {
   fecha_caducidad: FirebaseFirestoreTypes.Timestamp | Date;
   vigente: boolean;
   id_contrato_anterior?: string;
+  guias_incluye_codigo_producto: boolean;
+  guias_incluye_fecha_faena: boolean;
 }
 
 export interface ProductoContratoVenta extends Producto {

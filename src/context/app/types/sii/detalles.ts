@@ -1,3 +1,4 @@
+import { Timestamp } from '@react-native-firebase/firestore';
 import { GeoPoint, Producto, Proveedor } from '../esenciales';
 
 // 2nd Level
@@ -8,6 +9,8 @@ export interface Predio {
   georreferencia: GeoPoint;
   plan_de_manejo: string;
   certificado: string;
+  ano_plantacion?: number;
+  fecha_cosecha?: Timestamp;
 }
 
 // 3rd Level

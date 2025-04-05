@@ -1,3 +1,5 @@
+import { Timestamp } from '@react-native-firebase/firestore';
+
 export interface GeoPoint {
   // We fake it because I could not import GeoPoint from firestore
   latitude: number;
@@ -13,6 +15,8 @@ export interface Faena {
   plan_de_manejo: string;
   // planes_de_manejo: string[];
   productos: Producto[];
+  ano_plantacion?: number;
+  fecha_cosecha?: Timestamp;
 }
 
 export interface Producto {

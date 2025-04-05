@@ -11,7 +11,7 @@ import { Button, Divider, Surface, Text } from 'react-native-paper';
 
 export default function ProductoForm() {
   const {
-    state: { guia },
+    state: { guia: guiaFormData },
   } = useGuiaForm();
 
   const {
@@ -46,10 +46,11 @@ export default function ProductoForm() {
           <View style={styles.sectionContent}>
             <View style={styles.infoCard}>
               <Text style={styles.infoText}>
-                Código FSC: {guia.codigo_fsc || 'Sin Código'}
+                Código FSC: {guiaFormData.codigo_fsc || 'Sin Código'}
               </Text>
               <Text style={styles.infoText}>
-                Código Contrato Externo: {guia.codigo_contrato_externo || 'Sin Código'}
+                Código Contrato Externo:{' '}
+                {guiaFormData.codigo_contrato_externo || 'Sin Código'}
               </Text>
             </View>
           </View>
@@ -116,7 +117,7 @@ export default function ProductoForm() {
       </Button>
       {modalVisible && (
         <PreviewModal
-          guiaForm={guia}
+          guiaForm={guiaFormData}
           productoForm={productoFormData}
           modalVisible={modalVisible}
           setModalVisible={setModalVisible}

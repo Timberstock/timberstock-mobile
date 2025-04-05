@@ -29,6 +29,8 @@ export type GuiaFormData = {
   contrato_venta_id: GuiaDespachoFirestore['contrato_venta_id'] | null; // NOT A SELECTOR
   codigo_fsc: GuiaDespachoFirestore['codigo_fsc'] | null; // NOT A SELECTOR
   codigo_contrato_externo: GuiaDespachoFirestore['codigo_contrato_externo'] | null; // NOT A SELECTOR
+  guia_incluye_codigo_producto: boolean; // NOT A SELECTOR
+  guia_incluye_fecha_faena: boolean; // NOT A SELECTOR
 };
 
 // Here we map the fields that are selected from contratos with different field names

@@ -196,6 +196,22 @@ export class CreationService {
       ),
     };
 
+    if (guiaForm.guia_incluye_codigo_producto) {
+      // Only add this field if it's explicit
+      guiaDespachoIncomplete.guia_incluye_codigo_producto =
+        guiaForm.guia_incluye_codigo_producto;
+    }
+
+    if (guiaForm.guia_incluye_fecha_faena) {
+      // Only add this field if it's explicit
+      guiaDespachoIncomplete.guia_incluye_fecha_faena =
+        guiaForm.guia_incluye_fecha_faena;
+      guiaDespachoIncomplete.predio_origen.ano_plantacion =
+        guiaForm.faena?.ano_plantacion;
+      guiaDespachoIncomplete.predio_origen.fecha_cosecha =
+        guiaForm.faena?.fecha_cosecha;
+    }
+
     return guiaDespachoIncomplete;
   }
 }

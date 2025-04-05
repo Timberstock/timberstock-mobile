@@ -2,6 +2,7 @@ import CustomDropdown from '@/components/CustomDropdown';
 import { useGuiaForm } from '@/context/guia-creation/guia-form/GuiaFormContext';
 import { useProductoForm } from '@/context/guia-creation/producto-form/ProductoFormContext';
 import { theme } from '@/theme';
+import { Timestamp } from '@react-native-firebase/firestore';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
@@ -23,6 +24,11 @@ export default function GuiaForm() {
     updateObservacionField,
     isFormValid,
   } = useGuiaForm();
+
+  const formatDate = (date?: Timestamp) => {
+    if (!date) return '-';
+    return `${date.toDate().getDate()}/${date.toDate().getMonth() + 1}/${date.toDate().getFullYear()}`;
+  };
 
   const { resetForm } = useProductoForm();
 
@@ -137,7 +143,10 @@ export default function GuiaForm() {
               data={guiaFormOptions.faenas}
               labelField="nombre"
               valueField="rol"
-              onChange={(item) => updateField('faena', item)}
+              onChange={(item) => {
+                console.log(item);
+                updateField('faena', item);
+              }}
               onClear={() => updateField('faena', null)}
               disabled={!guiaFormData.proveedor}
             />
@@ -155,6 +164,12 @@ export default function GuiaForm() {
                 </Text>
                 <Text variant="bodyMedium" style={styles.infoText}>
                   Cert. Proveedor: {guiaFormData.faena.certificado}
+                </Text>
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Año Plantación: {guiaFormData.faena.ano_plantacion || '-'}
+                </Text>
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Fecha Cosecha: {formatDate(guiaFormData.faena.fecha_cosecha)}
                 </Text>
               </Surface>
             )}

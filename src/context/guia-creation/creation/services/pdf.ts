@@ -389,14 +389,23 @@ export class PDFService {
           <td class="td2 no-border numeric">$ ${Number(guia.monto_total_guia.toFixed()).toLocaleString('es-CL')}</td>
         </tr>
         ${trDetallesTableOnlyDescripcion('<br/>')}
-        ${trDetallesTableOnlyDescripcion(guia.codigo_fsc ? `Codigo FSC: ${guia.codigo_fsc}` : null)}
-        ${trDetallesTableOnlyDescripcion(`Patente Carro: ${guia.transporte.carro.patente}`)}
+        ${trDetallesTableOnlyDescripcion(`Predio: ${guia.predio_origen.nombre}`)}
         ${trDetallesTableOnlyDescripcion(`Rol: ${guia.predio_origen.rol}`)}
-        ${trDetallesTableOnlyDescripcion(`Origen: ${guia.predio_origen.nombre}`)}
         ${trDetallesTableOnlyDescripcion(`Comuna: ${guia.predio_origen.comuna}`)}
-        ${trDetallesTableOnlyDescripcion(`Coordenadas: (${guia.predio_origen.georreferencia.latitude},${guia.predio_origen.georreferencia.longitude})`)}
+        ${trDetallesTableOnlyDescripcion(guia.codigo_contrato_externo ? `Nro Pedido: ${guia.codigo_contrato_externo}` : '') /*El codigo contrato externo es el nro de pedido*/}
+        ${trDetallesTableOnlyDescripcion('<br/>')}
+        ${guia.guia_incluye_fecha_faena ? trDetallesTableOnlyDescripcion(`Fecha Corta: ${guia.predio_origen.fecha_cosecha?.toDate().toLocaleDateString('es-CL', { year: 'numeric', month: '2-digit', day: '2-digit' })}`) : ''}
+        ${guia.guia_incluye_fecha_faena ? trDetallesTableOnlyDescripcion(`Año Plantación: ${guia.predio_origen.ano_plantacion}`) : ''}
+        ${guia.guia_incluye_codigo_producto ? trDetallesTableOnlyDescripcion(`EEPP: ${guia.producto.codigo}`) : ''}
         ${trDetallesTableOnlyDescripcion(`Plan de Manejo o Uso Suelo: ${guia.predio_origen.plan_de_manejo}`)}
-        ${trDetallesTableOnlyDescripcion(guia.codigo_contrato_externo ? `Codigo: ${guia.codigo_contrato_externo}` : null)}
+        ${trDetallesTableOnlyDescripcion(`Coordenadas: (${guia.predio_origen.georreferencia.latitude},${guia.predio_origen.georreferencia.longitude})`)}
+        ${trDetallesTableOnlyDescripcion('<br/>')}
+        ${trDetallesTableOnlyDescripcion(guia.codigo_fsc ? `Codigo FSC: ${guia.codigo_fsc}` : '')}
+        ${trDetallesTableOnlyDescripcion('<br/>')}
+        ${trDetallesTableOnlyDescripcion(`Patente Carro: ${guia.transporte.carro.patente}`)}
+        ${trDetallesTableOnlyDescripcion(`Transporte: ${guia.transporte.empresa.razon_social}`)}
+        ${trDetallesTableOnlyDescripcion(guia.servicios.carguio?.empresa ? `Carguio: ${guia.servicios.carguio.empresa.razon_social}` : '')}
+
         ${guia.observaciones ? guia.observaciones.reduce((acc, observacion) => acc + trDetallesTableOnlyDescripcion(observacion), '') : ''}
         ${
           // If the product is Aserrable, we need to add the clases diametricas to the table

@@ -170,6 +170,9 @@ export class SelectorService {
           contratoVenta?.cliente.destinos_contrato
             .find((d) => d.rol === destino_contrato!.rol)
             ?.faenas.find((f) => f.rol === faena!.rol)?.codigo_contrato_externo || null,
+        guia_incluye_codigo_producto:
+          contratoVenta?.guias_incluye_codigo_producto || false,
+        guia_incluye_fecha_faena: contratoVenta?.guias_incluye_fecha_faena || false,
       },
       newOptions: {
         // Parse transportes from destino_contrato

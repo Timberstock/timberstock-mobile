@@ -77,4 +77,6 @@ export interface GuiaDespachoFirestore {
   version?: number;
   usuario_metadata: MetaDataUsuario;
   pdf_url: string;
+  guia_incluye_codigo_producto?: boolean;
+  guia_incluye_fecha_faena?: boolean;
 }
