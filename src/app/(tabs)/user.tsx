@@ -196,7 +196,7 @@ export default function User() {
                 hour: '2-digit',
                 minute: '2-digit',
               })}`
-            : '05/02/2025 10:08'}
+            : '05/04/2025 18:00'}
         </Text>
       </Animated.View>
 
