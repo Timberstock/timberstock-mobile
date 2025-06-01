@@ -1,14 +1,16 @@
+import colors from '@/theme/colors';
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { ActivityIndicator, Surface, Text } from 'react-native-paper';
 
-function Loading() {
+function Loading({ errorMessage }: { errorMessage: string }) {
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#4E4E4E" />
-      <Text style={styles.errorMessage}>
-        Intendando conectarse al servidor o buscando datos en cache{' '}
+    <Surface style={styles.container} elevation={0}>
+      <ActivityIndicator size="large" color={colors.secondary} />
+      <Text variant="bodyLarge" style={styles.errorMessage}>
+        {errorMessage}
       </Text>
-    </View>
+    </Surface>
   );
 }
 
@@ -17,10 +19,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.white,
   },
   errorMessage: {
-    color: 'blue',
-    marginTop: '5%',
+    marginTop: 20,
+    color: colors.secondary,
   },
 });
 

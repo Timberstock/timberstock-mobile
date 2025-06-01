@@ -1,0 +1,90 @@
+import { MD3LightTheme as DefaultTheme, configureFonts } from 'react-native-paper';
+
+const fontConfig = {
+  displayLarge: {
+    fontFamily: 'System',
+    fontSize: 57,
+    fontWeight: '400' as '400',
+    letterSpacing: 0,
+    lineHeight: 64,
+  },
+  displayMedium: {
+    fontFamily: 'System',
+    fontSize: 45,
+    fontWeight: '400' as '400',
+    letterSpacing: 0,
+    lineHeight: 52,
+  },
+  displaySmall: {
+    fontFamily: 'System',
+    fontSize: 36,
+    fontWeight: '400' as '400',
+    letterSpacing: 0,
+    lineHeight: 44,
+  },
+};
+
+export const theme = {
+  ...DefaultTheme,
+  fonts: configureFonts({ config: fontConfig }),
+  colors: {
+    ...DefaultTheme.colors,
+    // primary: '#6a11cb', // Your main purple
+    // secondary: '#2575fc', // Your main blue
+    // tertiary: '#9B9B9B', // Gray for 'Pendiente' (local only)
+    // error: '#FF5252', // Red for 'Rechazado' (errors)
+    // surface: colors.crudo,
+    // background: colors.white,
+    warning: '#FFA726', // Orange for 'Emitida' (in process)
+    success: '#4CAF50', // Green for 'Aceptado' (success)
+    primary: '#6A538C',
+    surfaceTint: '#6A538C',
+    onPrimary: '#FFFFFF',
+    primaryContainer: '#EDDCFF',
+    onPrimaryContainer: '#523C73',
+    secondary: '#645A70',
+    onSecondary: '#FFFFFF',
+    secondaryContainer: '#EBDDF7',
+    onSecondaryContainer: '#4C4357',
+    tertiary: '#7F525B',
+    onTertiary: '#FFFFFF',
+    tertiaryContainer: '#FFD9DF',
+    onTertiaryContainer: '#653B44',
+    error: '#BA1A1A',
+    onError: '#FFFFFF',
+    errorContainer: '#FFDAD6',
+    onErrorContainer: '#93000A',
+    background: '#FEF7FF',
+    onBackground: '#1D1A20',
+    surface: '#FEF7FF',
+    onSurface: '#1D1A20',
+    surfaceVariant: '#E8E0EB',
+    onSurfaceVariant: '#4A454E',
+    outline: '#7B757F',
+    outlineVariant: '#CBC4CF',
+    shadow: '#000000',
+    scrim: '#000000',
+    inverseSurface: '#322F35',
+    inverseOnSurface: '#F6EEF7',
+    inversePrimary: '#D6BBFB',
+    primaryFixed: '#EDDCFF',
+    onPrimaryFixed: '#250E44',
+    primaryFixedDim: '#D6BBFB',
+    onPrimaryFixedVariant: '#523C73',
+    secondaryFixed: '#EBDDF7',
+    onSecondaryFixed: '#1F182A',
+    secondaryFixedDim: '#CEC2DA',
+    onSecondaryFixedVariant: '#4C4357',
+    tertiaryFixed: '#FFD9DF',
+    onTertiaryFixed: '#321019',
+    tertiaryFixedDim: '#F1B7C2',
+    onTertiaryFixedVariant: '#653B44',
+    surfaceDim: '#DFD8E0',
+    surfaceBright: '#FEF7FF',
+    surfaceContainerLowest: '#FFFFFF',
+    surfaceContainerLow: '#F9F1F9',
+    surfaceContainer: '#F3ECF4',
+    surfaceContainerHigh: '#EDE6EE',
+    surfaceContainerHighest: '#E7E0E8',
+  },
+};

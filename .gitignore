@@ -1,9 +1,12 @@
+app_builds/
+
 # firebase_services_files/
 firebase_services_files/
 
 # expo
 ios/
 android/
+credentials/
 
 # Older build files for expo
 old_builds/

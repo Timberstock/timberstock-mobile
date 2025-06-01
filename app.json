@@ -2,7 +2,8 @@
   "expo": {
     "name": "TimberStock",
     "slug": "timberstock-mobile-app",
-    "version": "1.1.22",
+    "version": "1.1.24",
+    "scheme": "timberstock",
     "orientation": "portrait",
     "icon": "./assets/dallelogo.png",
     "userInterfaceStyle": "light",
@@ -15,18 +16,18 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/77c3e023-bb35-4869-91e8-aef0a6820e4c",
       "requestHeaders": {
-        "expo-channel-name": "staging"
+        "expo-channel-name": "production"
       }
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "buildNumber": "22",
+      "buildNumber": "24",
       "googleServicesFile": "./firebase_services_files/GoogleService-Info.plist",
       "supportsTablet": true,
       "bundleIdentifier": "com.atc.timberstockapp"
     },
     "android": {
-      "versionCode": 22,
+      "versionCode": 24,
       "googleServicesFile": "./firebase_services_files/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/dallelogo.png",
@@ -41,6 +42,9 @@
     "plugins": [
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
+      "@config-plugins/react-native-pdf",
+      "@config-plugins/react-native-blob-util",
+      "expo-router",
       [
         "expo-build-properties",
         {

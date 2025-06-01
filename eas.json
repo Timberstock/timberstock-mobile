@@ -3,27 +3,12 @@
     "version": ">= 3.1.1"
   },
   "build": {
-    "android-development-emulator": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "channel": "android-development-emulator"
-    },
-    "ios-development-device": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "channel": "ios-development-device"
-    },
-    "ios-development-simulator": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "ios": {
-        "simulator": true
-      },
-      "channel": "ios-development-simulator"
-    },
     "staging-internal": {
       "distribution": "internal",
-      "channel": "staging-internal"
+      "channel": "staging-internal",
+      "android": {
+        "buildType": "apk"
+      }
     },
     "staging": {
       "distribution": "store",
@@ -32,6 +17,13 @@
     "production": {
       "distribution": "store",
       "channel": "production"
+    },
+    "production-apk": {
+      "distribution": "store",
+      "channel": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {

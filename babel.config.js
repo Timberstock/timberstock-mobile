@@ -15,6 +15,8 @@ module.exports = function (api) {
           },
         },
       ],
+      //https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/
+      'react-native-reanimated/plugin',
     ],
   };
 };
